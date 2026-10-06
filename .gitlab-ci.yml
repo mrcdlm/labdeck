@@ -1,0 +1,23 @@
+# Prüfbau bei jedem Push auf main bzw. in Merge Requests (ohne Push),
+# Image-Veröffentlichung nur für Versions-Tags.
+check-image:
+  stage: build
+  image: docker:29.8.2-cli
+  script:
+    - docker build --pull --provenance=false --sbom=false --build-arg VERSION="$CI_COMMIT_SHORT_SHA" -t labdeck:check .
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+build-image:
+  stage: build
+  image: docker:29.8.2-cli
+  script:
+    # Tag v0.1.0 → Image 0.1.0 (wie auf ghcr.io); die Version erscheint in der Oberfläche
+    - IMAGE_TAG="${CI_COMMIT_TAG#v}"
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker build --pull --provenance=false --sbom=false --build-arg VERSION="$CI_COMMIT_TAG" -t "$CI_REGISTRY_IMAGE:$IMAGE_TAG" .
+    - docker push "$CI_REGISTRY_IMAGE:$IMAGE_TAG"
+  rules:
+    # nur Versions-Tags wie v0.1.0
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
