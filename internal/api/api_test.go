@@ -16,6 +16,10 @@ import (
 
 	"github.com/mrcdlm/labdeck/internal/config"
 	"github.com/mrcdlm/labdeck/internal/events"
+	"github.com/mrcdlm/labdeck/internal/integrations"
+	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks"
+	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks/hctest"
+	"github.com/mrcdlm/labdeck/internal/secrets"
 	"github.com/mrcdlm/labdeck/internal/store"
 )
 
@@ -24,6 +28,8 @@ type testEnv struct {
 	api      *Server
 	auth     *Auth
 	broker   *events.Broker
+	hc       *hctest.Fake
+	hcURL    string
 	language string // Accept-Language der Anfragen (Standard "de")
 }
 
@@ -54,11 +60,19 @@ func newTestEnv(t *testing.T, static fstest.MapFS) *testEnv {
 	t.Cleanup(broker.Close)
 	settings, _ := config.NewSettingsService(context.Background(), st)
 
-	s := NewServer(Deps{Store: st, Events: broker, Settings: settings,
+	hc := hctest.New("ro-key", "", hctest.Demo()...)
+	hcSrv := httptest.NewServer(hc)
+	t.Cleanup(hcSrv.Close)
+	box, _ := secrets.New(bytes.Repeat([]byte{1}, 32))
+	mgr := integrations.NewManager(integrations.NewRegistry(healthchecks.New()), st, box,
+		func(string) (string, bool) { return "", false }, log)
+	mgr.Pub = broker
+
+	s := NewServer(Deps{Store: st, Events: broker, Settings: settings, Integrations: mgr,
 		Info: Info{Version: "v1.2.3", SecretKeySet: true}, Auth: auth, Log: log, Static: static})
 	srv := httptest.NewServer(s.Routes())
 	t.Cleanup(srv.Close)
-	return &testEnv{srv: srv, api: s, auth: auth, broker: broker}
+	return &testEnv{srv: srv, api: s, auth: auth, broker: broker, hc: hc, hcURL: hcSrv.URL}
 }
 
 func (e *testEnv) do(t *testing.T, method, path, body string, cookie *http.Cookie) *http.Response {

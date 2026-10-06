@@ -16,7 +16,10 @@ import (
 	"github.com/mrcdlm/labdeck/internal/api"
 	"github.com/mrcdlm/labdeck/internal/config"
 	"github.com/mrcdlm/labdeck/internal/events"
+	"github.com/mrcdlm/labdeck/internal/integrations"
+	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks"
 	"github.com/mrcdlm/labdeck/internal/scheduler"
+	"github.com/mrcdlm/labdeck/internal/secrets"
 	"github.com/mrcdlm/labdeck/internal/store"
 	"github.com/mrcdlm/labdeck/web"
 )
@@ -86,6 +89,27 @@ func run() error {
 
 	broker := events.NewBroker()
 
+	// Integrationen: Zugangsdaten verschlüsselt (LABDECK_SECRET_KEY), Verweise
+	// ${SECRET_…} aus Env-Variablen.
+	box, err := secrets.New(cfg.SecretKey)
+	if err != nil {
+		return err
+	}
+	cfg.SecretKey = nil // steckt ab hier nur noch in box
+	registry := integrations.NewRegistry(healthchecks.New())
+	manager := integrations.NewManager(registry, st, box, os.LookupEnv, log)
+	manager.Pub = broker
+	poller := scheduler.NewPoller(log, manager.Poll)
+	// Nach Anlegen/Ändern/Löschen: Zeitpläne abgleichen und sofort abfragen.
+	manager.OnChange = func(id int64) {
+		if sched, err := manager.Schedules(ctx); err == nil {
+			poller.Sync(sched)
+			poller.Trigger(id)
+		} else {
+			log.Error("Zeitpläne laden fehlgeschlagen", "err", err)
+		}
+	}
+
 	if !strings.HasPrefix(cfg.AppPassword, "$2") && len(cfg.AppPassword) < minPasswordLen {
 		log.Warn(fmt.Sprintf("APP_PASSWORD ist kürzer als %d Zeichen – bitte ein langes, zufälliges Passwort verwenden",
 			minPasswordLen))
@@ -105,6 +129,19 @@ func run() error {
 			return err
 		},
 	})
+	sched.Add(scheduler.Job{
+		Name:     "retention",
+		Interval: func() time.Duration { return time.Hour },
+		Run: func(ctx context.Context) error {
+			s := settings.Get()
+			now := time.Now()
+			r, err := st.PurgeOldData(ctx, now.AddDate(0, 0, -s.RawRetentionDays), now.AddDate(0, 0, -s.DailyRetentionDays))
+			if err == nil && r != (store.PurgeResult{}) {
+				log.Info("Alte Daten gelöscht", "samples", r.Samples, "daily", r.Daily, "changes", r.Changes)
+			}
+			return err
+		},
+	})
 
 	// Geänderte Einstellungen ohne Neustart anwenden.
 	settings.OnChange(func(_, _ config.Settings) { sched.Reschedule() })
@@ -112,9 +149,9 @@ func run() error {
 	srv := &http.Server{
 		Addr: fmt.Sprintf(":%d", cfg.Port),
 		Handler: api.NewServer(api.Deps{
-			Store: st, Events: broker, Settings: settings,
+			Store: st, Events: broker, Settings: settings, Integrations: manager,
 			TrustedProxies: cfg.TrustedProxies,
-			Info:           api.Info{Version: version, DataDir: cfg.DataDir, SecretKeySet: cfg.SecretKey != nil},
+			Info:           api.Info{Version: version, DataDir: cfg.DataDir, SecretKeySet: box != nil},
 			Auth:           auth, Log: log, Static: web.Dist(),
 		}).Routes(),
 		ReadHeaderTimeout: 10 * time.Second,
@@ -129,6 +166,13 @@ func run() error {
 		}
 	}()
 	sched.Start(ctx)
+	schedules, err := manager.Schedules(ctx)
+	if err != nil {
+		stop()
+		return fmt.Errorf("load integrations: %w", err)
+	}
+	poller.Start(ctx, schedules)
+	log.Info("Integrationen geladen", "active", len(schedules))
 
 	select {
 	case <-ctx.Done():
@@ -136,6 +180,7 @@ func run() error {
 	case err := <-errCh:
 		stop()
 		sched.Wait()
+		poller.Wait()
 		return err
 	}
 
@@ -147,6 +192,7 @@ func run() error {
 		log.Error("Shutdown", "err", err)
 	}
 	sched.Wait()
+	poller.Wait()
 	return nil
 }
 

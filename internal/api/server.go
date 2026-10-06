@@ -28,6 +28,8 @@ type Deps struct {
 	Events eventSource // nil = keine Live-Updates
 	// Settings: Laufzeit-Einstellungen (nil = nicht änderbar)
 	Settings settingsService
+	// Integrations: Datenquellen verwalten und abfragen
+	Integrations integrationService
 	// TrustedProxies: Proxys, deren Client-IP-Header gelten (leer = keine)
 	TrustedProxies []netip.Prefix
 	Info           Info
@@ -40,6 +42,7 @@ type Server struct {
 	store          dataStore
 	events         eventSource
 	settings       settingsService
+	integrations   integrationService
 	trustedProxies []netip.Prefix
 	info           Info
 	auth           *Auth
@@ -48,7 +51,7 @@ type Server struct {
 }
 
 func NewServer(d Deps) *Server {
-	return &Server{store: d.Store, events: d.Events, settings: d.Settings, trustedProxies: d.TrustedProxies,
+	return &Server{store: d.Store, events: d.Events, settings: d.Settings, integrations: d.Integrations, trustedProxies: d.TrustedProxies,
 		info: d.Info, auth: d.Auth, log: d.Log, static: d.Static}
 }
 
@@ -74,6 +77,15 @@ func (s *Server) Routes() http.Handler {
 			r.Get("/settings", s.handleGetSettings)
 			r.Put("/settings", s.handlePutSettings)
 			r.Get("/info", s.handleInfo)
+
+			r.Get("/integration-types", s.handleIntegrationTypes)
+			r.Get("/integrations", s.handleListIntegrations)
+			r.Post("/integrations", s.handleCreateIntegration)
+			r.Post("/integrations/test", s.handleTestIntegration)
+			r.Get("/integrations/{id}", s.handleGetIntegration)
+			r.Put("/integrations/{id}", s.handleUpdateIntegration)
+			r.Delete("/integrations/{id}", s.handleDeleteIntegration)
+			r.Post("/integrations/{id}/poll", s.handlePollIntegration)
 		})
 
 		r.NotFound(func(w http.ResponseWriter, req *http.Request) {

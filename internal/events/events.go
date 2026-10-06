@@ -8,7 +8,8 @@ import "sync"
 
 // Themen, auf die das Frontend reagiert.
 const (
-	TopicSettings = "settings"
+	TopicSettings     = "settings"
+	TopicIntegrations = "integrations"
 )
 
 // Publisher ist das, was Produzenten von Ereignissen brauchen. Ein nil-Publisher
