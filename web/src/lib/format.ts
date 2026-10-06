@@ -72,3 +72,11 @@ export function useNow(intervalMs = 30_000): number {
   }, [intervalMs])
   return now
 }
+
+/** Dauer in Sekunden lesbar, z. B. "30 Sekunden", "5 Minuten", "1 Stunde". */
+export function formatDuration(seconds: number): string {
+  if (seconds >= 86400 && seconds % 86400 === 0) return i18n.t('duration.days', { count: seconds / 86400 })
+  if (seconds >= 3600 && seconds % 3600 === 0) return i18n.t('duration.hours', { count: seconds / 3600 })
+  if (seconds >= 60 && seconds % 60 === 0) return i18n.t('duration.minutes', { count: seconds / 60 })
+  return i18n.t('duration.seconds', { count: seconds })
+}

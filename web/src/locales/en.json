@@ -1,6 +1,8 @@
 {
   "common": {
-    "save": "Save"
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -53,7 +55,13 @@
   "dashboard": {
     "subtitle": "The state of your home lab at a glance",
     "noIntegrations": "No integrations set up yet",
-    "noIntegrationsHint": "Once data sources such as Healthchecks.io or Immich are set up, the overall status appears here."
+    "noIntegrationsHint": "Once data sources such as Healthchecks.io or Immich are set up, the overall status appears here.",
+    "allGood": "All good",
+    "problems_one": "{{count}} problem",
+    "problems_other": "{{count}} problems",
+    "activeIntegrations_one": "{{count}} integration active",
+    "activeIntegrations_other": "{{count}} integrations active",
+    "lastSuccess": "last successful {{time}}"
   },
   "backups": {
     "subtitle": "Last runs, results and overdue backups",
@@ -96,5 +104,73 @@
     "dataDir": "Data directory",
     "set": "set",
     "missing": "missing"
+  },
+  "duration": {
+    "seconds_one": "{{count}} second",
+    "seconds_other": "{{count}} seconds",
+    "minutes_one": "{{count}} minute",
+    "minutes_other": "{{count}} minutes",
+    "hours_one": "{{count}} hour",
+    "hours_other": "{{count}} hours",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days"
+  },
+  "integrations": {
+    "title": "Integrations",
+    "subtitle": "Data sources such as Healthchecks.io. Credentials are stored encrypted and never shown.",
+    "add": "Add",
+    "empty": "No integration set up yet.",
+    "loadError": "Could not load integrations: {{error}}",
+    "typesError": "Could not load integration types: {{error}}",
+    "typeUnknown": "Unknown integration type \"{{type}}\"",
+    "addTitle": "Add integration",
+    "chooseType": "Which data source would you like to connect?",
+    "addTypeTitle": "Add {{type}}",
+    "editTitle": "Edit {{type}}",
+    "back": "Back to the list",
+    "docs": "Documentation",
+    "noSecretKey": "LABDECK_SECRET_KEY is not set – credentials can only be entered as a reference such as <code>{{example}}</code> to an environment variable.",
+    "name": "Name",
+    "nameHint": "Shown on the dashboard, e.g. \"Healthchecks home lab\".",
+    "secretRef": "Reference: {{ref}} – leave empty to keep",
+    "secretSet": "stored – leave empty to keep",
+    "secretKeep": "Keep",
+    "secretClear": "Remove",
+    "secretHint": "Instead of the value, you can also use a reference such as <code>{{example}}</code> to an environment variable with the prefix SECRET_.",
+    "advanced": "Advanced",
+    "interval": "Polling interval",
+    "intervalHint": "How often labdeck queries the source.",
+    "timeout": "Timeout (seconds)",
+    "timeoutHint": "{{min}}–{{max}} seconds, shorter than the interval.",
+    "tlsVerify": "Verify TLS certificate",
+    "tlsVerifyHint": "Turn off for self-signed certificates in your LAN.",
+    "enabled": "Active",
+    "enabledHint": "Inactive integrations are not polled.",
+    "test": "Test connection",
+    "testOk": "Connection successful – {{summary}} ({{ms}} ms)",
+    "count": {
+      "checks_one": "{{count}} check",
+      "checks_other": "{{count}} checks",
+      "backups_one": "{{count}} backup",
+      "backups_other": "{{count}} backups",
+      "metrics_one": "{{count}} metric",
+      "metrics_other": "{{count}} metrics",
+      "none": "no data"
+    },
+    "status": {
+      "ok": "Connected",
+      "warning": "Warning",
+      "error": "Error",
+      "unknown": "Not polled yet",
+      "paused": "Inactive"
+    },
+    "enabledLabel": "{{name}} active",
+    "pollNow": "Poll",
+    "editLabel": "Edit {{name}}",
+    "deleteLabel": "Delete {{name}}",
+    "lastPoll": "Polled {{time}}",
+    "notPolled": "Not polled yet",
+    "deleteTitle": "Delete integration?",
+    "deleteHint": "\"{{name}}\" will be deleted including its history and metrics."
   }
 }

@@ -26,3 +26,12 @@ export async function api<T = unknown>(page: Page, method: string, path: string,
 export async function expectNoHorizontalOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 }
+
+export const MOCK = 'http://localhost:8790'
+
+// Steuerung der nachgebauten Dienste (cmd/mock)
+export const mock = {
+  hcFail: (status: number) => fetch(`${MOCK}/_healthchecks/fail?status=${status}`, { method: 'POST' }),
+  hcStatus: (name: string, status: string) =>
+    fetch(`${MOCK}/_healthchecks/status?name=${encodeURIComponent(name)}&status=${status}`, { method: 'POST' }),
+}

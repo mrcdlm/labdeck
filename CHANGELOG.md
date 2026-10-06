@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Integrations: data sources are added, tested, edited, paused and deleted in the web interface
+  (Settings → Integrations). The form is generated from each integration's schema.
+- Credentials of integrations are stored encrypted (AES-256-GCM with `LABDECK_SECRET_KEY`) and are
+  never returned by the API; leaving a field empty keeps the stored value. Alternatively, a field
+  can reference an environment variable as `${SECRET_NAME}` (prefix `SECRET_` only).
+- "Test connection" before saving, with clear error messages (wrong key, timeout, DNS, refused
+  connection, self-signed certificate, invalid JSON).
+- Per integration: polling interval (15 s – 24 h), timeout, TLS certificate verification, active.
+  Results, status changes and metrics (raw and daily values) are stored; old data is removed
+  according to the retention settings.
+- Healthchecks.io (cloud or self-hosted, read-only API key is enough): checks, backup tag, counts.
+- Dashboard: overall status ("All good" / "2 problems") based on the integrations.
+
 ## [0.1.0] – 2026-10-06
 
 ### Added

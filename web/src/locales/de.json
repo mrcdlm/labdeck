@@ -1,6 +1,8 @@
 {
   "common": {
-    "save": "Speichern"
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -53,7 +55,13 @@
   "dashboard": {
     "subtitle": "Zustand des HomeLabs auf einen Blick",
     "noIntegrations": "Noch keine Integrationen eingerichtet",
-    "noIntegrationsHint": "Sobald Datenquellen wie Healthchecks.io oder Immich eingerichtet sind, erscheint hier der Gesamtstatus."
+    "noIntegrationsHint": "Sobald Datenquellen wie Healthchecks.io oder Immich eingerichtet sind, erscheint hier der Gesamtstatus.",
+    "allGood": "Alles in Ordnung",
+    "problems_one": "{{count}} Problem",
+    "problems_other": "{{count}} Probleme",
+    "activeIntegrations_one": "{{count}} Integration aktiv",
+    "activeIntegrations_other": "{{count}} Integrationen aktiv",
+    "lastSuccess": "zuletzt erfolgreich {{time}}"
   },
   "backups": {
     "subtitle": "Letzte Läufe, Ergebnisse und überfällige Backups",
@@ -96,5 +104,73 @@
     "dataDir": "Datenverzeichnis",
     "set": "gesetzt",
     "missing": "fehlt"
+  },
+  "duration": {
+    "seconds_one": "{{count}} Sekunde",
+    "seconds_other": "{{count}} Sekunden",
+    "minutes_one": "{{count}} Minute",
+    "minutes_other": "{{count}} Minuten",
+    "hours_one": "{{count}} Stunde",
+    "hours_other": "{{count}} Stunden",
+    "days_one": "{{count}} Tag",
+    "days_other": "{{count}} Tage"
+  },
+  "integrations": {
+    "title": "Integrationen",
+    "subtitle": "Datenquellen wie Healthchecks.io. Zugangsdaten werden verschlüsselt gespeichert und nie angezeigt.",
+    "add": "Hinzufügen",
+    "empty": "Noch keine Integration eingerichtet.",
+    "loadError": "Integrationen konnten nicht geladen werden: {{error}}",
+    "typesError": "Integrationstypen konnten nicht geladen werden: {{error}}",
+    "typeUnknown": "Unbekannter Integrationstyp „{{type}}“",
+    "addTitle": "Integration hinzufügen",
+    "chooseType": "Welche Datenquelle möchtest du anbinden?",
+    "addTypeTitle": "{{type}} hinzufügen",
+    "editTitle": "{{type}} bearbeiten",
+    "back": "Zurück zur Auswahl",
+    "docs": "Dokumentation",
+    "noSecretKey": "LABDECK_SECRET_KEY ist nicht gesetzt – Zugangsdaten lassen sich nur als Verweis wie <code>{{example}}</code> auf eine Env-Variable eintragen.",
+    "name": "Name",
+    "nameHint": "Erscheint auf dem Dashboard, z. B. „Healthchecks Homelab“.",
+    "secretRef": "Verweis: {{ref}} – leer lassen = unverändert",
+    "secretSet": "gespeichert – leer lassen = unverändert",
+    "secretKeep": "Behalten",
+    "secretClear": "Entfernen",
+    "secretHint": "Statt des Werts geht auch ein Verweis wie <code>{{example}}</code> auf eine Env-Variable mit Präfix SECRET_.",
+    "advanced": "Erweitert",
+    "interval": "Abfrageintervall",
+    "intervalHint": "So oft fragt labdeck die Quelle ab.",
+    "timeout": "Timeout (Sekunden)",
+    "timeoutHint": "{{min}}–{{max}} Sekunden, kürzer als das Intervall.",
+    "tlsVerify": "TLS-Zertifikat prüfen",
+    "tlsVerifyHint": "Für selbst signierte Zertifikate im LAN ausschalten.",
+    "enabled": "Aktiv",
+    "enabledHint": "Deaktivierte Integrationen werden nicht abgefragt.",
+    "test": "Verbindung testen",
+    "testOk": "Verbindung erfolgreich – {{summary}} ({{ms}} ms)",
+    "count": {
+      "checks_one": "{{count}} Check",
+      "checks_other": "{{count}} Checks",
+      "backups_one": "{{count}} Backup",
+      "backups_other": "{{count}} Backups",
+      "metrics_one": "{{count}} Kennzahl",
+      "metrics_other": "{{count}} Kennzahlen",
+      "none": "keine Daten"
+    },
+    "status": {
+      "ok": "Verbunden",
+      "warning": "Warnung",
+      "error": "Fehler",
+      "unknown": "Noch nicht abgefragt",
+      "paused": "Deaktiviert"
+    },
+    "enabledLabel": "{{name}} aktiv",
+    "pollNow": "Abfragen",
+    "editLabel": "{{name}} bearbeiten",
+    "deleteLabel": "{{name}} löschen",
+    "lastPoll": "Abgefragt {{time}}",
+    "notPolled": "Noch nicht abgefragt",
+    "deleteTitle": "Integration löschen?",
+    "deleteHint": "„{{name}}“ wird samt Verlauf und Kennzahlen gelöscht."
   }
 }

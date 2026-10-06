@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
-// Browser-Tests gegen einen echten labdeck-Server (start-server.sh).
+// Browser-Tests gegen einen echten labdeck-Server (start-server.sh) und die
+// nachgebauten APIs der Dienste (cmd/mock).
 // Alle Tests teilen sich einen Server → nacheinander ausführen.
 export default defineConfig({
   testDir: './tests',
@@ -20,6 +21,13 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   webServer: [
+    {
+      // nachgebaute APIs (Healthchecks …), siehe cmd/mock
+      command: 'go run ../cmd/mock -addr :8790',
+      url: 'http://localhost:8790/_health',
+      reuseExistingServer: false,
+      timeout: 120_000,
+    },
     {
       command: 'sh ./start-server.sh',
       url: 'http://localhost:18080/healthz',

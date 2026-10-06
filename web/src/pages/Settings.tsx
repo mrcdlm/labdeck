@@ -3,8 +3,9 @@ import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { PageHeader } from '@/components/PageHeader'
+import { IntegrationsSection } from '@/components/IntegrationsSection'
+import { Section } from '@/components/Section'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -26,31 +27,6 @@ function timeZones(current: string): string[] {
   }
   if (current && !list.includes(current)) list = [...list, current].sort()
   return list
-}
-
-function Section({
-  icon,
-  title,
-  description,
-  children,
-}: {
-  icon: ReactNode
-  title: string
-  description: string
-  children: ReactNode
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          {icon}
-          {title}
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-5">{children}</CardContent>
-    </Card>
-  )
 }
 
 function SettingRow({ id, label, hint, children }: { id: string; label: string; hint: string; children: ReactNode }) {
@@ -246,6 +222,7 @@ export function Settings() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title={t('nav.settings')} subtitle={t('settings.subtitle')} />
+      <IntegrationsSection />
       {settings.isPending ? (
         <Skeleton className="h-64" />
       ) : settings.isError ? (

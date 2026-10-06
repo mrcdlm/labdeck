@@ -104,10 +104,17 @@ func (s ConfigSchema) Normalize(in map[string]any, lang i18n.Lang) (map[string]a
 			continue
 		}
 		v, present := in[f.Key]
-		if !present || v == nil || v == "" {
+		// Default nur, wenn das Feld fehlt – ein bewusst geleertes Feld bleibt leer.
+		if !present || v == nil {
 			if f.Default != nil {
 				out[f.Key] = f.Default
 			} else if f.Required {
+				bad(f, "integration.field_required")
+			}
+			continue
+		}
+		if v == "" {
+			if f.Required {
 				bad(f, "integration.field_required")
 			}
 			continue

@@ -26,7 +26,7 @@ test('Einstellungen: Zeitzone und Aufbewahrung speichern, Verwerfen, Fehler', as
   await page.getByRole('option', { name: 'America/New_York', exact: true }).click()
   await page.getByLabel('Rohdaten aufbewahren').fill('14')
   await save.click()
-  await expect(page.getByText('Gespeichert')).toBeVisible()
+  await expect(page.getByText('Gespeichert', { exact: true })).toBeVisible()
   const saved = (await api<Settings>(page, 'GET', '/api/settings')).json
   expect(saved).toMatchObject({ timezone: 'America/New_York', raw_retention_days: 14 })
 

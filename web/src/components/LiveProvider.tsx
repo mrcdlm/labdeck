@@ -7,6 +7,7 @@ import { keys } from '@/lib/queries-keys'
 /** Welche Queries ein Ereignisthema betrifft. */
 const topicKeys: Record<string, readonly (readonly string[])[]> = {
   settings: [keys.settings],
+  integrations: [keys.integrations],
 }
 
 /**

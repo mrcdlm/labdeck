@@ -62,6 +62,15 @@ func TestNormalize(t *testing.T) {
 		t.Fatalf("Feldname fehlt: %q", i18n.T(i18n.DE, msgs[0]))
 	}
 
+	// bewusst geleert: kein Default; Pflichtfeld geleert: Fehler
+	got, msgs = testSchema.Normalize(map[string]any{"mode": "a", "tag": ""}, i18n.DE)
+	if _, ok := got["tag"]; ok || len(msgs) != 0 {
+		t.Fatalf("geleert: %v %v", got, msgs)
+	}
+	if _, msgs = testSchema.Normalize(map[string]any{"mode": "a", "base_url": ""}, i18n.DE); codes(msgs) != "integration.field_required" {
+		t.Fatalf("Pflichtfeld geleert: %v", msgs)
+	}
+
 	for name, tc := range map[string]struct {
 		in   map[string]any
 		code string
