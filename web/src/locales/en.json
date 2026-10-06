@@ -1,0 +1,100 @@
+{
+  "common": {
+    "save": "Save"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "backups": "Backups",
+    "checks": "Checks",
+    "services": "Services",
+    "history": "History",
+    "settings": "Settings"
+  },
+  "live": {
+    "on": "Live",
+    "off": "Offline",
+    "onHint": "Changes appear immediately",
+    "offHint": "No live connection – reconnecting automatically"
+  },
+  "prefs": {
+    "language": "Language",
+    "languageName": {
+      "de": "Deutsch",
+      "en": "English"
+    },
+    "theme": "Appearance: {{mode}}",
+    "themeNext": "click for {{mode}}",
+    "themeMode": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    }
+  },
+  "auth": {
+    "title": "Sign in",
+    "description": "Please enter the dashboard password.",
+    "password": "Password",
+    "submit": "Sign in",
+    "logout": "Sign out"
+  },
+  "time": {
+    "justNow": "just now"
+  },
+  "status": {
+    "ok": "OK",
+    "warning": "Warning",
+    "error": "Error",
+    "unknown": "Unknown",
+    "paused": "Paused"
+  },
+  "placeholder": {
+    "title": "Nothing to see yet"
+  },
+  "dashboard": {
+    "subtitle": "The state of your home lab at a glance",
+    "noIntegrations": "No integrations set up yet",
+    "noIntegrationsHint": "Once data sources such as Healthchecks.io or Immich are set up, the overall status appears here."
+  },
+  "backups": {
+    "subtitle": "Last runs, results and overdue backups",
+    "empty": "Backups from Healthchecks.io, Proxmox Backup Server and custom sources appear here once they are set up."
+  },
+  "checks": {
+    "subtitle": "Healthchecks.io checks with uptime history",
+    "empty": "The checks of your Healthchecks.io projects appear here once an integration is set up."
+  },
+  "services": {
+    "subtitle": "Metrics and charts per integration",
+    "empty": "Each integration gets a card with its metrics here, e.g. photos, videos and storage in Immich."
+  },
+  "history": {
+    "subtitle": "Status changes and errors of all integrations",
+    "empty": "Status changes and errors appear here once integrations deliver data."
+  },
+  "settings": {
+    "subtitle": "Display, retention and system",
+    "loadError": "Could not load settings: {{error}}",
+    "general": "General",
+    "generalHint": "Changes take effect immediately, without a restart.",
+    "timezone": "Time zone",
+    "timezoneHint": "Used for all dates and times in the interface.",
+    "timezoneBrowser": "Same as browser ({{zone}})",
+    "rawRetention": "Keep raw data",
+    "rawRetentionHint": "Every single poll of the integrations – the basis for uptime and history.",
+    "dailyRetention": "Keep daily values",
+    "dailyRetentionHint": "One value per day and metric – for long-term charts.",
+    "days": "days",
+    "saved": "Saved",
+    "discard": "Discard"
+  },
+  "system": {
+    "title": "System",
+    "hint": "Keys and credentials are never shown, only whether they are set.",
+    "version": "Version",
+    "secretKey": "LABDECK_SECRET_KEY",
+    "secretKeyMissingHint": "Without a key, no credentials for integrations can be stored. Create one with: openssl rand -base64 32",
+    "dataDir": "Data directory",
+    "set": "set",
+    "missing": "missing"
+  }
+}

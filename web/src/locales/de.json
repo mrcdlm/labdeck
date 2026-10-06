@@ -1,0 +1,100 @@
+{
+  "common": {
+    "save": "Speichern"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "backups": "Backups",
+    "checks": "Checks",
+    "services": "Dienste",
+    "history": "Verlauf",
+    "settings": "Einstellungen"
+  },
+  "live": {
+    "on": "Live",
+    "off": "Offline",
+    "onHint": "Änderungen erscheinen sofort",
+    "offHint": "Keine Live-Verbindung – es wird automatisch neu verbunden"
+  },
+  "prefs": {
+    "language": "Sprache",
+    "languageName": {
+      "de": "Deutsch",
+      "en": "English"
+    },
+    "theme": "Darstellung: {{mode}}",
+    "themeNext": "klicken für {{mode}}",
+    "themeMode": {
+      "system": "System",
+      "light": "Hell",
+      "dark": "Dunkel"
+    }
+  },
+  "auth": {
+    "title": "Anmelden",
+    "description": "Bitte das Dashboard-Passwort eingeben.",
+    "password": "Passwort",
+    "submit": "Anmelden",
+    "logout": "Abmelden"
+  },
+  "time": {
+    "justNow": "gerade eben"
+  },
+  "status": {
+    "ok": "OK",
+    "warning": "Warnung",
+    "error": "Fehler",
+    "unknown": "Unbekannt",
+    "paused": "Pausiert"
+  },
+  "placeholder": {
+    "title": "Noch nichts zu sehen"
+  },
+  "dashboard": {
+    "subtitle": "Zustand des HomeLabs auf einen Blick",
+    "noIntegrations": "Noch keine Integrationen eingerichtet",
+    "noIntegrationsHint": "Sobald Datenquellen wie Healthchecks.io oder Immich eingerichtet sind, erscheint hier der Gesamtstatus."
+  },
+  "backups": {
+    "subtitle": "Letzte Läufe, Ergebnisse und überfällige Backups",
+    "empty": "Hier erscheinen Backups aus Healthchecks.io, Proxmox Backup Server und eigenen Quellen, sobald sie eingerichtet sind."
+  },
+  "checks": {
+    "subtitle": "Healthchecks.io-Checks mit Uptime-Verlauf",
+    "empty": "Hier erscheinen die Checks deiner Healthchecks.io-Projekte, sobald eine Integration eingerichtet ist."
+  },
+  "services": {
+    "subtitle": "Kennzahlen und Diagramme je Integration",
+    "empty": "Hier erscheint je Integration eine Karte mit ihren Kennzahlen, z. B. Fotos, Videos und Speicher in Immich."
+  },
+  "history": {
+    "subtitle": "Statuswechsel und Fehler aller Integrationen",
+    "empty": "Hier erscheinen Statuswechsel und Fehler, sobald Integrationen Daten liefern."
+  },
+  "settings": {
+    "subtitle": "Anzeige, Aufbewahrung und System",
+    "loadError": "Einstellungen konnten nicht geladen werden: {{error}}",
+    "general": "Allgemein",
+    "generalHint": "Änderungen gelten sofort, ohne Neustart.",
+    "timezone": "Zeitzone",
+    "timezoneHint": "Für alle Datums- und Zeitangaben in der Oberfläche.",
+    "timezoneBrowser": "Wie Browser ({{zone}})",
+    "rawRetention": "Rohdaten aufbewahren",
+    "rawRetentionHint": "Jede einzelne Abfrage der Integrationen – Grundlage für Uptime und Verlauf.",
+    "dailyRetention": "Tageswerte aufbewahren",
+    "dailyRetentionHint": "Ein Wert pro Tag und Kennzahl – für langfristige Diagramme.",
+    "days": "Tage",
+    "saved": "Gespeichert",
+    "discard": "Verwerfen"
+  },
+  "system": {
+    "title": "System",
+    "hint": "Schlüssel und Zugangsdaten werden nie angezeigt, nur ob sie gesetzt sind.",
+    "version": "Version",
+    "secretKey": "LABDECK_SECRET_KEY",
+    "secretKeyMissingHint": "Ohne Schlüssel können keine Zugangsdaten für Integrationen gespeichert werden. Erzeugen mit: openssl rand -base64 32",
+    "dataDir": "Datenverzeichnis",
+    "set": "gesetzt",
+    "missing": "fehlt"
+  }
+}

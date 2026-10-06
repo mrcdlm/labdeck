@@ -1,0 +1,33 @@
+# labdeck – Docker Compose
+#
+#   1. cp .env.example .env              and fill in the values
+#   2. mkdir -p data && sudo chown 65532:65532 data   (the container runs as UID 65532)
+#   3. docker compose pull && docker compose up -d
+#
+# Update: read the release notes, raise LABDECK_VERSION in .env, then
+#   docker compose pull && docker compose up -d
+name: labdeck
+services:
+  labdeck:
+    # Pinned version from .env – intentionally no "latest"
+    image: ghcr.io/mrcdlm/labdeck:${LABDECK_VERSION:?Set LABDECK_VERSION in .env, e.g. 0.1.0}
+    container_name: labdeck
+    restart: unless-stopped
+    # Runs as non-root and needs no Linux capabilities.
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    ports:
+      - "${LABDECK_PORT:-8080}:8080"
+    env_file: .env
+    environment:
+      TZ: ${TZ:-UTC}
+    volumes:
+      # To store data elsewhere, replace ./data with an absolute path (e.g. /srv/labdeck).
+      # ":Z" relabels the directory on SELinux hosts (Fedora, RHEL, openSUSE MicroOS …)
+      # and is ignored elsewhere.
+      - ./data:/data:Z
+    healthcheck:
+      test: ["CMD", "/app/server", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

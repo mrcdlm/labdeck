@@ -1,0 +1,25 @@
+# Local development: builds the image from source (repository root).
+#   docker compose -f docker-compose.dev.yml up -d --build
+services:
+  labdeck:
+    build:
+      context: ..
+      args:
+        VERSION: dev
+    image: labdeck:dev
+    container_name: labdeck
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    ports:
+      - "${LABDECK_PORT:-8080}:8080"
+    env_file: .env
+    environment:
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ./data:/data:Z
+    healthcheck:
+      test: ["CMD", "/app/server", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
