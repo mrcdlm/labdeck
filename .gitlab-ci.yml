@@ -1,23 +1,91 @@
-# Prüfbau bei jedem Push auf main bzw. in Merge Requests (ohne Push),
-# Image-Veröffentlichung nur für Versions-Tags.
-check-image:
-  stage: build
-  image: docker:29.8.2-cli
-  script:
-    - docker build --pull --provenance=false --sbom=false --build-arg VERSION="$CI_COMMIT_SHORT_SHA" -t labdeck:check .
+# labdeck – GitLab CI
+# Tests auf jedem Push/MR, Image-Push in die GitLab Container Registry auf main und bei Tags vX.Y.Z
+
+stages:
+  - test
+  - build
+
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
+  GOPATH: "$CI_PROJECT_DIR/.go"
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+
+workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
 
-build-image:
-  stage: build
-  image: docker:29.8.2-cli
+# ---------- test ----------
+
+test-go:
+  stage: test
+  image: golang:1.27
+  cache:
+    key: go-$CI_COMMIT_REF_SLUG
+    paths: [.go/pkg/mod/]
+  before_script:
+    # go:embed braucht web/dist – im Test reicht ein Platzhalter
+    - mkdir -p web/dist && [ -e web/dist/index.html ] || echo '<!doctype html>' > web/dist/index.html
   script:
-    # Tag v0.1.0 → Image 0.1.0 (wie auf ghcr.io); die Version erscheint in der Oberfläche
-    - IMAGE_TAG="${CI_COMMIT_TAG#v}"
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-    - docker build --pull --provenance=false --sbom=false --build-arg VERSION="$CI_COMMIT_TAG" -t "$CI_REGISTRY_IMAGE:$IMAGE_TAG" .
-    - docker push "$CI_REGISTRY_IMAGE:$IMAGE_TAG"
+    - go vet ./...
+    - go test ./...
+
+test-web:
+  stage: test
+  image: node:24
+  cache:
+    key:
+      files: [web/package-lock.json]
+    paths: [.npm/]
+  script:
+    - cd web
+    - npm ci
+    - npm run lint
+    - npm run build
+
+# ---------- build ----------
+
+# Nur prüfen, ob das Image baut (Merge Requests und andere Branches)
+build-check:
+  stage: build
+  image: docker:27
+  services: [docker:27-dind]
+  script:
+    - docker build --build-arg VERSION="$CI_COMMIT_SHORT_SHA" -t labdeck:check .
   rules:
-    # nur Versions-Tags wie v0.1.0
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: never
+    - when: on_success
+
+# Bauen und in die Registry pushen (main → :main, vX.Y.Z → :X.Y.Z, :X.Y, :latest)
+publish-image:
+  stage: build
+  image: docker:27
+  services: [docker:27-dind]
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        VERSION="${CI_COMMIT_TAG#v}"
+      else
+        VERSION="$CI_COMMIT_SHORT_SHA"
+      fi
+    - docker build --build-arg VERSION="$VERSION" -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
+    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        MINOR="${VERSION%.*}"
+        for T in "$VERSION" "$MINOR" latest; do
+          docker tag "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" "$CI_REGISTRY_IMAGE:$T"
+          docker push "$CI_REGISTRY_IMAGE:$T"
+        done
+      fi
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
