@@ -110,7 +110,7 @@ type listResponse struct {
 
 func (*Integration) fetch(ctx context.Context, cfg integrations.Config) ([]check, error) {
 	var resp listResponse
-	err := integrations.GetJSON(ctx, cfg.HTTP, cfg.String("base_url")+"/api/v3/checks/",
+	err := integrations.GetJSON(ctx, cfg.HTTP, cfg.BaseURL("base_url")+"/api/v3/checks/",
 		http.Header{"X-Api-Key": {cfg.Secret("api_key")}}, &resp)
 	if err != nil {
 		return nil, err
@@ -168,9 +168,9 @@ func (i *Integration) Collect(ctx context.Context, cfg integrations.Config) (int
 	snap.Metrics = []integrations.Metric{
 		{Key: "checks_total", Name: "Checks", Value: float64(len(checks)), Status: integrations.StatusOK},
 		{Key: "checks_up", Name: "up", Value: float64(counts[integrations.StatusOK]), Status: integrations.StatusOK},
-		{Key: "checks_grace", Name: "grace", Value: float64(counts[integrations.StatusWarning]),
+		{Key: "checks_grace", Name: "grace", Value: float64(counts[integrations.StatusWarning]), Derived: true,
 			Status: countStatus(counts[integrations.StatusWarning], integrations.StatusWarning)},
-		{Key: "checks_down", Name: "down", Value: float64(counts[integrations.StatusError]),
+		{Key: "checks_down", Name: "down", Value: float64(counts[integrations.StatusError]), Derived: true,
 			Status: countStatus(counts[integrations.StatusError], integrations.StatusError)},
 		{Key: "checks_paused", Name: "paused", Value: float64(counts[integrations.StatusPaused]), Status: integrations.StatusOK},
 	}
@@ -188,7 +188,7 @@ type flip struct {
 // bisherige Verlauf – oder der Check hat keinen; die Abfrage selbst scheitert
 // daran nicht.
 func (i *Integration) history(ctx context.Context, cfg integrations.Config, checks []check) map[string]flipsEntry {
-	base := cfg.String("base_url")
+	base := cfg.BaseURL("base_url")
 	now := i.now()
 	out := map[string]flipsEntry{}
 	var stale []check
@@ -242,7 +242,7 @@ func (i *Integration) history(ctx context.Context, cfg integrations.Config, chec
 // fetchFlips holt die Statuswechsel der letzten 30 Tage, aufsteigend.
 func (*Integration) fetchFlips(ctx context.Context, cfg integrations.Config, id string) ([]integrations.Transition, error) {
 	var flips []flip
-	u := cfg.String("base_url") + "/api/v3/checks/" + url.PathEscape(id) + "/flips/?seconds=" +
+	u := cfg.BaseURL("base_url") + "/api/v3/checks/" + url.PathEscape(id) + "/flips/?seconds=" +
 		strconv.Itoa(int(flipsPeriod.Seconds()))
 	if err := integrations.GetJSON(ctx, cfg.HTTP, u, http.Header{"X-Api-Key": {cfg.Secret("api_key")}}, &flips); err != nil {
 		return nil, err

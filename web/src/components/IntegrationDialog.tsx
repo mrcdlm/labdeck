@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, ChevronDown, ExternalLink, KeyRound, Loader2, PlugZap, X } from 'lucide-react'
+import { ArrowLeft, Check, ChevronDown, ExternalLink, KeyRound, Loader2, Plus, PlugZap, Trash2, X } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 
@@ -20,7 +20,16 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import type { Integration, IntegrationInput, IntegrationType, SchemaField } from '@/lib/api'
 import { formatDuration } from '@/lib/format'
-import { draftToConfig, initialDraft, intervalPresets, type Draft } from '@/lib/integrations'
+import {
+  draftToConfig,
+  initialDraft,
+  intervalPresets,
+  newItem,
+  visible,
+  type Draft,
+  type DraftItem,
+  type DraftValue,
+} from '@/lib/integrations'
 import { useIntegrationTypes, useSaveIntegration, useTestIntegration } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
@@ -135,19 +144,22 @@ function SchemaFieldInput({
   value,
   onChange,
   secret,
-  cleared,
-  onClear,
+  cleared = false,
+  onClear = () => {},
+  idPrefix = 'field',
 }: {
   field: SchemaField
   value: string | boolean
   onChange: (v: string | boolean) => void
   /** gespeicherter Zustand eines Secret-Felds */
   secret?: { set: boolean; ref?: string }
-  cleared: boolean
-  onClear: (clear: boolean) => void
+  cleared?: boolean
+  onClear?: (clear: boolean) => void
+  /** eindeutige IDs je Listeneintrag */
+  idPrefix?: string
 }) {
   const { t } = useTranslation()
-  const id = `field-${field.key}`
+  const id = `${idPrefix}-${field.key}`
 
   if (field.type === 'bool') {
     return (
@@ -249,6 +261,74 @@ function SchemaFieldInput({
     <FieldRow id={id} label={field.label} required={field.required} help={help}>
       {input}
     </FieldRow>
+  )
+}
+
+/** Liste gleich aufgebauter Einträge (z. B. Abfragen), Formular aus field.item. */
+function ListField({
+  field,
+  items,
+  onChange,
+}: {
+  field: SchemaField
+  items: DraftItem[]
+  onChange: (items: DraftItem[]) => void
+}) {
+  const { t } = useTranslation()
+  const full = field.max !== undefined && items.length >= field.max
+  const update = (i: number, key: string, v: DraftValue) =>
+    onChange(items.map((it, n) => (n === i ? { ...it, [key]: v } : it)))
+
+  return (
+    <fieldset className="grid gap-2" data-list={field.key}>
+      <legend className="mb-2 text-sm font-medium">
+        {field.label}
+        {field.required && <span className="text-muted-foreground">*</span>}
+      </legend>
+      {field.help && <p className="text-muted-foreground -mt-1 text-xs">{field.help}</p>}
+      {items.map((it, i) => (
+        <div key={i} className="bg-muted/30 flex flex-col gap-3 rounded-md border p-3" data-item={i + 1}>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground text-xs font-medium">
+              {t('integrations.listItem', { n: i + 1 })}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              aria-label={t('integrations.listRemove', { label: field.label, n: i + 1 })}
+              onClick={() => onChange(items.filter((_, n) => n !== i))}
+            >
+              <Trash2 />
+            </Button>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(field.item ?? []).filter((sub) => visible(sub, it)).map((sub) => (
+              <div key={sub.key} className={cn(!sub.half && 'sm:col-span-2')}>
+                <SchemaFieldInput
+                  field={sub}
+                  idPrefix={`field-${field.key}-${i}`}
+                  value={it[sub.key] ?? ''}
+                  onChange={(v) => update(i, sub.key, v)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      {items.length === 0 && <p className="text-muted-foreground text-sm">{t('integrations.listEmpty')}</p>}
+      <Button
+        type="button"
+        variant="outline"
+        className="w-fit"
+        disabled={full}
+        onClick={() => onChange([...items, newItem(field)])}
+      >
+        <Plus />
+        {t('integrations.listAdd')}
+      </Button>
+    </fieldset>
   )
 }
 
@@ -355,11 +435,22 @@ function IntegrationForm({
         />
       </FieldRow>
 
-      {type.fields.map((f) => (
+      {type.fields.filter((f) => visible(f, draft)).map((f) =>
+        f.type === 'list' ? (
+          <ListField
+            key={f.key}
+            field={f}
+            items={Array.isArray(draft[f.key]) ? (draft[f.key] as DraftItem[]) : []}
+            onChange={(items) => {
+              setDraft((d) => ({ ...d, [f.key]: items }))
+              touch()
+            }}
+          />
+        ) : (
         <SchemaFieldInput
           key={f.key}
           field={f}
-          value={draft[f.key] ?? ''}
+          value={(draft[f.key] as DraftValue | undefined) ?? ''}
           secret={integration?.secrets[f.key]}
           cleared={cleared.includes(f.key)}
           onClear={(clear) => {
@@ -371,7 +462,8 @@ function IntegrationForm({
             touch()
           }}
         />
-      ))}
+        ),
+      )}
 
       <div className="rounded-md border">
         <button

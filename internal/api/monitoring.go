@@ -197,13 +197,18 @@ func (s *Server) handleSetBackupMaxAge(w http.ResponseWriter, r *http.Request) {
 // --- Gesamtstatus --------------------------------------------------------------
 
 type problemDTO struct {
-	// Kind: integration, check, backup
+	// Kind: integration, check, backup, metric
 	Kind            string              `json:"kind"`
 	Status          integrations.Status `json:"status"` // error, warning
 	IntegrationID   int64               `json:"integration_id"`
 	IntegrationName string              `json:"integration_name"`
+	IntegrationType string              `json:"integration_type"`
 	ItemID          string              `json:"item_id,omitempty"`
 	Name            string              `json:"name"`
+	// Kennzahl: Gruppe (z. B. Benutzer), Wert und Einheit
+	Group string   `json:"group,omitempty"`
+	Value *float64 `json:"value,omitempty"`
+	Unit  string   `json:"unit,omitempty"`
 	// State: Zustand des Backups (overdue, failed, due_soon) bzw. Status
 	// der Quelle beim Check (down, grace)
 	State string `json:"state,omitempty"`
@@ -231,7 +236,7 @@ type overviewDTO struct {
 	Problems []problemDTO    `json:"problems"`
 }
 
-var kindOrder = map[string]int{"integration": 0, "backup": 1, "check": 2}
+var kindOrder = map[string]int{"integration": 0, "backup": 1, "check": 2, "metric": 3}
 
 func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 	all, err := s.integrations.List(r.Context())
@@ -253,8 +258,20 @@ func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 		if v.Status == integrations.StatusError {
 			out.Integrations.Error++
 			out.Problems = append(out.Problems, problemDTO{Kind: "integration", Status: integrations.StatusError,
-				IntegrationID: v.ID, IntegrationName: v.Name, Name: v.Name, Detail: i18n.T(lang, v.LastError),
-				At: v.LastSuccessAt})
+				IntegrationID: v.ID, IntegrationName: v.Name, IntegrationType: v.Type, Name: v.Name,
+				Detail: i18n.T(lang, v.LastError), At: v.LastSuccessAt})
+		}
+		// Schwellwerte von Kennzahlen (abgeleitete zählen über Checks/Backups)
+		if v.Snapshot != nil {
+			for _, m := range v.Snapshot.Metrics {
+				if m.Derived || (m.Status != integrations.StatusError && m.Status != integrations.StatusWarning) {
+					continue
+				}
+				val := m.Value
+				out.Problems = append(out.Problems, problemDTO{Kind: "metric", Status: m.Status, IntegrationID: v.ID,
+					IntegrationName: v.Name, IntegrationType: v.Type, ItemID: m.Key, Name: m.Name, Group: m.Group,
+					Value: &val, Unit: m.Unit})
+			}
 		}
 	}
 	out.Integrations.Active = len(active)
@@ -270,7 +287,8 @@ func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 		isBackup[store.BackupKey{IntegrationID: b.IntegrationID, ItemID: b.ID}] = true
 		if b.State.Problem() {
 			out.Problems = append(out.Problems, problemDTO{Kind: "backup", Status: b.Status, IntegrationID: b.IntegrationID,
-				IntegrationName: b.IntegrationName, ItemID: b.ID, Name: b.Name, State: string(b.State), At: b.LastRun})
+				IntegrationName: b.IntegrationName, IntegrationType: b.IntegrationType, ItemID: b.ID, Name: b.Name,
+				Group: b.Group, State: string(b.State), At: b.LastRun})
 		}
 	}
 
@@ -286,7 +304,8 @@ func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 		}
 		if c.Status == integrations.StatusError || c.Status == integrations.StatusWarning {
 			out.Problems = append(out.Problems, problemDTO{Kind: "check", Status: c.Status, IntegrationID: c.IntegrationID,
-				IntegrationName: c.IntegrationName, ItemID: c.ID, Name: c.Name, State: c.Raw, At: c.LastPing})
+				IntegrationName: c.IntegrationName, IntegrationType: "healthchecks", ItemID: c.ID, Name: c.Name,
+				State: c.Raw, At: c.LastPing})
 		}
 	}
 	if len(checks) > 0 {

@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Services page: one card per integration with its metrics, a chart of the selected metric
   (24 hours, 7 days, 30 days, 1 year) and a table per user/group.
 - Dashboard: a tile per service, e.g. "Immich – 48,213 photos · 1,204 videos · 412 GB".
+- HTTP JSON integration: read any values from a JSON API with GJSON paths (GET or POST, headers,
+  an encrypted header for credentials), with unit and thresholds. A timestamp can be shown as its
+  age and treated as a backup – so any backup tool with a status JSON can be monitored.
+- Prometheus integration: any PromQL instant queries with unit and thresholds, basic auth or
+  bearer token; one row per label value (e.g. per instance); timestamps (e.g. restic exporter)
+  as backups.
+- Threshold breaches appear in the overall status on the dashboard.
+
+### Changed
+- Addresses of integrations are stored as entered (a trailing slash is kept, some APIs need it).
 
 ## [0.3.0] – 2026-10-07
 

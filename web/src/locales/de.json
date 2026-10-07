@@ -66,13 +66,16 @@
       "at": {
         "integration": "zuletzt erfolgreich {{time}}",
         "backup": "letzter Lauf {{time}}",
-        "check": "letzter Ping {{time}}"
-      }
+        "check": "letzter Ping {{time}}",
+        "metric": "gemessen {{time}}"
+      },
+      "value": "Wert {{value}}"
     },
     "kind": {
       "integration": "Integration",
       "backup": "Backup",
-      "check": "Check"
+      "check": "Check",
+      "metric": "Kennzahl"
     },
     "noBackups": "Noch keine Backups",
     "monitored": "{{count}} überwacht",
@@ -287,7 +290,11 @@
     "lastPoll": "Abgefragt {{time}}",
     "notPolled": "Noch nicht abgefragt",
     "deleteTitle": "Integration löschen?",
-    "deleteHint": "„{{name}}“ wird samt Verlauf und Kennzahlen gelöscht."
+    "deleteHint": "„{{name}}“ wird samt Verlauf und Kennzahlen gelöscht.",
+    "listItem": "#{{n}}",
+    "listRemove": "{{label}} {{n}} entfernen",
+    "listAdd": "Hinzufügen",
+    "listEmpty": "Noch keine Einträge."
   },
   "placeholder": {
     "title": "Noch nichts zu sehen"

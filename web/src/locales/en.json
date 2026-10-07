@@ -66,13 +66,16 @@
       "at": {
         "integration": "last successful {{time}}",
         "backup": "last run {{time}}",
-        "check": "last ping {{time}}"
-      }
+        "check": "last ping {{time}}",
+        "metric": "measured {{time}}"
+      },
+      "value": "value {{value}}"
     },
     "kind": {
       "integration": "Integration",
       "backup": "Backup",
-      "check": "Check"
+      "check": "Check",
+      "metric": "Metric"
     },
     "noBackups": "No backups yet",
     "monitored": "{{count}} monitored",
@@ -287,7 +290,11 @@
     "lastPoll": "Polled {{time}}",
     "notPolled": "Not polled yet",
     "deleteTitle": "Delete integration?",
-    "deleteHint": "\"{{name}}\" will be deleted including its history and metrics."
+    "deleteHint": "\"{{name}}\" will be deleted including its history and metrics.",
+    "listItem": "#{{n}}",
+    "listRemove": "Remove {{label}} {{n}}",
+    "listAdd": "Add",
+    "listEmpty": "No entries yet."
   },
   "placeholder": {
     "title": "Nothing to see yet"

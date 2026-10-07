@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -237,5 +238,37 @@ func TestOverviewAPI(t *testing.T) {
 	if len(got.Problems) != 4 || got.Problems[0].Kind != "integration" || !strings.Contains(got.Problems[0].Detail, "Zugriff verweigert") ||
 		got.Problems[2].Kind != "check" || got.Problems[2].Name != "DynDNS" || got.Problems[2].State != "down" {
 		t.Fatalf("Probleme: %v", kinds)
+	}
+}
+
+func TestOverviewMetricThresholds(t *testing.T) {
+	e := newTestEnv(t, nil)
+	c := e.login(t)
+	src := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Write([]byte(`{"disk": 95, "temp": 41}`))
+	}))
+	defer src.Close()
+	resp := e.do(t, "POST", "/api/integrations", fmt.Sprintf(`{"type":"httpjson","name":"NAS","enabled":true,
+		"interval_seconds":60,"timeout_seconds":5,"tls_verify":true,"config":{"url":%q,"values":[
+		{"name":"Disk","path":"disk","unit":"%%","warn":80,"error":90},{"name":"Temp","path":"temp","warn":60}]}}`, src.URL), c)
+	if resp.StatusCode != 201 {
+		t.Fatalf("anlegen: %d %s", resp.StatusCode, body(t, resp.Body))
+	}
+	var it integrationResp
+	json.NewDecoder(resp.Body).Decode(&it)
+	e.do(t, "POST", fmt.Sprintf("/api/integrations/%d/poll", it.ID), "", c)
+
+	var got struct {
+		Status   string `json:"status"`
+		Problems []struct {
+			Kind, Status, Name, Unit, IntegrationType string
+			Value                                     *float64
+		} `json:"problems"`
+	}
+	raw := body(t, e.do(t, "GET", "/api/overview", "", c).Body)
+	json.Unmarshal([]byte(raw), &got)
+	if got.Status != "error" || len(got.Problems) != 1 || got.Problems[0].Kind != "metric" || got.Problems[0].Name != "Disk" ||
+		*got.Problems[0].Value != 95 || got.Problems[0].Unit != "%" || !strings.Contains(raw, `"integration_type":"httpjson"`) {
+		t.Fatalf("%s", raw)
 	}
 }

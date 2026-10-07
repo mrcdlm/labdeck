@@ -53,7 +53,7 @@ function Groups({ type, metrics }: { type: string; metrics: Metric[] }) {
             <TableHead>{t(`services.groupTitle.${type === 'immich' ? 'user' : 'group'}`)}</TableHead>
             {columns.map((c) => (
               <TableHead key={c} className="text-right">
-                <span className="inline-block first-letter:uppercase">{metricLabel(type, { key: c, name: c })}</span>
+                <span className="inline-block first-letter:uppercase">{metricLabel(type, metrics.find((m) => metricBase(m.key) === c)!)}</span>
               </TableHead>
             ))}
           </TableRow>

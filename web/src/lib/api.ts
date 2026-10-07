@@ -67,7 +67,7 @@ export const api = {
 
 // --- Integrationen ---------------------------------------------------------
 
-export type FieldType = 'string' | 'text' | 'url' | 'number' | 'bool' | 'select' | 'secret'
+export type FieldType = 'string' | 'text' | 'url' | 'number' | 'bool' | 'select' | 'secret' | 'list'
 
 export interface SchemaField {
   key: string
@@ -79,7 +79,14 @@ export interface SchemaField {
   default?: string | number | boolean
   options?: { value: string; label: string }[]
   min?: number
+  /** Zahl: Höchstwert; Liste: höchstens so viele Einträge */
   max?: number
+  /** halbe Breite im Formular */
+  half?: boolean
+  /** Unterfelder je Eintrag (nur list) */
+  item?: SchemaField[]
+  /** nur anzeigen, wenn Feld key einen der Werte hat */
+  show_if?: { key: string; values: string[] }
 }
 
 export interface IntegrationType {
@@ -99,7 +106,8 @@ export interface IntegrationTypes {
   limits: Record<string, number>
 }
 
-export type ConfigValue = string | number | boolean
+export type ScalarValue = string | number | boolean
+export type ConfigValue = ScalarValue | Record<string, ScalarValue>[]
 
 export interface Metric {
   key: string
@@ -274,12 +282,18 @@ export interface BackupsOverview {
 }
 
 export interface Problem {
-  kind: 'integration' | 'check' | 'backup'
+  kind: 'integration' | 'check' | 'backup' | 'metric'
   status: Status
   integration_id: number
   integration_name: string
+  integration_type: string
   item_id?: string
   name: string
+  /** Kennzahl/Backup: Gruppe, z. B. Benutzer oder Host */
+  group?: string
+  /** Kennzahl: aktueller Wert */
+  value?: number
+  unit?: string
   /** Backup: overdue, failed, due_soon; Check: Status der Quelle (down, grace) */
   state?: string
   /** Fehlermeldung der Integration */

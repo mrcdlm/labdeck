@@ -30,6 +30,8 @@ var catalog = map[string]entry{
 	"integration.field_option":       {"{field}: ungültige Auswahl", "{field}: invalid choice"},
 	"integration.field_newline":      {"{field}: darf keinen Zeilenumbruch enthalten", "{field}: must not contain a line break"},
 	"integration.field_range":        {"{field}: muss zwischen {min} und {max} liegen", "{field}: must be between {min} and {max}"},
+	"integration.field_list_max":     {"{field}: höchstens {max} Einträge", "{field}: at most {max} entries"},
+	"integration.field_item":         {"{field} {n}: {detail}", "{field} {n}: {detail}"},
 	"integration.field_url":          {"{field}: bitte eine http(s)-Adresse angeben, z. B. https://dienst.example.com", "{field}: please enter an http(s) address, e.g. https://service.example.com"},
 	"integration.field_url_userinfo": {"{field}: Benutzer/Passwort gehören nicht in die Adresse, sondern in die Felder für Zugangsdaten", "{field}: user name/password do not belong in the address but in the credential fields"},
 	"integration.field_url_invalid":  {"ungültige Adresse", "invalid address"},
@@ -70,6 +72,18 @@ var catalog = map[string]entry{
 	// Immich
 	"immich.forbidden":  {"Zugriff verweigert (HTTP 403) – der API-Key muss zu einem Admin gehören und die Berechtigung server.statistics haben", "Access denied (HTTP 403) – the API key must belong to an admin and have the server.statistics permission"},
 	"immich.unexpected": {"Antwort enthält keine Statistik – ist die Adresse eine Immich-Instanz?", "The response contains no statistics – is the address an Immich instance?"},
+
+	// HTTP-JSON
+	"httpjson.header_invalid":      {"Header Zeile {line}: bitte im Format Name: Wert", "Header line {line}: please use the format Name: value"},
+	"httpjson.auth_header_invalid": {"Header mit Zugangsdaten: bitte im Format Name: Wert", "Header with credentials: please use the format Name: value"},
+	"httpjson.path_missing":        {"{name}: Pfad {path} nicht in der Antwort gefunden", "{name}: path {path} not found in the response"},
+	"httpjson.not_number":          {"{name}: {value} ist keine Zahl", "{name}: {value} is not a number"},
+	"httpjson.not_timestamp":       {"{name}: {value} ist kein Zeitstempel (Unix-Zeit oder ISO 8601 erwartet)", "{name}: {value} is not a timestamp (Unix time or ISO 8601 expected)"},
+
+	// Prometheus
+	"prometheus.query_error": {"{name}: Abfrage ungültig – {detail}", "{name}: invalid query – {detail}"},
+	"prometheus.matrix":      {"{name}: Abfrage liefert einen Bereich (z. B. [5m]) – bitte eine Funktion wie rate() oder last_over_time() verwenden", "{name}: the query returns a range (e.g. [5m]) – please use a function like rate() or last_over_time()"},
+	"prometheus.unexpected":  {"Antwort ist kein Prometheus-Ergebnis – ist die Adresse Prometheus?", "The response is not a Prometheus result – is the address Prometheus?"},
 
 	// Einstellungen
 	"settings.timezone_invalid":      {"unbekannte Zeitzone {name}", "unknown time zone {name}"},

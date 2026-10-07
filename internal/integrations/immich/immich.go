@@ -83,7 +83,7 @@ func header(cfg integrations.Config) http.Header {
 
 func (*Integration) fetch(ctx context.Context, cfg integrations.Config) (stats, error) {
 	var s stats
-	err := integrations.GetJSON(ctx, cfg.HTTP, cfg.String("base_url")+"/api/server/statistics", header(cfg), &s)
+	err := integrations.GetJSON(ctx, cfg.HTTP, cfg.BaseURL("base_url")+"/api/server/statistics", header(cfg), &s)
 	if m := i18n.FromError(err); m.Code == "integration.unauthorized" && m.Params["status"] == "403" {
 		return s, i18n.E("immich.forbidden")
 	}
@@ -142,7 +142,7 @@ func (i *Integration) Collect(ctx context.Context, cfg integrations.Config) (int
 	}
 	// Version: öffentlich, ohne Berechtigung – Fehler sind hier egal.
 	var v struct{ Major, Minor, Patch int }
-	if err := integrations.GetJSON(ctx, cfg.HTTP, cfg.String("base_url")+"/api/server/version", nil, &v); err == nil &&
+	if err := integrations.GetJSON(ctx, cfg.HTTP, cfg.BaseURL("base_url")+"/api/server/version", nil, &v); err == nil &&
 		(v.Major > 0 || v.Minor > 0) {
 		snap.Info = map[string]string{"version": fmt.Sprintf("v%d.%d.%d", v.Major, v.Minor, v.Patch)}
 	}

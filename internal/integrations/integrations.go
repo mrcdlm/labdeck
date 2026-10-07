@@ -55,6 +55,9 @@ type Metric struct {
 	// Unit: z. B. "bytes", "s", "%", "" (Anzahl)
 	Unit   string `json:"unit,omitempty"`
 	Status Status `json:"status"`
+	// Derived: aus Checks/Backups abgeleitet (z. B. Anzahl down) – zählt im
+	// Gesamtstatus nicht zusätzlich als Problem
+	Derived bool `json:"derived,omitempty"`
 }
 
 // Check ist eine überwachte Aufgabe, z. B. ein Healthchecks.io-Check.

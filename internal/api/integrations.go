@@ -38,16 +38,35 @@ type optionDTO struct {
 }
 
 type fieldDTO struct {
-	Key         string      `json:"key"`
-	Type        string      `json:"type"`
-	Label       string      `json:"label"`
-	Help        string      `json:"help,omitempty"`
-	Placeholder string      `json:"placeholder,omitempty"`
-	Required    bool        `json:"required"`
-	Default     any         `json:"default,omitempty"`
-	Options     []optionDTO `json:"options,omitempty"`
-	Min         *float64    `json:"min,omitempty"`
-	Max         *float64    `json:"max,omitempty"`
+	Key         string                  `json:"key"`
+	Type        string                  `json:"type"`
+	Label       string                  `json:"label"`
+	Help        string                  `json:"help,omitempty"`
+	Placeholder string                  `json:"placeholder,omitempty"`
+	Required    bool                    `json:"required"`
+	Default     any                     `json:"default,omitempty"`
+	Options     []optionDTO             `json:"options,omitempty"`
+	Min         *float64                `json:"min,omitempty"`
+	Max         *float64                `json:"max,omitempty"`
+	Half        bool                    `json:"half,omitempty"`
+	Item        []fieldDTO              `json:"item,omitempty"`
+	ShowIf      *integrations.Condition `json:"show_if,omitempty"`
+}
+
+func toFieldDTOs(fields []integrations.Field, lang i18n.Lang) []fieldDTO {
+	out := []fieldDTO{}
+	for _, f := range fields {
+		fd := fieldDTO{Key: f.Key, Type: string(f.Type), Label: f.Label.In(lang), Help: f.Help.In(lang),
+			Placeholder: f.Placeholder, Required: f.Required, Default: f.Default, Min: f.Min, Max: f.Max, Half: f.Half, ShowIf: f.ShowIf}
+		for _, o := range f.Options {
+			fd.Options = append(fd.Options, optionDTO{Value: o.Value, Label: o.Label.In(lang)})
+		}
+		if len(f.Item) > 0 {
+			fd.Item = toFieldDTOs(f.Item, lang)
+		}
+		out = append(out, fd)
+	}
+	return out
 }
 
 type typeDTO struct {
@@ -76,17 +95,8 @@ func (s *Server) handleIntegrationTypes(w http.ResponseWriter, r *http.Request) 
 	}}
 	for _, integ := range s.integrations.Registry().All() {
 		sc := integ.Schema()
-		t := typeDTO{Type: integ.Type(), Title: sc.Title.In(lang), Description: sc.Description.In(lang),
-			Icon: sc.Icon, Docs: sc.Docs, Fields: []fieldDTO{}}
-		for _, f := range sc.Fields {
-			fd := fieldDTO{Key: f.Key, Type: string(f.Type), Label: f.Label.In(lang), Help: f.Help.In(lang),
-				Placeholder: f.Placeholder, Required: f.Required, Default: f.Default, Min: f.Min, Max: f.Max}
-			for _, o := range f.Options {
-				fd.Options = append(fd.Options, optionDTO{Value: o.Value, Label: o.Label.In(lang)})
-			}
-			t.Fields = append(t.Fields, fd)
-		}
-		out.Types = append(out.Types, t)
+		out.Types = append(out.Types, typeDTO{Type: integ.Type(), Title: sc.Title.In(lang), Description: sc.Description.In(lang),
+			Icon: sc.Icon, Docs: sc.Docs, Fields: toFieldDTOs(sc.Fields, lang)})
 	}
 	writeJSON(w, http.StatusOK, out)
 }

@@ -31,7 +31,7 @@ func TestIntegrationTypes(t *testing.T) {
 	resp := e.do(t, "GET", "/api/integration-types", "", c)
 	var got typesDTO
 	json.NewDecoder(resp.Body).Decode(&got)
-	if len(got.Types) != 2 || got.Types[0].Type != "healthchecks" || got.Types[1].Type != "immich" || !got.SecretKeySet ||
+	if len(got.Types) != 4 || got.Types[0].Type != "healthchecks" || got.Types[2].Type != "immich" || !got.SecretKeySet ||
 		got.Limits["interval_min"] != 15 || got.Types[0].Fields[1].Type != "secret" ||
 		!strings.HasPrefix(got.Types[0].Fields[1].Help, "Projekt") {
 		t.Fatalf("Typen (de): %+v", got)

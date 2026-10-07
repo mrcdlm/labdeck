@@ -39,10 +39,16 @@ function NoIntegrations() {
   )
 }
 
-const problemLink: Record<Problem['kind'], string> = {
-  integration: '/einstellungen',
-  backup: '/backups',
-  check: '/checks',
+function problemLink(p: Problem): string {
+  switch (p.kind) {
+    case 'integration':
+      return '/einstellungen'
+    case 'backup':
+      return '/backups'
+    case 'check':
+      return '/checks'
+  }
+  return `/dienste#integration-${p.integration_id}`
 }
 
 const checkStates = ['down', 'grace'] as const
@@ -53,9 +59,14 @@ function ProblemRow({ p, now }: { p: Problem; now: number }) {
   const { t } = useTranslation()
   let label: string
   let detail: ReactNode
+  let name = p.name
   if (p.kind === 'integration') {
     label = t('dashboard.problem.integration')
     detail = p.detail
+  } else if (p.kind === 'metric') {
+    label = t(`status.${p.status}`)
+    name = metricLabel(p.integration_type, { key: p.item_id ?? '', name: p.name })
+    detail = `${p.integration_name} · ${t('dashboard.problem.value', { value: formatMetric(p.value ?? 0, p.unit) })}`
   } else {
     const b = backupStates.find((s) => s === p.state)
     const c = checkStates.find((s) => s === p.state)
@@ -73,14 +84,15 @@ function ProblemRow({ p, now }: { p: Problem; now: number }) {
   return (
     <li>
       <Link
-        to={problemLink[p.kind]}
+        to={problemLink(p)}
         className="hover:bg-accent/40 flex items-center gap-3 px-3 py-2.5 transition-colors"
         data-problem={p.name}
       >
         <StatusBadge status={p.status} label={label} />
         <span className="min-w-0 flex-1">
           <span className="block font-medium [overflow-wrap:anywhere]">
-            {p.name}
+            <span className="first-letter:uppercase inline-block">{name}</span>
+            {p.group && <span className="text-muted-foreground font-normal"> · {p.group}</span>}
             <span className="text-muted-foreground ml-2 text-xs font-normal">{t(`dashboard.kind.${p.kind}`)}</span>
           </span>
           <span className="text-muted-foreground block text-xs break-words">

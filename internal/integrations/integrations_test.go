@@ -42,12 +42,15 @@ func TestNormalize(t *testing.T) {
 	if len(msgs) != 0 {
 		t.Fatalf("msgs: %v", msgs)
 	}
-	want := map[string]any{"base_url": "https://hc.example.com", "tag": "backup", "flag": false,
+	want := map[string]any{"base_url": "https://hc.example.com/", "tag": "backup", "flag": false,
 		"limit": 3.0, "mode": "b", "note": " zwei\nZeilen "}
 	for k, v := range want {
 		if got[k] != v {
 			t.Errorf("%s = %#v, erwartet %#v", k, got[k], v)
 		}
+	}
+	if b := (Config{Values: got}).BaseURL("base_url"); b != "https://hc.example.com" {
+		t.Errorf("BaseURL: %q", b)
 	}
 	if _, ok := got["api_key"]; ok {
 		t.Error("Secret in Werten")

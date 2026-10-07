@@ -1,6 +1,7 @@
 package integrations
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -51,9 +52,25 @@ var errRedirect = errors.New("redirect to another host")
 // GetJSON ruft u per GET ab und dekodiert die JSON-Antwort nach out. Fehler
 // sind übersetzbar und enthalten weder Header noch Query-Parameter.
 func GetJSON(ctx context.Context, c *http.Client, u string, header http.Header, out any) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+	return FetchJSON(ctx, c, http.MethodGet, u, header, nil, out, nil)
+}
+
+// FetchJSON sendet eine Anfrage (body nil = ohne) und dekodiert die
+// JSON-Antwort nach out (nil = Antwort nur auf gültiges JSON prüfen).
+// onError (optional) deutet Fehlerantworten selbst, z. B. die Meldung einer
+// Abfragesprache; liefert es nil, gilt die Standardmeldung.
+func FetchJSON(ctx context.Context, c *http.Client, method, u string, header http.Header, body []byte, out any,
+	onError func(status int, body []byte) error) error {
+	var rd io.Reader
+	if body != nil {
+		rd = bytes.NewReader(body)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, u, rd)
 	if err != nil {
 		return i18n.E("integration.field_url_invalid")
+	}
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
 	}
 	for k, vs := range header {
 		for _, v := range vs {
@@ -67,16 +84,28 @@ func GetJSON(ctx context.Context, c *http.Client, u string, header http.Header, 
 	}
 	defer resp.Body.Close()
 	if err := HTTPStatusError(resp); err != nil {
+		if onError != nil {
+			b, _ := io.ReadAll(io.LimitReader(resp.Body, 64<<10))
+			if e := onError(resp.StatusCode, b); e != nil {
+				return e
+			}
+		}
 		return err
 	}
-	body, err := io.ReadAll(io.LimitReader(resp.Body, maxBody+1))
+	data, err := io.ReadAll(io.LimitReader(resp.Body, maxBody+1))
 	if err != nil {
 		return RequestError(err)
 	}
-	if len(body) > maxBody {
+	if len(data) > maxBody {
 		return i18n.E("integration.too_large")
 	}
-	if err := json.Unmarshal(body, out); err != nil {
+	if out == nil {
+		if !json.Valid(data) {
+			return i18n.E("integration.bad_json", "detail", jsonDetail(json.Unmarshal(data, new(any))))
+		}
+		return nil
+	}
+	if err := json.Unmarshal(data, out); err != nil {
 		return i18n.E("integration.bad_json", "detail", jsonDetail(err))
 	}
 	return nil

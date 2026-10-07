@@ -27,6 +27,11 @@ func (r *Registry) Register(i Integration) {
 		if f.Type == FieldSecret && f.Default != nil {
 			panic(fmt.Sprintf("integration %q: secret field %q must not have a default", i.Type(), f.Key))
 		}
+		for _, sub := range f.Item {
+			if sub.Type == FieldSecret || sub.Type == FieldList {
+				panic(fmt.Sprintf("integration %q: list %q must not contain %s fields", i.Type(), f.Key, sub.Type))
+			}
+		}
 	}
 	r.byType[i.Type()] = i
 }

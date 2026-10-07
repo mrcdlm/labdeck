@@ -36,6 +36,9 @@ const (
 	FieldSelect FieldType = "select"
 	// FieldSecret wird verschlüsselt gespeichert und nie zurückgegeben.
 	FieldSecret FieldType = "secret"
+	// FieldList ist eine Liste gleich aufgebauter Einträge (Unterfelder in
+	// Item, ohne Secrets), z. B. mehrere Abfragen; Wert: []map[string]any.
+	FieldList FieldType = "list"
 )
 
 type Option struct {
@@ -55,7 +58,23 @@ type Field struct {
 	Options []Option `json:"options,omitempty"`
 	Min     *float64 `json:"min,omitempty"`
 	Max     *float64 `json:"max,omitempty"`
+	// Half: im Formular halbe Breite (zwei Felder nebeneinander)
+	Half bool `json:"half,omitempty"`
+	// Item: Unterfelder je Eintrag (nur FieldList); Max begrenzt die Anzahl
+	Item []Field `json:"item,omitempty"`
+	// ShowIf: Feld nur anzeigen, wenn ein anderes (Auswahl-)Feld einen der
+	// Werte hat; nur Darstellung, geprüft wird trotzdem
+	ShowIf *Condition `json:"show_if,omitempty"`
 }
+
+// Condition: Feld Key hat einen der Werte.
+type Condition struct {
+	Key    string   `json:"key"`
+	Values []string `json:"values"`
+}
+
+// maxListItems gilt, wenn eine Liste kein Max hat.
+const maxListItems = 50
 
 // ConfigSchema beschreibt eine Integration für das Einstellungsformular.
 type ConfigSchema struct {
@@ -170,6 +189,19 @@ func (s ConfigSchema) Normalize(in map[string]any, lang i18n.Lang) (map[string]a
 				continue
 			}
 			out[f.Key] = n
+		case FieldList:
+			items, imsgs := normalizeList(f, v, lang)
+			msgs = append(msgs, imsgs...)
+			if len(imsgs) > 0 {
+				continue
+			}
+			if len(items) == 0 {
+				if f.Required {
+					bad(f, "integration.field_required")
+				}
+				continue
+			}
+			out[f.Key] = items
 		case FieldBool:
 			b, ok := v.(bool)
 			if !ok {
@@ -184,6 +216,38 @@ func (s ConfigSchema) Normalize(in map[string]any, lang i18n.Lang) (map[string]a
 	return out, msgs
 }
 
+// normalizeList prüft jeden Eintrag gegen f.Item; Meldungen nennen die Nummer.
+func normalizeList(f Field, v any, lang i18n.Lang) ([]any, []i18n.Msg) {
+	raw, ok := v.([]any)
+	if !ok {
+		return nil, []i18n.Msg{i18n.M("integration.field_type", "field", f.Label.In(lang))}
+	}
+	limit := maxListItems
+	if f.Max != nil {
+		limit = int(*f.Max)
+	}
+	if len(raw) > limit {
+		return nil, []i18n.Msg{i18n.M("integration.field_list_max", "field", f.Label.In(lang), "max", strconv.Itoa(limit))}
+	}
+	sub := ConfigSchema{Fields: f.Item}
+	var out []any
+	var msgs []i18n.Msg
+	for i, it := range raw {
+		m, ok := it.(map[string]any)
+		if !ok {
+			msgs = append(msgs, i18n.M("integration.field_type", "field", f.Label.In(lang)))
+			continue
+		}
+		vals, imsgs := sub.Normalize(m, lang)
+		for _, im := range imsgs {
+			msgs = append(msgs, i18n.M("integration.field_item", "field", f.Label.In(lang), "n", strconv.Itoa(i+1),
+				"detail", i18n.Nest(im)))
+		}
+		out = append(out, vals)
+	}
+	return out, msgs
+}
+
 func fmtNum(p *float64) string {
 	if p == nil {
 		return "–"
@@ -192,7 +256,9 @@ func fmtNum(p *float64) string {
 }
 
 // normalizeURL erlaubt nur http(s) mit Host und ohne Zugangsdaten in der
-// Adresse (die gehören in ein Secret-Feld). Ein Schrägstrich am Ende entfällt.
+// Adresse (die gehören in ein Secret-Feld). Die Adresse bleibt sonst unverändert
+// (manche APIs brauchen den Schrägstrich am Ende); Basisadressen kürzt
+// Config.BaseURL.
 func normalizeURL(s string) (string, string) {
 	u, err := url.Parse(s)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
@@ -201,5 +267,5 @@ func normalizeURL(s string) (string, string) {
 	if u.User != nil {
 		return "", "integration.field_url_userinfo"
 	}
-	return strings.TrimRight(s, "/"), ""
+	return s, ""
 }
