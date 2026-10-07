@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 
 import { IntegrationIcon } from '@/components/IntegrationIcon'
+import { LiveItem, LiveTableRow } from '@/components/LiveRow'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { RangeToggle, UptimeBar } from '@/components/UptimeBar'
@@ -39,7 +40,7 @@ function NameCell({ item, icon }: { item: BackupItem; icon?: string }) {
     <div className="min-w-0">
       <div className="font-medium [overflow-wrap:anywhere]">{item.name}</div>
       <div className="text-muted-foreground mt-0.5 flex items-center gap-1 text-xs">
-        <IntegrationIcon name={icon} className="size-3 shrink-0" />
+        <IntegrationIcon name={icon} type={item.integration_type} className="size-3 shrink-0" />
         <span className="[overflow-wrap:anywhere]">
           {item.integration_name}
           {item.group && ` · ${item.group}`}
@@ -294,8 +295,10 @@ export function Backups() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data!.backups.map((b) => (
-                    <TableRow
+                  {data!.backups.map((b, n) => (
+                    <LiveTableRow
+                      watch={b.state}
+                      index={n}
                       key={`${b.integration_id}/${b.id}`}
                       className={cn(b.state === 'paused' && 'opacity-60')}
                       data-backup={b.name}
@@ -318,14 +321,16 @@ export function Backups() {
                       <TableCell className="pr-4">
                         <MaxAge item={b} onEdit={() => setEditing(b)} />
                       </TableCell>
-                    </TableRow>
+                    </LiveTableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
             <ul className="divide-y md:hidden">
-              {data!.backups.map((b) => (
-                <li
+              {data!.backups.map((b, n) => (
+                <LiveItem
+                  watch={b.state}
+                  index={n}
                   key={`${b.integration_id}/${b.id}`}
                   className={cn('flex flex-col gap-2 p-4', b.state === 'paused' && 'opacity-60')}
                   data-backup={b.name}
@@ -344,7 +349,7 @@ export function Backups() {
                     <MaxAge item={b} onEdit={() => setEditing(b)} />
                   </div>
                   <History item={b} range={range} />
-                </li>
+                </LiveItem>
               ))}
             </ul>
           </Card>

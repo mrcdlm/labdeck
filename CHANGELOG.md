@@ -19,6 +19,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   containers with search, state filter, sorting and a history chart per resource.
 - Setting "Keep raw data per VM/container" (default 7 days) – with many guests this keeps the
   database small; daily values stay.
+- Real, colored logos of the services (Healthchecks.io, Immich, Proxmox, Prometheus, Glances, NUT)
+  and of the webhook presets, bundled offline.
+- More motion: tiles and rows fade in, numbers count up and glide to new values, rows light up
+  on live changes, the overall status pulses on errors and draws a check mark when all is good,
+  uptime bars grow, meters fill, chart lines draw. Everything is off with "reduce motion".
+
+### Changed
+- Healthchecks.io as a traffic light: the Checks tile only shows green "All 7 checks OK" or red
+  "2 checks down" with their names; failed checks are bundled into one problem row per project,
+  checks in their grace period are no longer a problem; on the Services page Healthchecks is a
+  compact status row instead of a card with counters and chart.
+- Services page: grouped metrics are split into tables by kind (storage, disks, ZFS pools,
+  filesystems, users); state values (mains/battery, OK/failed) get no chart.
 
 ## [0.4.0] – 2026-10-07
 

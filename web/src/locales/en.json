@@ -69,7 +69,8 @@
         "integration": "last successful {{time}}",
         "backup": "last run {{time}}",
         "check": "last ping {{time}}",
-        "metric": "measured {{time}}"
+        "metric": "measured {{time}}",
+        "checks": "{{time}}"
       },
       "value": "value {{value}}"
     },
@@ -77,7 +78,8 @@
       "integration": "Integration",
       "backup": "Backup",
       "check": "Check",
-      "metric": "Metric"
+      "metric": "Metric",
+      "checks": "Healthchecks"
     },
     "noBackups": "No backups yet",
     "monitored": "{{count}} monitored",
@@ -86,15 +88,16 @@
     "backupsBad": "{{count}} overdue/failed",
     "other": "{{count}} other",
     "noChecks": "No checks yet",
-    "checks_one": "{{count}} check",
-    "checks_other": "{{count}} checks",
-    "checksUp": "{{count}} up",
-    "checksGrace": "{{count}} grace",
-    "checksDown": "{{count}} down",
     "thresholds_one": "{{count}} threshold",
     "thresholds_other": "{{count}} thresholds",
     "events": "Recent events",
-    "allEvents": "Show all"
+    "allEvents": "Show all",
+    "checksDownBadge_one": "{{count}} check down",
+    "checksDownBadge_other": "{{count}} checks down",
+    "checksFailed_one": "{{count}} check down",
+    "checksFailed_other": "{{count}} checks down",
+    "checksAllOk_one": "The check is up",
+    "checksAllOk_other": "All {{count}} checks OK"
   },
   "backups": {
     "subtitle": "Last runs, results and overdue backups",
@@ -195,7 +198,15 @@
       "datastore": "Datastore"
     },
     "toResources_one": "View {{count}} resource",
-    "toResources_other": "View {{count}} resources"
+    "toResources_other": "View {{count}} resources",
+    "sections": {
+      "storage": "Storage",
+      "disk": "Disks",
+      "zfs": "ZFS pools",
+      "fs": "Filesystems",
+      "ups": "UPS",
+      "user": "User"
+    }
   },
   "history": {
     "subtitle": "Status changes and errors of all integrations",

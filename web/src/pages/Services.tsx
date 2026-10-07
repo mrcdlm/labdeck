@@ -1,8 +1,9 @@
-import { CloudOff, Cpu, Plug, Server } from 'lucide-react'
+import { ChevronRight, CloudOff, Cpu, Plug, Server } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router'
 
+import { AnimatedNumber } from '@/components/AnimatedNumber'
 import { IntegrationIcon } from '@/components/IntegrationIcon'
 import { MetricChart, MetricRangeToggle } from '@/components/MetricChart'
 import { PageHeader } from '@/components/PageHeader'
@@ -12,7 +13,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { Integration, IntegrationType, Metric, MetricRange } from '@/lib/api'
 import { absoluteTime, relativeTime, useNow } from '@/lib/format'
-import { formatMetric, metricBase, metricLabel } from '@/lib/metrics'
+import { formatMetric, isStateUnit, metricBase, metricLabel } from '@/lib/metrics'
+import { rise } from '@/lib/motion'
 import { useIntegrations, useIntegrationTypes } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
@@ -37,13 +39,35 @@ function Stat({ m, label, selected, onSelect }: { m: Metric; label: string; sele
         {statusDot[m.status] && <span className={cn('size-2 rounded-full', statusDot[m.status])} aria-hidden />}
         <span className="inline-block first-letter:uppercase">{label}</span>
       </span>
-      <span className="text-xl font-semibold tabular-nums">{formatMetric(m.value, m.unit)}</span>
+      <span className="text-xl font-semibold tabular-nums">
+        {isStateUnit(m.unit) ? formatMetric(m.value, m.unit) : <AnimatedNumber value={m.value} format={(v) => formatMetric(v, m.unit)} />}
+      </span>
     </button>
   )
 }
 
 /** Kennzahlen je Gruppe (z. B. je Benutzer) als Tabelle. */
-function Groups({ type, metrics }: { type: string; metrics: Metric[] }) {
+// Bekannte Arten gruppierter Kennzahlen (Anfang des Schlüssels) bekommen je
+// eine eigene Tabelle; alles andere landet gemeinsam in einer.
+const sections = ['storage', 'disk', 'zfs', 'fs', 'ups', 'user'] as const
+type Section = (typeof sections)[number] | 'other'
+
+function sectionOf(key: string): Section {
+  const prefix = key.slice(0, key.indexOf('/'))
+  return sections.find((s) => s === prefix) ?? 'other'
+}
+
+/** Gruppierte Kennzahlen, je Art eine Tabelle. */
+function GroupTables({ type, metrics }: { type: string; metrics: Metric[] }) {
+  const bySection = new Map<Section, Metric[]>()
+  for (const m of metrics) {
+    const s = sectionOf(m.key)
+    bySection.set(s, [...(bySection.get(s) ?? []), m])
+  }
+  return [...bySection].map(([s, list]) => <Groups key={s} type={type} section={s} metrics={list} />)
+}
+
+function Groups({ type, section, metrics }: { type: string; section: Section; metrics: Metric[] }) {
   const { t } = useTranslation()
   const groups = [...new Set(metrics.map((m) => m.group!))]
   const columns = [...new Set(metrics.map((m) => metricBase(m.key)))]
@@ -53,7 +77,11 @@ function Groups({ type, metrics }: { type: string; metrics: Metric[] }) {
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead>{t(`services.groupTitle.${groupTitle[type] ?? 'group'}`)}</TableHead>
+            <TableHead>
+              {section === 'other'
+                ? t(`services.groupTitle.${groupTitle[type] ?? 'group'}`)
+                : t(`services.sections.${section}`)}
+            </TableHead>
             {columns.map((c) => (
               <TableHead key={c} className="text-right">
                 <span className="inline-block first-letter:uppercase">{metricLabel(type, metrics.find((m) => metricBase(m.key) === c)!)}</span>
@@ -98,7 +126,9 @@ function ServiceCard({ integration: i, type }: { integration: Integration; type?
   const grouped = metrics.filter((m) => m.group)
   const [selected, setSelected] = useState<string>()
   const [range, setRange] = useState<MetricRange>('30d')
-  const current = main.find((m) => m.key === selected) ?? main[0]
+  // Zustandswerte (Netz/Batterie, OK/Fehler) haben kein Diagramm
+  const current = main.find((m) => m.key === selected) ?? main.find((m) => !isStateUnit(m.unit))
+  const chartable = current && !isStateUnit(current.unit)
   const version = i.snapshot?.info?.version
 
   return (
@@ -106,7 +136,7 @@ function ServiceCard({ integration: i, type }: { integration: Integration; type?
       <CardContent className="flex flex-col gap-5">
         <div className="flex flex-wrap items-center gap-3">
           <span className="bg-muted grid size-10 shrink-0 place-items-center rounded-lg">
-            <IntegrationIcon name={type?.icon} className="size-5" />
+            <IntegrationIcon name={type?.icon} type={i.type} className="size-5" />
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -162,7 +192,7 @@ function ServiceCard({ integration: i, type }: { integration: Integration; type?
                 />
               ))}
             </div>
-            {current && (
+            {chartable && current && (
               <div className="flex flex-col gap-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-sm font-medium">
@@ -178,7 +208,7 @@ function ServiceCard({ integration: i, type }: { integration: Integration; type?
                 />
               </div>
             )}
-            {grouped.length > 0 && <Groups type={i.type} metrics={grouped} />}
+            {grouped.length > 0 && <GroupTables type={i.type} metrics={grouped} />}
           </>
         )}
       </CardContent>
@@ -201,6 +231,43 @@ function Empty() {
         </Link>
       </CardContent>
     </Card>
+  )
+}
+
+/** Healthchecks.io als Ampel: grün oder rot mit Anzahl, Details auf der Checks-Seite. */
+function HealthchecksRow({ integration: i }: { integration: Integration }) {
+  const { t } = useTranslation()
+  const metrics = i.snapshot?.metrics ?? []
+  const count = (key: string) => metrics.find((m) => m.key === key)?.value ?? 0
+  const down = count('checks_down')
+  const active = count('checks_total') - count('checks_paused')
+  const unreachable = i.status === 'error'
+  return (
+    <Link
+      to="/checks"
+      id={`integration-${i.id}`}
+      data-service={i.name}
+      className="group bg-card hover:bg-accent/40 flex scroll-mt-6 items-center gap-4 rounded-xl border px-5 py-4 transition-[background-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md"
+    >
+      <span className="bg-muted grid size-10 shrink-0 place-items-center rounded-lg">
+        <IntegrationIcon type="healthchecks" className="size-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="font-semibold">{i.name}</div>
+        <div className="flex items-center gap-2 text-sm">
+          <span className="relative flex size-2.5" aria-hidden>
+            {(down > 0 || unreachable) && <span className="bg-destructive/60 animate-ring absolute inset-0 rounded-full" />}
+            <span className={cn('relative size-2.5 rounded-full', down > 0 || unreachable ? 'bg-destructive' : 'bg-success')} />
+          </span>
+          {unreachable
+            ? i.last_error
+            : down > 0
+              ? t('dashboard.checksFailed', { count: down })
+              : t('dashboard.checksAllOk', { count: active })}
+        </div>
+      </div>
+      <ChevronRight className="text-muted-foreground size-4 transition-transform group-hover:translate-x-0.5" />
+    </Link>
   )
 }
 
@@ -230,9 +297,18 @@ export function Services() {
         // aktive zuerst
         [...list]
           .sort((a, b) => Number(b.enabled) - Number(a.enabled))
-          .map((i) => (
-            <ServiceCard key={i.id} integration={i} type={types.data?.types.find((x) => x.type === i.type)} />
-          ))
+          .map((i, n) => {
+            const motion = rise(n)
+            return (
+              <div key={i.id} className={motion.className} style={motion.style}>
+                {i.type === 'healthchecks' ? (
+                  <HealthchecksRow integration={i} />
+                ) : (
+                  <ServiceCard integration={i} type={types.data?.types.find((x) => x.type === i.type)} />
+                )}
+              </div>
+            )
+          })
       )}
     </div>
   )

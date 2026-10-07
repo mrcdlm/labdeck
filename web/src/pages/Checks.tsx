@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 
+import { LiveItem, LiveTableRow } from '@/components/LiveRow'
 import { PageHeader } from '@/components/PageHeader'
 import { Segmented } from '@/components/Segmented'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -119,8 +120,10 @@ function GroupCard({ group, range, now }: { group: Group; range: UptimeRange; no
             </TableRow>
           </TableHeader>
           <TableBody>
-            {group.checks.map((c) => (
-              <TableRow
+            {group.checks.map((c, n) => (
+              <LiveTableRow
+                watch={c.status}
+                index={n}
                 key={`${c.integration_id}/${c.id}`}
                 className={cn(c.status === 'paused' && 'opacity-60')}
                 data-check={c.name}
@@ -140,14 +143,16 @@ function GroupCard({ group, range, now }: { group: Group; range: UptimeRange; no
                 <TableCell className="w-56 min-w-40 pr-6">
                   <History check={c} range={range} />
                 </TableCell>
-              </TableRow>
+              </LiveTableRow>
             ))}
           </TableBody>
         </Table>
       </div>
       <ul className="divide-y md:hidden">
-        {group.checks.map((c) => (
-          <li
+        {group.checks.map((c, n) => (
+          <LiveItem
+            watch={c.status}
+            index={n}
             key={`${c.integration_id}/${c.id}`}
             className={cn('flex flex-col gap-2 p-4', c.status === 'paused' && 'opacity-60')}
             data-check={c.name}
@@ -162,7 +167,7 @@ function GroupCard({ group, range, now }: { group: Group; range: UptimeRange; no
                 {t('checks.lastPingAgo', { time: relativeTime(c.last_ping, now) })}
               </span>
             )}
-          </li>
+          </LiveItem>
         ))}
       </ul>
     </Card>

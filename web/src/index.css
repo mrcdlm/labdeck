@@ -89,3 +89,81 @@
     @apply bg-background text-foreground antialiased;
   }
 }
+
+/* --- Bewegung ---------------------------------------------------------------
+   Dezent, aber sichtbar: Einblenden, Aufleuchten bei Live-Änderungen, pulsierende
+   Ampel bei Fehlern, Häkchen bei „Alles in Ordnung“, wachsende Uptime-Balken.
+   Mit „Bewegung reduzieren“ im Betriebssystem ist alles aus. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes flash {
+  from {
+    background-color: color-mix(in oklch, var(--chart-1) 22%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+@keyframes ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+@keyframes draw {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes grow-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@utility animate-rise {
+  animation: rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@utility animate-flash {
+  animation: flash 1.6s ease-out;
+}
+@utility animate-ring {
+  animation: ring 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@utility animate-draw {
+  stroke-dasharray: 24;
+  animation: draw 0.6s ease-out 0.25s both;
+}
+@utility animate-grow-y {
+  transform-origin: bottom;
+  animation: grow-y 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

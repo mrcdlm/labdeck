@@ -70,16 +70,19 @@ type overviewResp struct {
 	Checks struct {
 		Total    int            `json:"total"`
 		Statuses map[string]int `json:"statuses"`
+		Status   string         `json:"status"`
 	} `json:"checks"`
 	Backups struct {
 		Total int `json:"total"`
 	} `json:"backups"`
 	Problems []struct {
-		Kind   string `json:"kind"`
-		Status string `json:"status"`
-		Name   string `json:"name"`
-		State  string `json:"state"`
-		Detail string `json:"detail"`
+		Kind   string   `json:"kind"`
+		Status string   `json:"status"`
+		Name   string   `json:"name"`
+		State  string   `json:"state"`
+		Detail string   `json:"detail"`
+		Count  int      `json:"count"`
+		Items  []string `json:"items"`
 	} `json:"problems"`
 }
 
@@ -236,8 +239,9 @@ func TestOverviewAPI(t *testing.T) {
 		kinds = append(kinds, p.Kind+":"+p.Name)
 	}
 	if len(got.Problems) != 4 || got.Problems[0].Kind != "integration" || !strings.Contains(got.Problems[0].Detail, "Zugriff verweigert") ||
-		got.Problems[2].Kind != "check" || got.Problems[2].Name != "DynDNS" || got.Problems[2].State != "down" {
-		t.Fatalf("Probleme: %v", kinds)
+		got.Problems[2].Kind != "checks" || got.Problems[2].Name != "Homelab" || got.Problems[2].Count != 1 ||
+		len(got.Problems[2].Items) != 1 || got.Problems[2].Items[0] != "DynDNS" || got.Checks.Status != "error" {
+		t.Fatalf("Probleme: %v %+v", kinds, got.Problems)
 	}
 }
 

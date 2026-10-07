@@ -206,6 +206,9 @@ type problemDTO struct {
 	State string `json:"state,omitempty"`
 	// Detail: Fehlermeldung der Integration
 	Detail string `json:"detail,omitempty"`
+	// Checks: Anzahl und Namen der ausgefallenen Checks
+	Count int      `json:"count,omitempty"`
+	Items []string `json:"items,omitempty"`
 	// At: letzter Erfolg (Integration), letzter Ping (Check), letzter Lauf (Backup)
 	At *time.Time `json:"at,omitempty"`
 }
@@ -228,7 +231,7 @@ type overviewDTO struct {
 	Problems []problemDTO    `json:"problems"`
 }
 
-var kindOrder = map[string]int{"integration": 0, "backup": 1, "check": 2, "metric": 3}
+var kindOrder = map[string]int{"integration": 0, "backup": 1, "checks": 2, "metric": 3}
 
 func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 	all, err := s.integrations.List(r.Context())
@@ -286,22 +289,35 @@ func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 
 	checks := collectChecks(active, now)
 	out.Checks = checksSummary{Total: len(checks), Statuses: map[integrations.Status]int{}, Status: integrations.StatusUnknown}
-	statuses := make([]integrations.Status, 0, len(checks))
+	// Healthchecks als Ampel: ausgefallene Checks je Integration in einer Zeile;
+	// Karenzzeit ist (noch) kein Problem. Checks, die zugleich Backups sind,
+	// erscheinen nur als Backup.
+	failed := map[int64]*problemDTO{}
+	var order []int64
 	for _, c := range checks {
 		out.Checks.Statuses[c.Status]++
-		statuses = append(statuses, c.Status)
-		// Checks, die zugleich Backups sind, erscheinen nur als Backup.
-		if isBackup[store.BackupKey{IntegrationID: c.IntegrationID, ItemID: c.ID}] {
+		if c.Status != integrations.StatusError || isBackup[store.BackupKey{IntegrationID: c.IntegrationID, ItemID: c.ID}] {
 			continue
 		}
-		if c.Status == integrations.StatusError || c.Status == integrations.StatusWarning {
-			out.Problems = append(out.Problems, problemDTO{Kind: "check", Status: c.Status, IntegrationID: c.IntegrationID,
-				IntegrationName: c.IntegrationName, IntegrationType: "healthchecks", ItemID: c.ID, Name: c.Name,
-				State: c.Raw, At: c.LastPing})
+		p, ok := failed[c.IntegrationID]
+		if !ok {
+			p = &problemDTO{Kind: "checks", Status: integrations.StatusError, IntegrationID: c.IntegrationID,
+				IntegrationName: c.IntegrationName, IntegrationType: "healthchecks", Name: c.IntegrationName}
+			failed[c.IntegrationID] = p
+			order = append(order, c.IntegrationID)
 		}
+		p.Count++
+		p.Items = append(p.Items, c.Name)
 	}
-	if len(checks) > 0 {
-		out.Checks.Status = integrations.Worst(statuses...)
+	for _, id := range order {
+		out.Problems = append(out.Problems, *failed[id])
+	}
+	switch {
+	case len(checks) == 0:
+	case out.Checks.Statuses[integrations.StatusError] > 0:
+		out.Checks.Status = integrations.StatusError
+	default:
+		out.Checks.Status = integrations.StatusOK
 	}
 
 	// Fehler vor Warnungen, dann Integration, Backup, Check

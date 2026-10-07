@@ -321,7 +321,7 @@ export interface BackupsOverview {
 }
 
 export interface Problem {
-  kind: 'integration' | 'check' | 'backup' | 'metric'
+  kind: 'integration' | 'checks' | 'backup' | 'metric'
   status: Status
   integration_id: number
   integration_name: string
@@ -338,6 +338,9 @@ export interface Problem {
   /** Fehlermeldung der Integration */
   detail?: string
   at?: string
+  /** checks: Anzahl und Namen der ausgefallenen Checks */
+  count?: number
+  items?: string[]
 }
 
 export interface Overview {

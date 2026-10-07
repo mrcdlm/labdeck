@@ -24,7 +24,8 @@ test('Backups, Checks und Gesamtstatus aus Healthchecks.io', async ({ page }) =>
   await expect(problems.locator('[data-problem="Proxmox vzdump"]')).toContainText('Überfällig')
   await expect(problems.locator('[data-problem="Borg Laptop"]')).toContainText('Bald fällig')
   await expect(page.getByRole('link', { name: /Backups 3 überwacht/ })).toBeVisible()
-  await expect(page.getByRole('link', { name: /Checks 7 Checks/ })).toBeVisible()
+  // Healthchecks als Ampel: vzdump ist down (zählt hier mit, steht aber als Backup in der Liste)
+  await expect(page.locator('[data-tile="checks"]')).toContainText('1 Check ausgefallen')
 
   // Backups: Probleme zuerst, Verlauf als Balken
   await page.getByRole('link', { name: /Backups 3 überwacht/ }).click()
@@ -75,7 +76,11 @@ test('Backups, Checks und Gesamtstatus aus Healthchecks.io', async ({ page }) =>
   await mock.hcStatus('DynDNS', 'down')
   await api(page, 'POST', `/api/integrations/${id}/poll`)
   await expect(page.getByText('3 Probleme')).toBeVisible()
-  await expect(problems.locator('[data-problem="DynDNS"]')).toContainText('Down')
+  // ausgefallene Checks je Projekt in einer Zeile
+  const hc = problems.locator('[data-problem="Homelab"]')
+  await expect(hc).toContainText('1 Check down')
+  await expect(hc).toContainText('DynDNS')
+  await expect(page.locator('[data-tile="checks"]')).toContainText('2 Checks ausgefallen')
   await mock.hcStatus('DynDNS', 'up')
   await api(page, 'POST', `/api/integrations/${id}/poll`)
   await expect(page.getByText('2 Probleme')).toBeVisible()

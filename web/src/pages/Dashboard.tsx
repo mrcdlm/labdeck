@@ -1,28 +1,20 @@
-import type { LucideIcon } from 'lucide-react'
-import {
-  AlertTriangle,
-  ChevronRight,
-  DatabaseBackup,
-  HeartPulse,
-  History as HistoryIcon,
-  PauseCircle,
-  Plug,
-  ShieldCheck,
-} from 'lucide-react'
+import { AlertTriangle, ChevronRight, DatabaseBackup, History as HistoryIcon, PauseCircle, Plug } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 
+import { AnimatedNumber } from '@/components/AnimatedNumber'
+import { HistoryList } from '@/components/HistoryList'
+import { IntegrationIcon } from '@/components/IntegrationIcon'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { IntegrationIcon } from '@/components/IntegrationIcon'
-import { HistoryList } from '@/components/HistoryList'
 import type { DashboardTile, Integration, Overview, Problem } from '@/lib/api'
 import { absoluteTime, relativeTime, useNow } from '@/lib/format'
 import { formatMetric, isStateUnit, metricLabel } from '@/lib/metrics'
+import { rise, useFlash } from '@/lib/motion'
 import { useDashboardLayout, useHistory, useIntegrations, useIntegrationTypes, useOverview } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
@@ -55,18 +47,19 @@ function problemLink(p: Problem): string {
       return '/einstellungen'
     case 'backup':
       return '/backups'
-    case 'check':
+    case 'checks':
       return '/checks'
   }
   return `/dienste#integration-${p.integration_id}`
 }
 
-const checkStates = ['down', 'grace'] as const
 const backupStates = ['failed', 'overdue', 'due_soon'] as const
 
 /** Eine Zeile der Problemliste: was, wo, seit wann. */
-function ProblemRow({ p, now }: { p: Problem; now: number }) {
+function ProblemRow({ p, now, index }: { p: Problem; now: number; index: number }) {
   const { t } = useTranslation()
+  const flash = useFlash([p.status, p.state, p.count, p.value])
+  const motion = rise(index)
   let label: string
   let detail: ReactNode
   let name = p.name
@@ -77,12 +70,14 @@ function ProblemRow({ p, now }: { p: Problem; now: number }) {
     label = t(`status.${p.status}`)
     name = metricLabel(p.integration_type, { key: p.item_id ?? '', name: p.name })
     detail = `${p.integration_name} · ${t('dashboard.problem.value', { value: formatMetric(p.value ?? 0, p.unit) })}`
+  } else if (p.kind === 'checks') {
+    // Healthchecks als Ampel: eine Zeile je Projekt mit den ausgefallenen Checks
+    label = t('dashboard.checksDownBadge', { count: p.count ?? 0 })
+    const items = p.items ?? []
+    detail = items.slice(0, 3).join(', ') + (items.length > 3 ? ` +${items.length - 3}` : '')
   } else {
     const b = backupStates.find((s) => s === p.state)
-    const c = checkStates.find((s) => s === p.state)
-    if (p.kind === 'backup' && b) label = t(`backups.state.${b}`)
-    else if (p.kind === 'check' && c) label = t(`checks.raw.${c}`)
-    else label = t(`status.${p.status}`)
+    label = b ? t(`backups.state.${b}`) : t(`status.${p.status}`)
     detail = p.integration_name
   }
   const at =
@@ -92,12 +87,15 @@ function ProblemRow({ p, now }: { p: Problem; now: number }) {
     })
 
   return (
-    <li>
+    <li className={motion.className} style={motion.style}>
       <Link
         to={problemLink(p)}
-        className="hover:bg-accent/40 flex items-center gap-3 px-3 py-2.5 transition-colors"
+        className={cn('hover:bg-accent/40 flex items-center gap-3 px-3 py-2.5 transition-colors', flash && 'animate-flash')}
         data-problem={p.name}
       >
+        {p.kind === 'checks' ? (
+          <IntegrationIcon type="healthchecks" className="size-4 shrink-0" />
+        ) : null}
         <StatusBadge status={p.status} label={label} />
         <span className="min-w-0 flex-1">
           <span className="block font-medium [overflow-wrap:anywhere]">
@@ -121,6 +119,36 @@ function ProblemRow({ p, now }: { p: Problem; now: number }) {
   )
 }
 
+/**
+ * Ampel des Gesamtstatus: bei Fehlern pulsiert ein Ring um das Symbol, bei
+ * „Alles in Ordnung“ zeichnet sich ein Häkchen.
+ */
+function StatusMark({ tone }: { tone: 'idle' | 'ok' | 'warning' | 'error' }) {
+  const box = {
+    idle: 'bg-muted text-muted-foreground',
+    ok: 'bg-success/15 text-success',
+    warning: 'bg-warning/15 text-warning',
+    error: 'bg-destructive/15 text-destructive',
+  }[tone]
+  return (
+    <span className={cn('relative grid size-10 shrink-0 place-items-center rounded-lg', box)} data-tone={tone}>
+      {(tone === 'error' || tone === 'warning') && (
+        <span
+          className={cn('animate-ring absolute inset-0 rounded-lg', tone === 'error' ? 'bg-destructive/30' : 'bg-warning/30')}
+          aria-hidden
+        />
+      )}
+      {tone === 'idle' && <PauseCircle className="size-5" />}
+      {tone === 'ok' && (
+        <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden>
+          <path d="M5 12.5l4.5 4.5L19 7.5" className="animate-draw" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+      {(tone === 'error' || tone === 'warning') && <AlertTriangle className="relative size-5" />}
+    </span>
+  )
+}
+
 /** Gesamtstatus: alles in Ordnung oder Liste der Probleme (ganz oben). */
 function OverallStatus({ overview }: { overview: Overview }) {
   const { t } = useTranslation()
@@ -129,26 +157,13 @@ function OverallStatus({ overview }: { overview: Overview }) {
   const errors = problems.filter((p) => p.status === 'error').length
   const ok = problems.length === 0
   const idle = overview.integrations.active === 0 // alle deaktiviert
-  const Icon = idle ? PauseCircle : ok ? ShieldCheck : AlertTriangle
+  const tone = idle ? 'idle' : ok ? 'ok' : errors > 0 ? 'error' : 'warning'
 
   return (
     <Card className={cn(errors > 0 && 'border-destructive/40', !ok && errors === 0 && 'border-warning/40')}>
       <CardContent className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
-          <span
-            className={cn(
-              'grid size-10 shrink-0 place-items-center rounded-lg',
-              idle
-                ? 'bg-muted text-muted-foreground'
-                : ok
-                  ? 'bg-success/15 text-success'
-                : errors > 0
-                  ? 'bg-destructive/15 text-destructive'
-                  : 'bg-warning/15 text-warning',
-            )}
-          >
-            <Icon className="size-5" />
-          </span>
+          <StatusMark tone={tone} />
           <div className="min-w-0">
             <p className="text-lg font-semibold">
               {idle ? t('dashboard.noneActive') : ok ? t('dashboard.allGood') : t('dashboard.problems', { count: problems.length })}
@@ -160,8 +175,8 @@ function OverallStatus({ overview }: { overview: Overview }) {
         </div>
         {problems.length > 0 && (
           <ul className="divide-y rounded-md border" aria-label={t('dashboard.problemList')}>
-            {problems.map((p) => (
-              <ProblemRow key={`${p.kind}/${p.integration_id}/${p.item_id ?? ''}`} p={p} now={now} />
+            {problems.map((p, n) => (
+              <ProblemRow key={`${p.kind}/${p.integration_id}/${p.item_id ?? ''}`} p={p} now={now} index={n} />
             ))}
           </ul>
         )}
@@ -171,14 +186,14 @@ function OverallStatus({ overview }: { overview: Overview }) {
 }
 
 /** Übersichtskachel wie in dnsdeck: Icon-Box links, Titel, Zahl + Badges, Chevron → Detailseite. */
-function Tile({ to, icon: Icon, title, children }: { to: string; icon: LucideIcon; title: string; children: ReactNode }) {
+const tileClass =
+  'group bg-card hover:bg-accent/40 flex items-center gap-4 rounded-xl border p-5 transition-[background-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md'
+
+function Tile({ to, icon, title, children, tile }: { to: string; icon: ReactNode; title: string; children: ReactNode; tile?: string }) {
   return (
-    <Link
-      to={to}
-      className="group bg-card hover:bg-accent/40 flex items-center gap-4 rounded-xl border p-5 transition-colors"
-    >
-      <span className="bg-muted grid size-10 shrink-0 place-items-center rounded-lg">
-        <Icon className="size-5" />
+    <Link to={to} className={tileClass} data-tile={tile}>
+      <span className="bg-muted grid size-10 shrink-0 place-items-center rounded-lg transition-transform duration-200 group-hover:scale-105">
+        {icon}
       </span>
       <div className="min-w-0 flex-1">
         <div className="text-muted-foreground text-sm">{title}</div>
@@ -195,12 +210,14 @@ function BackupsTile({ overview }: { overview: Overview }) {
   const n = (k: keyof typeof s.states) => s.states[k] ?? 0
   const bad = n('overdue') + n('failed')
   return (
-    <Tile to="/backups" icon={DatabaseBackup} title={t('nav.backups')}>
+    <Tile to="/backups" icon={<DatabaseBackup className="size-5" />} title={t('nav.backups')} tile="backups">
       {s.total === 0 ? (
         <div className="text-muted-foreground font-medium">{t('dashboard.noBackups')}</div>
       ) : (
         <div className="flex flex-wrap items-center gap-2 font-medium">
-          <span className="tabular-nums">{t('dashboard.monitored', { count: s.total })}</span>
+          <span className="tabular-nums">
+            <AnimatedNumber value={s.total} format={(v) => t('dashboard.monitored', { count: v })} />
+          </span>
           {n('ok') > 0 && <Badge variant="success">{t('dashboard.backupsOk', { count: n('ok') })}</Badge>}
           {n('due_soon') > 0 && <Badge variant="warning">{t('dashboard.backupsDueSoon', { count: n('due_soon') })}</Badge>}
           {bad > 0 && <Badge variant="destructive">{t('dashboard.backupsBad', { count: bad })}</Badge>}
@@ -213,22 +230,29 @@ function BackupsTile({ overview }: { overview: Overview }) {
   )
 }
 
+/** Healthchecks.io als Ampel: grün, wenn alle Checks laufen, rot mit den ausgefallenen. */
 function ChecksTile({ overview }: { overview: Overview }) {
   const { t } = useTranslation()
   const c = overview.checks
-  const n = (k: keyof typeof c.statuses) => c.statuses[k] ?? 0
+  const down = c.statuses.error ?? 0
+  const active = c.total - (c.statuses.paused ?? 0)
+  const names = overview.problems.filter((p) => p.kind === 'checks').flatMap((p) => p.items ?? [])
+  const flash = useFlash(down)
   return (
-    <Tile to="/checks" icon={HeartPulse} title={t('nav.checks')}>
+    <Tile to="/checks" icon={<IntegrationIcon type="healthchecks" className="size-5" />} title={t('nav.checks')} tile="checks">
       {c.total === 0 ? (
         <div className="text-muted-foreground font-medium">{t('dashboard.noChecks')}</div>
       ) : (
-        <div className="flex flex-wrap items-center gap-2 font-medium">
-          <span className="tabular-nums">{t('dashboard.checks', { count: c.total })}</span>
-          {n('ok') > 0 && <Badge variant="success">{t('dashboard.checksUp', { count: n('ok') })}</Badge>}
-          {n('warning') > 0 && <Badge variant="warning">{t('dashboard.checksGrace', { count: n('warning') })}</Badge>}
-          {n('error') > 0 && <Badge variant="destructive">{t('dashboard.checksDown', { count: n('error') })}</Badge>}
-          {n('paused') + n('unknown') > 0 && (
-            <Badge variant="secondary">{t('dashboard.other', { count: n('paused') + n('unknown') })}</Badge>
+        <div className={cn('flex flex-col gap-0.5 rounded-md', flash && 'animate-flash')}>
+          <span className="flex items-center gap-2 font-medium">
+            <span className="relative flex size-2.5" aria-hidden>
+              {down > 0 && <span className="bg-destructive/60 animate-ring absolute inset-0 rounded-full" />}
+              <span className={cn('relative size-2.5 rounded-full', down > 0 ? 'bg-destructive' : 'bg-success')} />
+            </span>
+            {down > 0 ? t('dashboard.checksFailed', { count: down }) : t('dashboard.checksAllOk', { count: active })}
+          </span>
+          {down > 0 && names.length > 0 && (
+            <span className="text-muted-foreground truncate text-xs">{names.join(', ')}</span>
           )}
         </div>
       )}
@@ -242,13 +266,9 @@ function ServiceTile({ integration: i, icon }: { integration: Integration; icon?
   const main = (i.snapshot?.metrics ?? []).filter((m) => !m.group).slice(0, 3)
   const bad = (i.snapshot?.metrics ?? []).filter((m) => m.status === 'error' || m.status === 'warning')
   return (
-    <Link
-      to={`/dienste#integration-${i.id}`}
-      className="group bg-card hover:bg-accent/40 flex items-center gap-4 rounded-xl border p-5 transition-colors"
-      data-tile={i.name}
-    >
-      <span className="bg-muted grid size-10 shrink-0 place-items-center rounded-lg">
-        <IntegrationIcon name={icon} className="size-5" />
+    <Link to={`/dienste#integration-${i.id}`} className={tileClass} data-tile={i.name}>
+      <span className="bg-muted grid size-10 shrink-0 place-items-center rounded-lg transition-transform duration-200 group-hover:scale-105">
+        <IntegrationIcon name={icon} type={i.type} className="size-5" />
       </span>
       <div className="min-w-0 flex-1">
         <div className="text-muted-foreground flex items-center gap-2 text-sm">
@@ -262,7 +282,11 @@ function ServiceTile({ integration: i, icon }: { integration: Integration; icon?
             {main.map((m, n) => (
               <span key={m.key} className="whitespace-nowrap">
                 {n > 0 && <span className="text-muted-foreground mr-1.5">·</span>}
-                {formatMetric(m.value, m.unit)}
+                {isStateUnit(m.unit) ? (
+                  formatMetric(m.value, m.unit)
+                ) : (
+                  <AnimatedNumber value={m.value} format={(v) => formatMetric(v, m.unit)} />
+                )}
                 {!isStateUnit(m.unit) && (
                   <>
                     {' '}
@@ -346,10 +370,11 @@ function Tiles({ overview }: { overview: Overview }) {
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {tiles
         .filter((x) => x.visible)
-        .map((x) => {
+        .map((x, n) => {
           const content = tile(x.id)
+          const motion = rise(n)
           return content ? (
-            <div key={x.id} className={cn('min-w-0 [&>*]:h-full', span[x.size])}>
+            <div key={x.id} className={cn('min-w-0 [&>*]:h-full', span[x.size], motion.className)} style={motion.style}>
               {content}
             </div>
           ) : null

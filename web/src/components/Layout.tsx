@@ -64,7 +64,10 @@ function LiveIndicator({ compact }: { compact?: boolean }) {
       className="text-muted-foreground flex items-center gap-2 text-xs"
       title={live ? t('live.onHint') : t('live.offHint')}
     >
-      <span className={cn('size-2 rounded-full', live ? 'bg-success' : 'bg-muted-foreground/50')} />
+      <span className="relative flex size-2" aria-hidden>
+        {live && <span className="bg-success/60 animate-ring absolute inset-0 rounded-full [animation-duration:2.4s]" />}
+        <span className={cn('relative size-2 rounded-full', live ? 'bg-success' : 'bg-muted-foreground/50')} />
+      </span>
       {!compact && (live ? t('live.on') : t('live.off'))}
     </span>
   )

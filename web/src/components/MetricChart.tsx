@@ -17,6 +17,7 @@ import { metricRanges, type MetricRange } from '@/lib/api'
 import { currentLang } from '@/i18n'
 import { absoluteTime } from '@/lib/format'
 import { formatMetric, formatMetricShort } from '@/lib/metrics'
+import { reducedMotion } from '@/lib/motion'
 import { useMetricHistory } from '@/lib/queries'
 
 const axisTick = { fill: 'var(--muted-foreground)', fontSize: 12 }
@@ -146,7 +147,9 @@ export function MetricChart({
             fill={`url(#fill-${integrationId})`}
             dot={points.length <= 31 ? { r: 2.5, strokeWidth: 0, fill: 'var(--chart-1)' } : false}
             activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--card)' }}
-            isAnimationActive={false}
+            isAnimationActive={!reducedMotion()}
+            animationDuration={800}
+            animationEasing="ease-out"
           />
         </AreaChart>
       </ResponsiveContainer>

@@ -35,7 +35,12 @@ export function UptimeBar({ uptime, range, compact }: Props) {
         return (
           <div
             key={i}
-            className={cn('min-w-0 flex-1', compact ? 'rounded-[1px]' : 'rounded-[2px]', bucketColor[b])}
+            className={cn(
+              'animate-grow-y min-w-0 flex-1 transition-transform hover:scale-y-125',
+              compact ? 'rounded-[1px]' : 'rounded-[2px]',
+              bucketColor[b],
+            )}
+            style={{ animationDelay: `${i * 8}ms` }}
             title={`${absoluteTime(from)} – ${absoluteTime(to)}: ${t(`uptime.bucket.${b}`)}`}
           />
         )

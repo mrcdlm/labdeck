@@ -70,7 +70,7 @@ function IntegrationItem({
           }
         />
         <span className="bg-muted grid size-7 shrink-0 place-items-center rounded-md">
-          <IntegrationIcon name={icon} className="size-4" />
+          <IntegrationIcon name={icon} type={integration.type} className="size-4" />
         </span>
         <span className="min-w-0">
           <span className="block leading-tight font-medium">{integration.name}</span>

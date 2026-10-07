@@ -2,6 +2,7 @@ import { ArrowRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { IntegrationIcon } from '@/components/IntegrationIcon'
+import { LiveItem } from '@/components/LiveRow'
 import { StatusBadge } from '@/components/StatusBadge'
 import type { BackupState, HistoryEntry, Status } from '@/lib/api'
 import { absoluteTime, relativeTime, useNow } from '@/lib/format'
@@ -50,8 +51,10 @@ export function HistoryList({ entries, compact }: { entries: HistoryEntry[]; com
 
   return (
     <ul className="divide-y">
-      {entries.map((e) => (
-        <li
+      {entries.map((e, n) => (
+        <LiveItem
+          watch={e.id}
+          index={n}
           key={e.id}
           className={cn('flex flex-col gap-1.5 py-3 sm:flex-row sm:items-center sm:gap-4', !compact && 'px-4 md:px-6')}
           data-entry={entryLabel(e)}
@@ -70,7 +73,7 @@ export function HistoryList({ entries, compact }: { entries: HistoryEntry[]; com
               <span className="text-muted-foreground text-xs">{t(`dashboard.kind.${e.kind}`)}</span>
             </div>
             <div className="text-muted-foreground flex items-center gap-1 text-xs">
-              <IntegrationIcon name={icon(e.integration_type)} className="size-3 shrink-0" />
+              <IntegrationIcon name={icon(e.integration_type)} type={e.integration_type} className="size-3 shrink-0" />
               <span className="[overflow-wrap:anywhere]">
                 {e.integration_name}
                 {e.message && ` · ${e.message}`}
@@ -82,7 +85,7 @@ export function HistoryList({ entries, compact }: { entries: HistoryEntry[]; com
             <ArrowRight className="text-muted-foreground size-3.5" aria-label={t('history.to')} />
             <StateBadge kind={e.kind} value={e.to} />
           </div>
-        </li>
+        </LiveItem>
       ))}
     </ul>
   )

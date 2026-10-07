@@ -6,6 +6,7 @@ import { Link } from 'react-router'
 import { IntegrationIcon } from '@/components/IntegrationIcon'
 import { Meter } from '@/components/Meter'
 import { MetricChart, MetricRangeToggle } from '@/components/MetricChart'
+import { LiveItem, LiveTableRow } from '@/components/LiveRow'
 import { PageHeader } from '@/components/PageHeader'
 import { Segmented } from '@/components/Segmented'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -125,7 +126,7 @@ function HostCard({ integration, host, icon, guests }: {
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <span className="bg-muted grid size-10 shrink-0 place-items-center rounded-lg">
-            <IntegrationIcon name={icon} className="size-5" />
+            <IntegrationIcon name={icon} type={integration.type} className="size-5" />
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -194,9 +195,11 @@ function GuestTable({ integration, list }: { integration: Integration; list: Res
             </TableRow>
           </TableHeader>
           <TableBody>
-            {list.map((r) => (
+            {list.map((r, n) => (
               <Fragment key={r.id}>
-                <TableRow
+                <LiveTableRow
+                  watch={r.state}
+                  index={n}
                   className={cn('cursor-pointer', !running(r) && 'opacity-60')}
                   onClick={() => setOpen((o) => (o === r.id ? undefined : r.id))}
                   data-resource={r.name}
@@ -231,7 +234,7 @@ function GuestTable({ integration, list }: { integration: Integration; list: Res
                   <TableCell className="pr-6 text-sm whitespace-nowrap">
                     {r.uptime ? formatUptime(r.uptime) : (r.info?.uptime ?? '—')}
                   </TableCell>
-                </TableRow>
+                </LiveTableRow>
                 {open === r.id && (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={7} className="px-6 pb-4 whitespace-normal">
@@ -245,8 +248,8 @@ function GuestTable({ integration, list }: { integration: Integration; list: Res
         </Table>
       </div>
       <ul className="divide-y md:hidden">
-        {list.map((r) => (
-          <li key={r.id} className={cn('flex flex-col gap-2 p-4', !running(r) && 'opacity-60')} data-resource={r.name}>
+        {list.map((r, n) => (
+          <LiveItem watch={r.state} index={n} key={r.id} className={cn('flex flex-col gap-2 p-4', !running(r) && 'opacity-60')} data-resource={r.name}>
             <div className="flex items-start justify-between gap-2">
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="font-medium">{r.name}</span>
@@ -260,7 +263,7 @@ function GuestTable({ integration, list }: { integration: Integration; list: Res
                 <MemCell used={r.mem_used} total={r.mem_total} />
               </div>
             )}
-          </li>
+          </LiveItem>
         ))}
       </ul>
     </Card>

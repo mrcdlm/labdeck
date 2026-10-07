@@ -106,7 +106,7 @@ function TypePicker({ types, onPick }: { types: IntegrationType[]; onPick: (type
               className="hover:bg-accent/40 flex items-center gap-3 rounded-lg border p-3 text-left transition-colors"
             >
               <span className="bg-muted grid size-9 shrink-0 place-items-center rounded-md">
-                <IntegrationIcon name={ty.icon} className="size-4" />
+                <IntegrationIcon name={ty.icon} type={ty.type} className="size-4" />
               </span>
               <span className="min-w-0">
                 <span className="block font-medium">{ty.title}</span>
@@ -396,7 +396,7 @@ function IntegrationForm({
               <ArrowLeft />
             </Button>
           )}
-          <IntegrationIcon name={type.icon} className="size-5" />
+          <IntegrationIcon name={type.icon} type={type.type} className="size-5" />
           {integration ? t('integrations.editTitle', { type: type.title }) : t('integrations.addTypeTitle', { type: type.title })}
         </DialogTitle>
         <DialogDescription>

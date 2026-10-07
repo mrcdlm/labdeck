@@ -69,7 +69,8 @@
         "integration": "zuletzt erfolgreich {{time}}",
         "backup": "letzter Lauf {{time}}",
         "check": "letzter Ping {{time}}",
-        "metric": "gemessen {{time}}"
+        "metric": "gemessen {{time}}",
+        "checks": "{{time}}"
       },
       "value": "Wert {{value}}"
     },
@@ -77,7 +78,8 @@
       "integration": "Integration",
       "backup": "Backup",
       "check": "Check",
-      "metric": "Kennzahl"
+      "metric": "Kennzahl",
+      "checks": "Healthchecks"
     },
     "noBackups": "Noch keine Backups",
     "monitored": "{{count}} überwacht",
@@ -86,15 +88,16 @@
     "backupsBad": "{{count}} überfällig/fehlgeschlagen",
     "other": "{{count}} sonstige",
     "noChecks": "Noch keine Checks",
-    "checks_one": "{{count}} Check",
-    "checks_other": "{{count}} Checks",
-    "checksUp": "{{count}} up",
-    "checksGrace": "{{count}} Karenzzeit",
-    "checksDown": "{{count}} down",
     "thresholds_one": "{{count}} Schwellwert",
     "thresholds_other": "{{count}} Schwellwerte",
     "events": "Letzte Ereignisse",
-    "allEvents": "Alle anzeigen"
+    "allEvents": "Alle anzeigen",
+    "checksDownBadge_one": "{{count}} Check down",
+    "checksDownBadge_other": "{{count}} Checks down",
+    "checksFailed_one": "{{count}} Check ausgefallen",
+    "checksFailed_other": "{{count}} Checks ausgefallen",
+    "checksAllOk_one": "Der Check läuft",
+    "checksAllOk_other": "Alle {{count}} Checks OK"
   },
   "backups": {
     "subtitle": "Letzte Läufe, Ergebnisse und überfällige Backups",
@@ -195,7 +198,15 @@
       "datastore": "Datastore"
     },
     "toResources_one": "{{count}} Ressource ansehen",
-    "toResources_other": "{{count}} Ressourcen ansehen"
+    "toResources_other": "{{count}} Ressourcen ansehen",
+    "sections": {
+      "storage": "Storage",
+      "disk": "Platten",
+      "zfs": "ZFS-Pools",
+      "fs": "Dateisysteme",
+      "ups": "USV",
+      "user": "Benutzer"
+    }
   },
   "history": {
     "subtitle": "Statuswechsel und Fehler aller Integrationen",

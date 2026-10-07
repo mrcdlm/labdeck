@@ -2,6 +2,7 @@ import { Loader2, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 
+import { IntegrationIcon } from '@/components/IntegrationIcon'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -127,6 +128,7 @@ function WebhookForm({ webhook, onDone }: { webhook?: Webhook; onDone: () => voi
               <SelectContent>
                 {presets.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
+                    <IntegrationIcon type={p.id} name="bell" className="text-muted-foreground size-4" />
                     {presetLabel(p)}
                   </SelectItem>
                 ))}
