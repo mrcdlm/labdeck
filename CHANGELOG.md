@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] – 2026-10-07
+
 ### Added
 - Immich integration: photos, videos and storage usage in total and per user (with quota),
   server version. Needs an admin API key with the `server.statistics` permission.
