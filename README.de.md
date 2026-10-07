@@ -44,8 +44,8 @@ Schwesterprojekt von [dnsdeck](https://github.com/mrcdlm/dnsdeck) – gleiche Op
   Nextcloud, Home Assistant … ohne eigenen Code).
 - **Prometheus** – beliebige PromQL-Abfragen mit Einheit und Schwellwerten, eine Zeile je
   Label-Wert; alles, was Exporter liefern (node_exporter, restic-/borg-Exporter, SMART …).
-- **Proxmox VE, Glances und USV** – CPU, RAM und Platte jedes Nodes, jeder VM, jedes LXC- und
-  Docker-Containers auf einer Ressourcen-Seite mit Füllständen und Verlauf; Storages, SMART,
+- **Proxmox VE, Dockhand und USV** – CPU, RAM und Platte jedes Nodes, jeder VM, jedes LXC- und
+  Docker-Containers (alle Docker-Hosts aus Dockhand, inkl. Health und ausstehender Image-Updates) auf einer Ressourcen-Seite mit Füllständen und Verlauf; Storages, SMART,
   ZFS, vzdump-Sicherungen; USV im Batteriebetrieb als Problem.
 - **Dienste-Seite und Diagramme** – eine Karte je Integration mit Kennzahlen und Diagramm
   (24 Stunden bis 1 Jahr; Rohwerte 30 Tage, Tageswerte 1 Jahr, einstellbar).
@@ -118,7 +118,7 @@ Zertifikate im LAN ausschaltbar). Mehrere Instanzen je Typ sind möglich.
 | HTTP-JSON | optional ein Header mit Zugangsdaten (verschlüsselt gespeichert) | beliebige Werte, Zeitstempel als Backups |
 | Prometheus | keine, Basic Auth oder Bearer-Token | beliebige PromQL-Abfragen |
 | Proxmox VE | API-Token `benutzer@realm!name`, Rolle **PVEAuditor** auf `/` | Auslastung je Node, VM und Container, Storages, SMART, ZFS, Sicherungen |
-| Glances | optional Basic Auth | Auslastung eines Hosts und je Docker-Container |
+| Dockhand | API-Token `dh_…` (nur bei aktiver Anmeldung in Dockhand) | CPU/RAM je Docker-Host und Container, Health, ausstehende Updates |
 | USV (NUT) | optional upsd-Benutzer | Netz/Batterie, Ladung, Restlaufzeit, Last |
 
 **Backups von Proxmox VE (vzdump) mit Healthchecks.io überwachen:** einen Check mit dem Tag

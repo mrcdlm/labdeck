@@ -408,24 +408,23 @@
       "online": "Online",
       "disk_pct": "Platte"
     },
-    "glances": {
-      "cpu": "CPU",
-      "mem_pct": "RAM",
-      "containers_running": "Container aktiv",
-      "load5": "Load (5 min)",
-      "used_pct": "Belegung",
-      "used": "Belegt",
-      "total": "Kapazität",
-      "disk_pct": "Platte",
-      "mem": "RAM",
-      "container_health": "Container unhealthy"
-    },
     "nut": {
       "power": "Versorgung",
       "charge": "Ladung",
       "runtime": "Restlaufzeit",
       "load": "Last",
       "input_voltage": "Eingangsspannung"
+    },
+    "dockhand": {
+      "containers_running": "Container aktiv",
+      "cpu": "CPU",
+      "mem_pct": "RAM",
+      "updates": "Updates verfügbar",
+      "containers": "Container",
+      "hosts": "Docker-Hosts",
+      "container_health": "Container unhealthy",
+      "online": "Online",
+      "mem": "RAM"
     }
   },
   "webhooks": {
@@ -520,7 +519,7 @@
   "resources": {
     "subtitle": "CPU, RAM und Platten der Hosts, VMs und Container",
     "emptyTitle": "Noch keine Ressourcen",
-    "empty": "Hier erscheinen Nodes, VMs und Container, sobald eine Integration für Proxmox VE oder Glances eingerichtet ist.",
+    "empty": "Hier erscheinen Nodes, VMs und Container, sobald eine Integration für Proxmox VE oder Dockhand eingerichtet ist.",
     "search": "Name, ID, Tag oder Image suchen",
     "filter": "Zustand",
     "filters": {
@@ -573,7 +572,7 @@
       "mem": "RAM",
       "disk_pct": "Platte"
     },
-    "hint": "Zeile anklicken für den Verlauf. Netzwerk: bei Proxmox seit dem Start, bei Glances je Sekunde."
+    "hint": "Zeile anklicken für den Verlauf. Netzwerk: Daten seit dem Start der VM bzw. des Containers."
   },
   "units": {
     "mainsOn": "Netzbetrieb",

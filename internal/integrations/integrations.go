@@ -76,7 +76,7 @@ type Resource struct {
 	MemTotal  *int64 `json:"mem_total,omitempty"`
 	DiskUsed  *int64 `json:"disk_used,omitempty"`
 	DiskTotal *int64 `json:"disk_total,omitempty"`
-	// Netzwerk: Bytes seit Start (PVE) bzw. Bytes/s (Glances, NetRate)
+	// Netzwerk: Bytes seit Start bzw. Bytes/s (NetRate)
 	NetIn   *int64 `json:"net_in,omitempty"`
 	NetOut  *int64 `json:"net_out,omitempty"`
 	NetRate bool   `json:"net_rate,omitempty"`

@@ -11,15 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   status, CPU, RAM, disk and network per VM and container, storage usage, SMART state and
   remaining life of the disks, ZFS pool health, last backup per VM/container from the backup
   storages and the vzdump runs.
-- Glances integration: CPU, RAM, load and filesystems of a host plus status (incl. healthy /
-  unhealthy), CPU, RAM and network per Docker container.
+- Dockhand integration (API token, read permissions): CPU and RAM of every Docker host Dockhand
+  manages, pending image updates, and status (incl. healthy / unhealthy), CPU, RAM and network
+  per container.
 - UPS via Network UPS Tools (upsd): mains or battery, charge, runtime, load, input voltage;
   running on battery and low runtime appear as problems.
 - Resources page: one card per host/node with CPU, RAM and disk meters, below it the VMs and
   containers with search, state filter, sorting and a history chart per resource.
 - Setting "Keep raw data per VM/container" (default 7 days) – with many guests this keeps the
   database small; daily values stay.
-- Real, colored logos of the services (Healthchecks.io, Immich, Proxmox, Prometheus, Glances, NUT)
+- Real, colored logos of the services (Healthchecks.io, Immich, Proxmox, Prometheus, NUT)
   and of the webhook presets, bundled offline.
 - More motion: tiles and rows fade in, numbers count up and glide to new values, rows light up
   on live changes, the overall status pulses on errors and draws a check mark when all is good,

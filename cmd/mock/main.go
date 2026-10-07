@@ -13,10 +13,10 @@
 //	HTTP-JSON         http://localhost:8790/json/stats     Header: Authorization: Token json-token
 //	Proxmox Backup    http://localhost:8790/pbs            Token-ID: labdeck@pbs!dashboard, Secret: pbs-secret
 //	Proxmox VE        http://localhost:8790/pve            Token-ID: labdeck@pve!dashboard, Secret: pve-secret
-//	Glances           http://localhost:8790/glances        ohne Anmeldung
+//	Dockhand          http://localhost:8790/dockhand       API-Token: dh_mock
 //	USV (NUT)         Host localhost, Port 8793 (-nut-addr), USV „ups“, ohne Anmeldung
 //
-// Steuerung (ohne Key), {svc} = healthchecks | immich | prometheus | json | pbs | pve | glances:
+// Steuerung (ohne Key), {svc} = healthchecks | immich | prometheus | json | pbs | pve | dockhand:
 //
 //	POST /_{svc}/fail?status=500                    Ausfälle simulieren (status=0 beendet)
 //	POST /_{svc}/broken?on=1                        kaputtes JSON liefern (on=0 beendet)
@@ -24,7 +24,7 @@
 //	GET  /_{svc}/requests                           Anzahl der API-Anfragen
 //	POST /_healthchecks/status?name=DynDNS&status=down   Status eines Checks setzen
 //	POST /_immich/photos?n=100                      Fotos hinzufügen (Verlauf)
-//	POST /_glances/cpu?value=95                     CPU-Last des Glances-Hosts setzen
+//	POST /_dockhand/health?name=jellyfin&value=unhealthy   Health eines Containers setzen
 //	POST /_nut/status?value=OB+DISCHRG              Status der USV setzen (OL = Netz)
 //
 // Webhook-Empfänger: beliebige Anfragen an /hook/… werden aufgezeichnet,
@@ -39,7 +39,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mrcdlm/labdeck/internal/integrations/glances/glancestest"
+	"github.com/mrcdlm/labdeck/internal/integrations/dockhand/dockhandtest"
 	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks/hctest"
 	"github.com/mrcdlm/labdeck/internal/integrations/immich/immichtest"
 	"github.com/mrcdlm/labdeck/internal/integrations/nut/nuttest"
@@ -117,10 +117,10 @@ func main() {
 	mount(mux, "json", &jsonStatus{})
 	mount(mux, "pbs", pbstest.New("labdeck@pbs!dashboard:pbs-secret", pbstest.Demo()...))
 	mount(mux, "pve", pvetest.New("labdeck@pve!dashboard=pve-secret").Demo())
-	gl := glancestest.New("", "")
-	mount(mux, "glances", gl)
-	mux.HandleFunc("POST /_glances/cpu", func(w http.ResponseWriter, r *http.Request) {
-		gl.SetCPU(float64(intParam(r, "value")))
+	dh := dockhandtest.New("dh_mock").Demo()
+	mount(mux, "dockhand", dh)
+	mux.HandleFunc("POST /_dockhand/health", func(w http.ResponseWriter, r *http.Request) {
+		dh.SetHealth(r.URL.Query().Get("name"), r.URL.Query().Get("value"))
 		w.WriteHeader(http.StatusNoContent)
 	})
 
@@ -137,6 +137,6 @@ func main() {
 
 	mux.HandleFunc("GET /_health", func(w http.ResponseWriter, _ *http.Request) { w.Write([]byte("ok")) })
 
-	log.Printf("Mock auf %s – Healthchecks: /healthchecks (hc-readonly), Immich: /immich (immich-admin), Prometheus: /prometheus, JSON: /json/stats, PBS: /pbs, PVE: /pve, Glances: /glances", *addr)
+	log.Printf("Mock auf %s – Healthchecks: /healthchecks (hc-readonly), Immich: /immich (immich-admin), Prometheus: /prometheus, JSON: /json/stats, PBS: /pbs, PVE: /pve, Dockhand: /dockhand", *addr)
 	log.Fatal(http.ListenAndServe(*addr, mux))
 }

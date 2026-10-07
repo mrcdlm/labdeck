@@ -12,7 +12,7 @@ const create = (page: Parameters<typeof api>[0], body: Record<string, unknown>) 
     enabled: true, interval_seconds: 3600, timeout_seconds: 5, tls_verify: true, secrets: {}, clear_secrets: [], ...body,
   })
 
-test('Proxmox VE und Glances: Ressourcen-Seite mit Hosts, VMs, Containern', async ({ page }) => {
+test('Proxmox VE und Dockhand: Ressourcen-Seite mit Hosts, VMs, Containern', async ({ page }) => {
   await login(page)
 
   // PVE per Formular
@@ -31,8 +31,10 @@ test('Proxmox VE und Glances: Ressourcen-Seite mit Hosts, VMs, Containern', asyn
   await dialog.getByRole('button', { name: 'Speichern' }).click()
   await expect(dialog).toBeHidden()
 
-  const glances = await create(page, { type: 'glances', name: 'Docker-Host', config: { base_url: `${MOCK}/glances` } })
-  await api(page, 'POST', `/api/integrations/${glances.json.id}/poll`)
+  const dockhand = await create(page, {
+    type: 'dockhand', name: 'Dockhand', config: { base_url: `${MOCK}/dockhand` }, secrets: { api_token: 'dh_mock' },
+  })
+  await api(page, 'POST', `/api/integrations/${dockhand.json.id}/poll`)
 
   await page.goto('/ressourcen')
   const pve1 = page.locator('[data-host="pve1"]')

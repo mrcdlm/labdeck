@@ -36,7 +36,7 @@ const integrations = (m) => [
     type: 'pve', name: 'Proxmox VE', config: { base_url: `${m}/pve`, token_id: 'labdeck@pve!dashboard', backups: false },
     secrets: { token_secret: 'pve-secret' },
   },
-  { type: 'glances', name: 'Docker-Host', config: { base_url: `${m}/glances` }, secrets: {} },
+  { type: 'dockhand', name: 'Dockhand', config: { base_url: `${m}/dockhand` }, secrets: { api_token: 'dh_mock' } },
   { type: 'nut', name: 'USV', config: { host: new URL(m).hostname, port: 8794 }, secrets: {} },
   {
     type: 'prometheus', name: 'Prometheus', secrets: {},
@@ -72,8 +72,8 @@ if (mode === 'setup') {
   const shoot = async (page, name, path, file, full = true) => {
     await page.goto(base + path)
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(600)
-    await page.screenshot({ path: `${out}/${file}.png`, fullPage: full })
+    await page.waitForTimeout(800)
+    await page.screenshot({ path: `${out}/${file}.png`, fullPage: full, animations: 'disabled' })
   }
   // je Sprache alle Seiten hell, Dashboard zusätzlich dunkel und mobil
   for (const lang of ['de', 'en']) {

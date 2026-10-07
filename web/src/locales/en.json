@@ -408,24 +408,23 @@
       "online": "online",
       "disk_pct": "disk"
     },
-    "glances": {
-      "cpu": "CPU",
-      "mem_pct": "RAM",
-      "containers_running": "containers running",
-      "load5": "load (5 min)",
-      "used_pct": "usage",
-      "used": "used",
-      "total": "capacity",
-      "disk_pct": "disk",
-      "mem": "RAM",
-      "container_health": "container unhealthy"
-    },
     "nut": {
       "power": "power",
       "charge": "charge",
       "runtime": "runtime",
       "load": "load",
       "input_voltage": "input voltage"
+    },
+    "dockhand": {
+      "containers_running": "containers running",
+      "cpu": "CPU",
+      "mem_pct": "RAM",
+      "updates": "updates available",
+      "containers": "containers",
+      "hosts": "Docker hosts",
+      "container_health": "container unhealthy",
+      "online": "online",
+      "mem": "RAM"
     }
   },
   "webhooks": {
@@ -520,7 +519,7 @@
   "resources": {
     "subtitle": "CPU, RAM and disks of hosts, VMs and containers",
     "emptyTitle": "No resources yet",
-    "empty": "Nodes, VMs and containers appear here once an integration for Proxmox VE or Glances is set up.",
+    "empty": "Nodes, VMs and containers appear here once an integration for Proxmox VE or Dockhand is set up.",
     "search": "Search name, ID, tag or image",
     "filter": "State",
     "filters": {
@@ -573,7 +572,7 @@
       "mem": "RAM",
       "disk_pct": "Disk"
     },
-    "hint": "Click a row for its history. Network: since start for Proxmox, per second for Glances."
+    "hint": "Click a row for its history. Network: data since the VM or container started."
   },
   "units": {
     "mainsOn": "On mains",

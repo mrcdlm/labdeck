@@ -2,6 +2,7 @@ import {
   BatteryCharging,
   Bell,
   Braces,
+  Container,
   DatabaseBackup,
   Flame,
   Gauge,
@@ -13,7 +14,6 @@ import {
 } from 'lucide-react'
 
 import discord from '@/assets/brands/discord.svg'
-import glances from '@/assets/brands/glances.svg'
 import healthchecks from '@/assets/brands/healthchecks.svg'
 import homeassistant from '@/assets/brands/home-assistant.svg'
 import immich from '@/assets/brands/immich.svg'
@@ -35,6 +35,7 @@ const icons: Record<string, LucideIcon> = {
   server: Server,
   gauge: Gauge,
   'battery-charging': BatteryCharging,
+  container: Container,
   bell: Bell,
 }
 
@@ -46,7 +47,6 @@ const logos: Record<string, { src: string; dark?: boolean }> = {
   pve: { src: proxmox, dark: true },
   pbs: { src: proxmox, dark: true },
   prometheus: { src: prometheus },
-  glances: { src: glances, dark: true },
   nut: { src: nut, dark: true },
   // Webhook-Vorlagen
   ntfy: { src: ntfy },

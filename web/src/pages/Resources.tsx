@@ -149,7 +149,7 @@ function HostCard({ integration, host, icon, guests }: {
             <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} />
           </button>
         </div>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className={cn('grid gap-4', host.disk_total ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
           <Meter
             size="lg"
             value={host.cpu}
@@ -162,12 +162,14 @@ function HostCard({ integration, host, icon, guests }: {
             label={t('resources.mem')}
             detail={host.mem_used !== undefined && host.mem_total ? `${formatBytes(host.mem_used)} / ${formatBytes(host.mem_total)}` : '—'}
           />
-          <Meter
-            size="lg"
-            value={pct(host.disk_used, host.disk_total)}
-            label={t('resources.disk')}
-            detail={host.disk_used !== undefined && host.disk_total ? `${formatBytes(host.disk_used)} / ${formatBytes(host.disk_total)}` : '—'}
-          />
+          {host.disk_total ? (
+            <Meter
+              size="lg"
+              value={pct(host.disk_used, host.disk_total)}
+              label={t('resources.disk')}
+              detail={host.disk_used !== undefined ? `${formatBytes(host.disk_used)} / ${formatBytes(host.disk_total)}` : '—'}
+            />
+          ) : null}
         </div>
         {open && <ResourceHistory integration={integration} r={host} />}
       </CardContent>

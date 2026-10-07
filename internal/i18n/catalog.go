@@ -149,9 +149,10 @@ var catalog = map[string]entry{
 	"pve.no_nodes":     {"Das Token sieht keine Nodes – Rolle PVEAuditor auf / für das Token vergeben", "The token sees no nodes – give the token the role PVEAuditor on /"},
 	"pve.node_missing": {"Node {nodes} nicht gefunden oder für das Token nicht sichtbar", "Node {nodes} not found or not visible to the token"},
 
-	// Glances
-	"glances.no_v4":      {"Keine Glances-API v4 unter dieser Adresse – Glances 4 im Webserver-Modus (glances -w) und Port 61208 prüfen", "No Glances API v4 at this address – check Glances 4 in web server mode (glances -w) and port 61208"},
-	"glances.unexpected": {"Antwort ist keine Glances-API – ist die Adresse Glances?", "The response is not the Glances API – is the address Glances?"},
+	// Dockhand
+	"dockhand.unexpected":  {"Antwort ist keine Dockhand-API – ist die Adresse die Dockhand-Oberfläche?", "The response is not the Dockhand API – is the address the Dockhand web interface?"},
+	"dockhand.no_envs":     {"Dockhand kennt keine Umgebung (Docker-Host) oder das Token darf keine sehen", "Dockhand knows no environment (Docker host) or the token may not see any"},
+	"dockhand.env_missing": {"Umgebung {names} in Dockhand nicht gefunden", "Environment {names} not found in Dockhand"},
 
 	// USV (NUT)
 	"nut.protocol":      {"Antwort ist kein NUT-Protokoll – läuft unter Host und Port upsd?", "The response is not the NUT protocol – is upsd running at host and port?"},

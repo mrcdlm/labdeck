@@ -17,7 +17,7 @@ import (
 	"github.com/mrcdlm/labdeck/internal/config"
 	"github.com/mrcdlm/labdeck/internal/events"
 	"github.com/mrcdlm/labdeck/internal/integrations"
-	"github.com/mrcdlm/labdeck/internal/integrations/glances"
+	"github.com/mrcdlm/labdeck/internal/integrations/dockhand"
 	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks"
 	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks/hctest"
 	"github.com/mrcdlm/labdeck/internal/integrations/httpjson"
@@ -78,7 +78,7 @@ func newTestEnv(t *testing.T, static fstest.MapFS) *testEnv {
 	imSrv := httptest.NewServer(im)
 	t.Cleanup(imSrv.Close)
 	box, _ := secrets.New(bytes.Repeat([]byte{1}, 32))
-	mgr := integrations.NewManager(integrations.NewRegistry(glances.New(), healthchecks.New(), httpjson.New(), immich.New(), nut.New(), pbs.New(), prometheus.New(), pve.New()), st, box,
+	mgr := integrations.NewManager(integrations.NewRegistry(dockhand.New(), healthchecks.New(), httpjson.New(), immich.New(), nut.New(), pbs.New(), prometheus.New(), pve.New()), st, box,
 		func(string) (string, bool) { return "", false }, log)
 	mgr.Pub = broker
 	dispatcher := notify.NewDispatcher(st, func(string) (string, bool) { return "", false }, log)
