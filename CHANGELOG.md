@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] – 2026-10-07
+
 ### Added
 - Integrations: data sources are added, tested, edited, paused and deleted in the web interface
   (Settings → Integrations). The form is generated from each integration's schema.
@@ -19,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   according to the retention settings.
 - Healthchecks.io (cloud or self-hosted, read-only API key is enough): checks, backup tag, counts.
 - Dashboard: overall status ("All good" / "2 problems") based on the integrations.
+
+### Changed
+- GitLab CI: Go and web tests on every push and merge request; image build check on other
+  branches; image push to the GitLab registry on `main` (`:main`) and for version tags
+  (`:X.Y.Z`, `:X.Y`, `:latest`).
 
 ## [0.1.0] – 2026-10-06
 
