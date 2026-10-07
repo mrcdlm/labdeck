@@ -91,9 +91,20 @@ type Backup struct {
 	SizeBytes   *int64         `json:"size_bytes,omitempty"`
 	Duration    *time.Duration `json:"duration,omitempty"`
 	Description string         `json:"description,omitempty"`
+	// Verify: Prüfung des Backups durch die Quelle (ok, failed, none); leer = unbekannt
+	Verify string `json:"verify,omitempty"`
+	// Runs: bekannte Läufe der letzten 30 Tage (z. B. PBS-Snapshots), aufsteigend;
+	// daraus entsteht der Verlauf, wenn die Quelle keinen History liefert
+	Runs []Run `json:"runs,omitempty"`
 	// History/HistorySince wie bei Check (z. B. Healthchecks-Flips).
 	History      []Transition `json:"history,omitempty"`
 	HistorySince *time.Time   `json:"history_since,omitempty"`
+}
+
+// Run ist ein Lauf eines Backups mit Ergebnis (ok oder error).
+type Run struct {
+	At     time.Time `json:"at"`
+	Result Status    `json:"result"`
 }
 
 // Transition ist ein Statuswechsel zum Zeitpunkt At.

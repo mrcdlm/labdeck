@@ -18,6 +18,9 @@ import { cn } from '@/lib/utils'
 
 const statusDot: Record<string, string> = { warning: 'bg-warning', error: 'bg-destructive' }
 
+// Überschrift der Gruppen-Spalte je Integrationstyp
+const groupTitle: Record<string, 'user' | 'datastore'> = { immich: 'user', pbs: 'datastore' }
+
 /** Große Kennzahl; anklickbar, um sie im Diagramm zu zeigen. */
 function Stat({ m, label, selected, onSelect }: { m: Metric; label: string; selected: boolean; onSelect: () => void }) {
   return (
@@ -50,7 +53,7 @@ function Groups({ type, metrics }: { type: string; metrics: Metric[] }) {
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead>{t(`services.groupTitle.${type === 'immich' ? 'user' : 'group'}`)}</TableHead>
+            <TableHead>{t(`services.groupTitle.${groupTitle[type] ?? 'group'}`)}</TableHead>
             {columns.map((c) => (
               <TableHead key={c} className="text-right">
                 <span className="inline-block first-letter:uppercase">{metricLabel(type, metrics.find((m) => metricBase(m.key) === c)!)}</span>

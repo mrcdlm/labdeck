@@ -11,8 +11,9 @@
 //	Immich            http://localhost:8790/immich         API-Key: immich-admin (oder immich-user: ohne Berechtigung)
 //	Prometheus        http://localhost:8790/prometheus     ohne Anmeldung
 //	HTTP-JSON         http://localhost:8790/json/stats     Header: Authorization: Token json-token
+//	Proxmox Backup    http://localhost:8790/pbs            Token-ID: labdeck@pbs!dashboard, Secret: pbs-secret
 //
-// Steuerung (ohne Key), {svc} = healthchecks | immich | prometheus | json:
+// Steuerung (ohne Key), {svc} = healthchecks | immich | prometheus | json | pbs:
 //
 //	POST /_{svc}/fail?status=500                    Ausfälle simulieren (status=0 beendet)
 //	POST /_{svc}/broken?on=1                        kaputtes JSON liefern (on=0 beendet)
@@ -32,6 +33,7 @@ import (
 
 	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks/hctest"
 	"github.com/mrcdlm/labdeck/internal/integrations/immich/immichtest"
+	"github.com/mrcdlm/labdeck/internal/integrations/pbs/pbstest"
 	"github.com/mrcdlm/labdeck/internal/integrations/prometheus/promtest"
 )
 
@@ -101,9 +103,10 @@ func main() {
 
 	mount(mux, "prometheus", promtest.New("", "", "").Demo(time.Now()))
 	mount(mux, "json", &jsonStatus{})
+	mount(mux, "pbs", pbstest.New("labdeck@pbs!dashboard:pbs-secret", pbstest.Demo()...))
 
 	mux.HandleFunc("GET /_health", func(w http.ResponseWriter, _ *http.Request) { w.Write([]byte("ok")) })
 
-	log.Printf("Mock auf %s – Healthchecks: /healthchecks (hc-readonly), Immich: /immich (immich-admin), Prometheus: /prometheus, JSON: /json/stats", *addr)
+	log.Printf("Mock auf %s – Healthchecks: /healthchecks (hc-readonly), Immich: /immich (immich-admin), Prometheus: /prometheus, JSON: /json/stats, PBS: /pbs", *addr)
 	log.Fatal(http.ListenAndServe(*addr, mux))
 }

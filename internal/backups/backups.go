@@ -73,6 +73,7 @@ type Item struct {
 	Result          integrations.Status      `json:"result"`
 	SizeBytes       *int64                   `json:"size_bytes,omitempty"`
 	DurationSeconds *float64                 `json:"duration_seconds,omitempty"`
+	Verify          string                   `json:"verify,omitempty"`
 	State           State                    `json:"state"`
 	Status          integrations.Status      `json:"status"`
 	MaxAgeHours     int                      `json:"max_age_hours"`
@@ -90,9 +91,9 @@ func Evaluate(sources []Source, maxAges map[store.BackupKey]int, defaultHours in
 		for _, b := range src.Backups {
 			it := Item{IntegrationID: src.IntegrationID, IntegrationName: src.IntegrationName,
 				IntegrationType: src.IntegrationType, ID: b.ID, Name: b.Name, Group: b.Group,
-				Description: b.Description, LastRun: b.LastRun, Result: b.Result, SizeBytes: b.SizeBytes,
+				Description: b.Description, LastRun: b.LastRun, Result: b.Result, SizeBytes: b.SizeBytes, Verify: b.Verify,
 				MaxAgeHours: defaultHours, Stale: src.Stale,
-				Uptime: uptime.All(b.History, b.HistorySince, b.Result, now)}
+			}
 			if b.Duration != nil {
 				d := b.Duration.Seconds()
 				it.DurationSeconds = &d
@@ -102,6 +103,14 @@ func Evaluate(sources []Source, maxAges map[store.BackupKey]int, defaultHours in
 			}
 			it.State = state(b, time.Duration(it.MaxAgeHours)*time.Hour, now)
 			it.Status = it.State.Status()
+			switch {
+			case b.HistorySince != nil:
+				it.Uptime = uptime.All(b.History, b.HistorySince, b.Result, now)
+			case len(b.Runs) > 0:
+				// Verlauf aus den Läufen: ok → bald fällig → überfällig bis zum nächsten Lauf
+				tr, since := runHistory(b.Runs, time.Duration(it.MaxAgeHours)*time.Hour)
+				it.Uptime = uptime.All(tr, &since, it.Status, now)
+			}
 			if b.LastRun != nil {
 				due := b.LastRun.Add(time.Duration(it.MaxAgeHours) * time.Hour)
 				it.DueAt = &due
@@ -118,6 +127,40 @@ func Evaluate(sources []Source, maxAges map[store.BackupKey]int, defaultHours in
 		)
 	})
 	return out
+}
+
+// runHistory macht aus Läufen Statuswechsel: nach einem erfolgreichen Lauf
+// ok, ab WarnRatio des Höchstalters Warnung, danach Fehler (überfällig) bis
+// zum nächsten Lauf; ein fehlgeschlagener Lauf ist Fehler bis zum nächsten.
+func runHistory(runs []integrations.Run, maxAge time.Duration) ([]integrations.Transition, time.Time) {
+	rs := slices.Clone(runs)
+	slices.SortFunc(rs, func(a, b integrations.Run) int { return a.At.Compare(b.At) })
+	var out []integrations.Transition
+	cur := integrations.StatusUnknown
+	set := func(at time.Time, st integrations.Status) {
+		if st != cur {
+			out = append(out, integrations.Transition{At: at, From: cur, To: st})
+			cur = st
+		}
+	}
+	for i, r := range rs {
+		if r.Result == integrations.StatusError {
+			set(r.At, integrations.StatusError)
+			continue
+		}
+		set(r.At, integrations.StatusOK)
+		next := r.At.Add(maxAge + 1) // nach dem letzten Lauf: bis „jetzt“
+		if i+1 < len(rs) {
+			next = rs[i+1].At
+		}
+		if w := r.At.Add(time.Duration(float64(maxAge) * WarnRatio)); w.Before(next) {
+			set(w, integrations.StatusWarning)
+		}
+		if o := r.At.Add(maxAge); o.Before(next) {
+			set(o, integrations.StatusError)
+		}
+	}
+	return out, rs[0].At
 }
 
 func state(b integrations.Backup, maxAge time.Duration, now time.Time) State {

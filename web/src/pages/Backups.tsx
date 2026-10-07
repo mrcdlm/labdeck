@@ -1,4 +1,4 @@
-import { CloudOff, DatabaseBackup, Info, Loader2, Pencil, Plug } from 'lucide-react'
+import { CloudOff, DatabaseBackup, Info, Loader2, Pencil, Plug, ShieldCheck, ShieldQuestion, ShieldX } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
@@ -46,6 +46,27 @@ function NameCell({ item, icon }: { item: BackupItem; icon?: string }) {
         </span>
         {item.stale && <CloudOff className="text-warning size-3 shrink-0" aria-hidden />}
       </div>
+      <Verify item={item} />
+    </div>
+  )
+}
+
+const verifyIcon = { ok: ShieldCheck, failed: ShieldX, none: ShieldQuestion }
+
+/** Verify-Status der Quelle (z. B. Proxmox Backup Server). */
+function Verify({ item }: { item: BackupItem }) {
+  const { t } = useTranslation()
+  if (!item.verify) return null
+  const Icon = verifyIcon[item.verify]
+  return (
+    <div
+      className={cn(
+        'mt-0.5 flex items-center gap-1 text-xs',
+        item.verify === 'failed' ? 'text-destructive' : 'text-muted-foreground',
+      )}
+    >
+      <Icon className="size-3 shrink-0" aria-hidden />
+      {t(`backups.verify.${item.verify}`)}
     </div>
   )
 }

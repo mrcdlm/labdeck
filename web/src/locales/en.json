@@ -128,7 +128,12 @@
     "total_one": "{{count}} backup",
     "total_other": "{{count}} backups",
     "stale": "At least one source is currently unreachable – showing the data from the last successful poll.",
-    "howItWorks": "A backup is overdue when its last run is older than the maximum age (default {{age}}, marked with *), and due soon from {{percent}} % of it. Failed means: the source reports an error. Healthchecks checks with the backup tag appear here automatically."
+    "howItWorks": "A backup is overdue when its last run is older than the maximum age (default {{age}}, marked with *), and due soon from {{percent}} % of it. Failed means: the source reports an error. Healthchecks checks with the backup tag appear here automatically.",
+    "verify": {
+      "ok": "verified",
+      "failed": "verify failed",
+      "none": "not verified"
+    }
   },
   "checks": {
     "subtitle": "Healthchecks.io checks with uptime history",
@@ -182,7 +187,8 @@
     },
     "groupTitle": {
       "user": "User",
-      "group": "Group"
+      "group": "Group",
+      "datastore": "Datastore"
     }
   },
   "history": {
@@ -333,6 +339,15 @@
       "checks_grace": "grace",
       "checks_down": "down",
       "checks_paused": "paused"
+    },
+    "pbs": {
+      "groups": "backup groups",
+      "verify_failed": "verify failed",
+      "datastores": "datastores",
+      "used": "used",
+      "total": "capacity",
+      "used_pct": "usage",
+      "snapshots": "snapshots"
     }
   }
 }

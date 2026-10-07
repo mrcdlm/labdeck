@@ -119,7 +119,7 @@ func TestChecksAPI(t *testing.T) {
 
 	// /api/integrations liefert keine Verläufe mit
 	raw := body(t, e.do(t, "GET", "/api/integrations", "", c).Body)
-	if strings.Contains(raw, "history") {
+	if strings.Contains(raw, "history") || strings.Contains(raw, `"runs"`) {
 		t.Error("Verlauf in /api/integrations")
 	}
 

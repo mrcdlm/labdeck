@@ -85,6 +85,11 @@ var catalog = map[string]entry{
 	"prometheus.matrix":      {"{name}: Abfrage liefert einen Bereich (z. B. [5m]) – bitte eine Funktion wie rate() oder last_over_time() verwenden", "{name}: the query returns a range (e.g. [5m]) – please use a function like rate() or last_over_time()"},
 	"prometheus.unexpected":  {"Antwort ist kein Prometheus-Ergebnis – ist die Adresse Prometheus?", "The response is not a Prometheus result – is the address Prometheus?"},
 
+	// Proxmox Backup Server
+	"pbs.unexpected":        {"Antwort ist keine PBS-API – Adresse mit Port 8007 prüfen", "The response is not the PBS API – check the address with port 8007"},
+	"pbs.no_datastores":     {"Das Token sieht keine Datastores – Rolle DatastoreAudit auf /datastore für das Token vergeben", "The token sees no datastores – give the token the role DatastoreAudit on /datastore"},
+	"pbs.datastore_missing": {"Datastore {store} nicht gefunden oder für das Token nicht sichtbar", "Datastore {store} not found or not visible to the token"},
+
 	// Einstellungen
 	"settings.timezone_invalid":      {"unbekannte Zeitzone {name}", "unknown time zone {name}"},
 	"settings.raw_retention_range":   {"Aufbewahrung der Rohdaten muss zwischen {min} und {max} Tagen liegen", "Raw data retention must be between {min} and {max} days"},

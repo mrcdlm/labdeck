@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bearer token; one row per label value (e.g. per instance); timestamps (e.g. restic exporter)
   as backups.
 - Threshold breaches appear in the overall status on the dashboard.
+- Proxmox Backup Server integration (API token, role DatastoreAudit): last snapshot, size and
+  verify state per VM, container and host (all namespaces), datastore usage with thresholds.
+  A failed verify marks the backup as failed.
+- Backups without a history from their source get one from their runs (e.g. PBS snapshots):
+  OK after a run, due soon from 80 % of the maximum age, then overdue until the next run.
 
 ### Changed
 - Addresses of integrations are stored as entered (a trailing slash is kept, some APIs need it).

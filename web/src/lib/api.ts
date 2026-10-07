@@ -258,6 +258,8 @@ export interface BackupItem {
   result: Status
   size_bytes?: number
   duration_seconds?: number
+  /** Prüfung durch die Quelle (z. B. PBS-Verify); fehlt = unbekannt */
+  verify?: 'ok' | 'failed' | 'none'
   state: BackupState
   status: Status
   max_age_hours: number

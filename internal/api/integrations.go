@@ -120,7 +120,7 @@ func toDTO(v integrations.View, lang i18n.Lang) integrationDTO {
 		}
 		snap.Backups = slices.Clone(snap.Backups)
 		for i := range snap.Backups {
-			snap.Backups[i].History, snap.Backups[i].HistorySince = nil, nil
+			snap.Backups[i].History, snap.Backups[i].HistorySince, snap.Backups[i].Runs = nil, nil, nil
 		}
 		v.Snapshot = &snap
 	}

@@ -128,7 +128,12 @@
     "total_one": "{{count}} Backup",
     "total_other": "{{count}} Backups",
     "stale": "Mindestens eine Quelle ist gerade nicht erreichbar – angezeigt werden die Daten vom letzten erfolgreichen Abruf.",
-    "howItWorks": "Ein Backup ist überfällig, wenn sein letzter Lauf älter als das Höchstalter ist (Standard {{age}}, mit * markiert), und ab {{percent}} % davon bald fällig. Fehlgeschlagen heißt: Die Quelle meldet einen Fehler. Healthchecks-Checks mit dem Backup-Tag erscheinen hier automatisch."
+    "howItWorks": "Ein Backup ist überfällig, wenn sein letzter Lauf älter als das Höchstalter ist (Standard {{age}}, mit * markiert), und ab {{percent}} % davon bald fällig. Fehlgeschlagen heißt: Die Quelle meldet einen Fehler. Healthchecks-Checks mit dem Backup-Tag erscheinen hier automatisch.",
+    "verify": {
+      "ok": "verifiziert",
+      "failed": "Verify fehlgeschlagen",
+      "none": "nicht verifiziert"
+    }
   },
   "checks": {
     "subtitle": "Healthchecks.io-Checks mit Uptime-Verlauf",
@@ -182,7 +187,8 @@
     },
     "groupTitle": {
       "user": "Benutzer",
-      "group": "Gruppe"
+      "group": "Gruppe",
+      "datastore": "Datastore"
     }
   },
   "history": {
@@ -333,6 +339,15 @@
       "checks_grace": "Karenzzeit",
       "checks_down": "Down",
       "checks_paused": "Pausiert"
+    },
+    "pbs": {
+      "groups": "Backup-Gruppen",
+      "verify_failed": "Verify fehlgeschlagen",
+      "datastores": "Datastores",
+      "used": "Belegt",
+      "total": "Kapazität",
+      "used_pct": "Belegung",
+      "snapshots": "Snapshots"
     }
   }
 }
