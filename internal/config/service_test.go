@@ -69,6 +69,7 @@ func TestSettingsService(t *testing.T) {
 		func(s *Settings) { s.RawRetentionDays = MaxRawRetentionDays + 1 },
 		func(s *Settings) { s.DailyRetentionDays = MinDailyRetentionDays - 1 },
 		func(s *Settings) { s.BackupMaxAgeHours = 0 },
+		func(s *Settings) { s.NotifyLanguage = "fr" },
 		func(s *Settings) { s.BackupMaxAgeHours = MaxBackupMaxAgeHours + 1 },
 	} {
 		n := svc.Get()

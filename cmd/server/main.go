@@ -14,14 +14,17 @@ import (
 	"time"
 
 	"github.com/mrcdlm/labdeck/internal/api"
+	"github.com/mrcdlm/labdeck/internal/backups"
 	"github.com/mrcdlm/labdeck/internal/config"
 	"github.com/mrcdlm/labdeck/internal/events"
+	"github.com/mrcdlm/labdeck/internal/i18n"
 	"github.com/mrcdlm/labdeck/internal/integrations"
 	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks"
 	"github.com/mrcdlm/labdeck/internal/integrations/httpjson"
 	"github.com/mrcdlm/labdeck/internal/integrations/immich"
 	"github.com/mrcdlm/labdeck/internal/integrations/pbs"
 	"github.com/mrcdlm/labdeck/internal/integrations/prometheus"
+	"github.com/mrcdlm/labdeck/internal/notify"
 	"github.com/mrcdlm/labdeck/internal/scheduler"
 	"github.com/mrcdlm/labdeck/internal/secrets"
 	"github.com/mrcdlm/labdeck/internal/store"
@@ -104,6 +107,64 @@ func run() error {
 	manager := integrations.NewManager(registry, st, box, os.LookupEnv, log)
 	manager.Pub = broker
 	poller := scheduler.NewPoller(log, manager.Poll)
+
+	// Benachrichtigungen (Webhooks wie dnsdeck, Tokens verschlüsselt)
+	dispatcher := notify.NewDispatcher(st, os.LookupEnv, log)
+	dispatcher.Pub = broker
+	dispatcher.Lang = func() i18n.Lang { return i18n.Parse(settings.Get().NotifyLanguage) }
+	dispatcher.Token = api.OpenWebhookToken(box)
+	// Zeitangaben in Nachrichten in der Zeitzone der Anzeige
+	timeFmt := func(t time.Time) string {
+		loc := time.Local
+		if tz := settings.Get().Timezone; tz != "" {
+			if l, err := time.LoadLocation(tz); err == nil {
+				loc = l
+			}
+		}
+		return t.In(loc).Format("2006-01-02 15:04")
+	}
+
+	// Backups: regelmäßig auswerten (überfällig wird man auch ohne Abfrage)
+	watcher := &backups.Watcher{Store: st,
+		Load: func(ctx context.Context, now time.Time) ([]backups.Item, error) {
+			list, err := manager.List(ctx)
+			if err != nil {
+				return nil, err
+			}
+			maxAges, err := st.BackupMaxAges(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return backups.Evaluate(backups.Sources(list), maxAges, settings.Get().BackupMaxAgeHours, now), nil
+		},
+		OnChange: func(c backups.Change) {
+			if ev, ok := notify.FromBackup(c, time.Now(), timeFmt); ok {
+				dispatcher.Notify(ev)
+			}
+			events.Publish(broker, events.TopicBackups)
+		},
+	}
+	// Nach jeder Abfrage: Statuswechsel melden, Backups neu auswerten.
+	manager.OnPolled = func(it integrations.PolledIntegration, changes []store.StatusChange) {
+		if len(changes) > 0 {
+			metrics := map[string]integrations.Metric{}
+			lastPing := map[string]*time.Time{}
+			if v, err := manager.Get(ctx, it.ID); err == nil && v.Snapshot != nil {
+				for _, m := range v.Snapshot.Metrics {
+					metrics[m.Key] = m
+				}
+				for _, c := range v.Snapshot.Checks {
+					lastPing[c.ID] = c.LastPing
+				}
+			}
+			for _, ev := range notify.FromPoll(notify.Source{Name: it.Name, Type: it.Type}, changes, metrics, lastPing, timeFmt) {
+				dispatcher.Notify(ev)
+			}
+		}
+		if err := watcher.Run(ctx); err != nil && ctx.Err() == nil {
+			log.Error("Backups auswerten fehlgeschlagen", "err", err)
+		}
+	}
 	// Nach Anlegen/Ändern/Löschen: Zeitpläne abgleichen und sofort abfragen.
 	manager.OnChange = func(id int64) {
 		if sched, err := manager.Schedules(ctx); err == nil {
@@ -134,6 +195,11 @@ func run() error {
 		},
 	})
 	sched.Add(scheduler.Job{
+		Name:     "backup-watch",
+		Interval: func() time.Duration { return time.Minute },
+		Run:      watcher.Run,
+	})
+	sched.Add(scheduler.Job{
 		Name:     "retention",
 		Interval: func() time.Duration { return time.Hour },
 		Run: func(ctx context.Context) error {
@@ -154,6 +220,7 @@ func run() error {
 		Addr: fmt.Sprintf(":%d", cfg.Port),
 		Handler: api.NewServer(api.Deps{
 			Store: st, Events: broker, Settings: settings, Integrations: manager, Backups: st, Metrics: st,
+			History: st, Prefs: st, WebhookStore: st, Webhooks: dispatcher, WebhookEnv: os.LookupEnv, Box: box,
 			TrustedProxies: cfg.TrustedProxies,
 			Info:           api.Info{Version: version, DataDir: cfg.DataDir, SecretKeySet: box != nil},
 			Auth:           auth, Log: log, Static: web.Dist(),
@@ -169,6 +236,7 @@ func run() error {
 			errCh <- err
 		}
 	}()
+	dispatcher.Start(ctx)
 	sched.Start(ctx)
 	schedules, err := manager.Schedules(ctx)
 	if err != nil {
@@ -185,6 +253,7 @@ func run() error {
 		stop()
 		sched.Wait()
 		poller.Wait()
+		dispatcher.Wait()
 		return err
 	}
 
@@ -197,6 +266,7 @@ func run() error {
 	}
 	sched.Wait()
 	poller.Wait()
+	dispatcher.Wait()
 	return nil
 }
 

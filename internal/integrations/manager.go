@@ -91,6 +91,13 @@ type View struct {
 	Snapshot      *Snapshot  `json:"snapshot,omitempty"`
 }
 
+// PolledIntegration beschreibt die abgefragte Integration für OnPolled.
+type PolledIntegration struct {
+	ID   int64
+	Name string
+	Type string
+}
+
 // TestResult ist das Ergebnis von „Verbindung testen“.
 type TestResult struct {
 	OK       bool     `json:"ok"`
@@ -111,6 +118,9 @@ type Manager struct {
 	Pub events.Publisher
 	// OnChange wird nach Anlegen/Ändern/Löschen aufgerufen (Scheduler abgleichen).
 	OnChange func(id int64)
+	// OnPolled wird nach jeder gespeicherten Abfrage mit den Statuswechseln
+	// aufgerufen (Benachrichtigungen, Backup-Auswertung).
+	OnPolled func(it PolledIntegration, changes []store.StatusChange)
 	now      func() time.Time
 
 	mu      sync.Mutex
@@ -620,6 +630,9 @@ func (m *Manager) Poll(ctx context.Context, id int64) error {
 	}
 	m.log.Debug("Integration abgefragt", "id", id, "status", res.Status, "duration", res.Duration)
 	events.Publish(m.Pub, events.TopicIntegrations)
+	if m.OnPolled != nil {
+		m.OnPolled(PolledIntegration{ID: id, Name: it.Name, Type: it.Type}, res.Changes)
+	}
 	return nil
 }
 
@@ -643,10 +656,11 @@ func (m *Manager) collect(ctx context.Context, it store.Integration) (Snapshot, 
 }
 
 // itemChanges vergleicht zwei Snapshots: neue Einträge und geänderte Status
-// von Checks, Backups und Kennzahlen.
+// von Checks und Kennzahlen. Backups wertet internal/backups aus (ihr Zustand
+// hängt auch von der Zeit ab).
 func itemChanges(prev, cur Snapshot, at time.Time) []store.StatusChange {
 	var out []store.StatusChange
-	add := func(kind, id, name string, from, to Status) {
+	add := func(kind, id, name, group string, from, to Status) {
 		if from == to {
 			return
 		}
@@ -656,28 +670,25 @@ func itemChanges(prev, cur Snapshot, at time.Time) []store.StatusChange {
 				return
 			}
 		}
-		out = append(out, store.StatusChange{Kind: kind, ItemID: id, ItemName: name, From: string(from), To: string(to), At: at})
+		out = append(out, store.StatusChange{Kind: kind, ItemID: id, ItemName: name, ItemGroup: group,
+			From: string(from), To: string(to), At: at})
 	}
 	checks := map[string]Status{}
 	for _, c := range prev.Checks {
 		checks[c.ID] = c.Status
 	}
 	for _, c := range cur.Checks {
-		add("check", c.ID, c.Name, checks[c.ID], c.Status)
-	}
-	backups := map[string]Status{}
-	for _, b := range prev.Backups {
-		backups[b.ID] = b.Result
-	}
-	for _, b := range cur.Backups {
-		add("backup", b.ID, b.Name, backups[b.ID], b.Result)
+		add("check", c.ID, c.Name, c.Group, checks[c.ID], c.Status)
 	}
 	metrics := map[string]Status{}
 	for _, mt := range prev.Metrics {
 		metrics[mt.Key] = mt.Status
 	}
 	for _, mt := range cur.Metrics {
-		add("metric", mt.Key, mt.Name, metrics[mt.Key], mt.Status)
+		if mt.Derived {
+			continue // steckt schon in den Checks/Backups
+		}
+		add("metric", mt.Key, mt.Name, mt.Group, metrics[mt.Key], mt.Status)
 	}
 	slices.SortStableFunc(out, func(a, b store.StatusChange) int { return strings.Compare(a.Kind, b.Kind) })
 	return out

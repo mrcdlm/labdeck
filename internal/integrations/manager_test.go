@@ -195,14 +195,24 @@ func TestPollStatusChanges(t *testing.T) {
 	ctx := context.Background()
 	v, _ := e.m.Create(ctx, e.input("ro-key"), i18n.DE)
 
+	var polled []store.StatusChange
+	e.m.OnPolled = func(it integrations.PolledIntegration, ch []store.StatusChange) {
+		if it.ID != v.ID || it.Type != "healthchecks" {
+			t.Errorf("OnPolled: %+v", it)
+		}
+		polled = ch
+	}
 	e.m.Poll(ctx, v.ID)
 	changes, _ := e.st.ListStatusChanges(ctx, v.ID, 100)
+	if len(polled) != len(changes) {
+		t.Fatalf("OnPolled: %d Wechsel, gespeichert %d", len(polled), len(changes))
+	}
 	kinds := map[string]int{}
 	for _, c := range changes {
 		kinds[c.Kind]++
 	}
-	// Integration unknown→ok; Checks ohne „new“ (bleibt unknown); 3 Backups; Kennzahlen grace/down
-	if kinds["integration"] != 1 || kinds["check"] != 6 || kinds["backup"] != 3 || kinds["metric"] != 5 {
+	// Integration unknown→ok; Checks ohne „new“ (bleibt unknown); Kennzahlen (Backups: internal/backups)
+	if kinds["integration"] != 1 || kinds["check"] != 6 || kinds["backup"] != 0 || kinds["metric"] != 3 {
 		t.Fatalf("erste Abfrage: %v", kinds)
 	}
 

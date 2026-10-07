@@ -62,6 +62,7 @@ func (s *SettingsService) Update(ctx context.Context, next Settings) (Settings, 
 		{KeyRawRetentionDays, strconv.Itoa(next.RawRetentionDays)},
 		{KeyDailyRetentionDays, strconv.Itoa(next.DailyRetentionDays)},
 		{KeyBackupMaxAgeHours, strconv.Itoa(next.BackupMaxAgeHours)},
+		{KeyNotifyLanguage, next.NotifyLanguage},
 	} {
 		if err := s.store.SetSetting(ctx, kv[0], kv[1]); err != nil {
 			return Settings{}, err
@@ -96,6 +97,9 @@ func validate(n Settings) error {
 	if n.BackupMaxAgeHours < MinBackupMaxAgeHours || n.BackupMaxAgeHours > MaxBackupMaxAgeHours {
 		add("settings.backup_max_age_range",
 			"min", strconv.Itoa(MinBackupMaxAgeHours), "max", strconv.Itoa(MaxBackupMaxAgeHours))
+	}
+	if n.NotifyLanguage != "de" && n.NotifyLanguage != "en" {
+		add("settings.notify_language_invalid")
 	}
 	if len(msgs) > 0 {
 		return &ValidationError{Msgs: msgs}

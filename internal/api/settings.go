@@ -29,6 +29,7 @@ type settingsDTO struct {
 	RawRetentionDays   int            `json:"raw_retention_days"`
 	DailyRetentionDays int            `json:"daily_retention_days"`
 	BackupMaxAgeHours  int            `json:"backup_max_age_hours"`
+	NotifyLanguage     string         `json:"notify_language"`
 	Limits             map[string]int `json:"limits"`
 }
 
@@ -38,6 +39,7 @@ func settingsToDTO(c config.Settings) settingsDTO {
 		RawRetentionDays:   c.RawRetentionDays,
 		DailyRetentionDays: c.DailyRetentionDays,
 		BackupMaxAgeHours:  c.BackupMaxAgeHours,
+		NotifyLanguage:     c.NotifyLanguage,
 		Limits: map[string]int{
 			"raw_retention_days_min":   config.MinRawRetentionDays,
 			"raw_retention_days_max":   config.MaxRawRetentionDays,
@@ -71,6 +73,7 @@ func (s *Server) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		RawRetentionDays:   in.RawRetentionDays,
 		DailyRetentionDays: in.DailyRetentionDays,
 		BackupMaxAgeHours:  in.BackupMaxAgeHours,
+		NotifyLanguage:     in.NotifyLanguage,
 	}
 
 	saved, err := s.settings.Update(r.Context(), next)

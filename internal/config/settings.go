@@ -16,6 +16,7 @@ const (
 	KeyRawRetentionDays   = "raw_retention_days"
 	KeyDailyRetentionDays = "daily_retention_days"
 	KeyBackupMaxAgeHours  = "backup_max_age_hours"
+	KeyNotifyLanguage     = "notify_language"
 )
 
 const (
@@ -47,6 +48,8 @@ type Settings struct {
 	DailyRetentionDays int
 	// BackupMaxAgeHours: Standard-Höchstalter von Backups in Stunden.
 	BackupMaxAgeHours int
+	// NotifyLanguage: Sprache der Benachrichtigungen ("de" oder "en").
+	NotifyLanguage string
 }
 
 type settingsStore interface {
@@ -57,7 +60,7 @@ type settingsStore interface {
 // Ungültige Werte werden ignoriert (Default), damit die App immer startet.
 func LoadSettings(ctx context.Context, s settingsStore) (Settings, []error) {
 	out := Settings{RawRetentionDays: DefaultRawRetentionDays, DailyRetentionDays: DefaultDailyRetentionDays,
-		BackupMaxAgeHours: DefaultBackupMaxAgeHours}
+		BackupMaxAgeHours: DefaultBackupMaxAgeHours, NotifyLanguage: "de"}
 	var warnings []error
 
 	if v, err := s.GetSetting(ctx, KeyTimezone); err == nil {
@@ -89,6 +92,13 @@ func LoadSettings(ctx context.Context, s settingsStore) (Settings, []error) {
 	loadInt(KeyRawRetentionDays, MinRawRetentionDays, MaxRawRetentionDays, &out.RawRetentionDays)
 	loadInt(KeyDailyRetentionDays, MinDailyRetentionDays, MaxDailyRetentionDays, &out.DailyRetentionDays)
 	loadInt(KeyBackupMaxAgeHours, MinBackupMaxAgeHours, MaxBackupMaxAgeHours, &out.BackupMaxAgeHours)
+	if v, err := s.GetSetting(ctx, KeyNotifyLanguage); err == nil {
+		if v == "de" || v == "en" {
+			out.NotifyLanguage = v
+		} else {
+			warnings = append(warnings, fmt.Errorf("%s invalid (%q), using default", KeyNotifyLanguage, v))
+		}
+	}
 
 	return out, warnings
 }

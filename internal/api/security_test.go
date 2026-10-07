@@ -83,7 +83,7 @@ func TestSessionsBoundToPassword(t *testing.T) {
 func TestCrossOriginRequestsRejected(t *testing.T) {
 	e := newTestEnv(t, nil)
 	c := e.login(t)
-	body := `{"timezone":"","raw_retention_days":30,"daily_retention_days":365,"backup_max_age_hours":26}`
+	body := `{"timezone":"","raw_retention_days":30,"daily_retention_days":365,"backup_max_age_hours":26,"notify_language":"de"}`
 
 	send := func(method, path string, hdr map[string]string) int {
 		req, _ := http.NewRequest(method, e.srv.URL+path, strings.NewReader(body))

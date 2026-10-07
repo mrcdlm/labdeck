@@ -116,15 +116,7 @@ func (s *Server) evaluateBackups(ctx context.Context, list []integrations.View, 
 	if err != nil {
 		return nil, err
 	}
-	var sources []backups.Source
-	for _, v := range list {
-		if v.Snapshot == nil || len(v.Snapshot.Backups) == 0 {
-			continue
-		}
-		sources = append(sources, backups.Source{IntegrationID: v.ID, IntegrationName: v.Name,
-			IntegrationType: v.Type, Stale: stale(v), Backups: v.Snapshot.Backups})
-	}
-	return backups.Evaluate(sources, maxAges, s.defaultMaxAge(), now), nil
+	return backups.Evaluate(backups.Sources(list), maxAges, s.defaultMaxAge(), now), nil
 }
 
 type backupsDTO struct {

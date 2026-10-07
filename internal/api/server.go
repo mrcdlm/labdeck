@@ -15,6 +15,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/mrcdlm/labdeck/internal/i18n"
+	"github.com/mrcdlm/labdeck/internal/notify"
+	"github.com/mrcdlm/labdeck/internal/secrets"
 )
 
 type dataStore interface {
@@ -34,6 +36,16 @@ type Deps struct {
 	Backups backupStore
 	// Metrics: Verlauf der Kennzahlen
 	Metrics metricStore
+	// History: Statuswechsel aller Integrationen (Verlauf-Seite)
+	History historyStore
+	// Prefs: weitere gespeicherte Einstellungen (Dashboard-Anordnung)
+	Prefs prefsStore
+	// Webhooks: Speicherung, Test und Vorschau (nil = keine Benachrichtigungen)
+	WebhookStore webhookStore
+	Webhooks     webhookTester
+	WebhookEnv   notify.Env
+	// Box verschlüsselt Webhook-Tokens (nil = kein LABDECK_SECRET_KEY)
+	Box *secrets.Box
 	// TrustedProxies: Proxys, deren Client-IP-Header gelten (leer = keine)
 	TrustedProxies []netip.Prefix
 	Info           Info
@@ -49,6 +61,12 @@ type Server struct {
 	integrations   integrationService
 	backups        backupStore
 	metrics        metricStore
+	history        historyStore
+	prefs          prefsStore
+	webhookStore   webhookStore
+	webhooks       webhookTester
+	webhookEnv     notify.Env
+	box            *secrets.Box
 	trustedProxies []netip.Prefix
 	info           Info
 	auth           *Auth
@@ -57,7 +75,9 @@ type Server struct {
 }
 
 func NewServer(d Deps) *Server {
-	return &Server{store: d.Store, events: d.Events, settings: d.Settings, integrations: d.Integrations, backups: d.Backups, metrics: d.Metrics, trustedProxies: d.TrustedProxies,
+	return &Server{store: d.Store, events: d.Events, settings: d.Settings, integrations: d.Integrations, backups: d.Backups, metrics: d.Metrics,
+		history: d.History, prefs: d.Prefs, webhookStore: d.WebhookStore, webhooks: d.Webhooks, webhookEnv: d.WebhookEnv,
+		box: d.Box, trustedProxies: d.TrustedProxies,
 		info: d.Info, auth: d.Auth, log: d.Log, static: d.Static}
 }
 
@@ -98,6 +118,16 @@ func (s *Server) Routes() http.Handler {
 			r.Get("/checks", s.handleChecks)
 			r.Get("/backups", s.handleBackups)
 			r.Put("/backups/max-age", s.handleSetBackupMaxAge)
+			r.Get("/history", s.handleHistory)
+			r.Get("/dashboard", s.handleGetDashboard)
+			r.Put("/dashboard", s.handlePutDashboard)
+
+			r.Get("/webhooks", s.handleListWebhooks)
+			r.Post("/webhooks", s.handleCreateWebhook)
+			r.Post("/webhooks/preview", s.handlePreviewWebhook)
+			r.Put("/webhooks/{id}", s.handleUpdateWebhook)
+			r.Delete("/webhooks/{id}", s.handleDeleteWebhook)
+			r.Post("/webhooks/{id}/test", s.handleTestWebhook)
 		})
 
 		r.NotFound(func(w http.ResponseWriter, req *http.Request) {

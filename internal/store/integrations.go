@@ -188,6 +188,7 @@ type StatusChange struct {
 	Kind          string // integration, check, backup, metric
 	ItemID        string
 	ItemName      string
+	ItemGroup     string // z. B. Benutzer, Datastore
 	From, To      string
 	Message       string // i18n.Msg als JSON
 	At            time.Time
@@ -218,13 +219,8 @@ func (s *Store) SavePollResult(ctx context.Context, id int64, r PollResult) erro
 		return ErrNotFound
 	}
 
-	for _, c := range r.Changes {
-		if _, err := tx.ExecContext(ctx, `INSERT INTO status_changes
-			(integration_id, kind, item_id, item_name, from_status, to_status, message, at)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-			id, c.Kind, c.ItemID, c.ItemName, c.From, c.To, c.Message, formatTime(c.At)); err != nil {
-			return fmt.Errorf("status change: %w", err)
-		}
+	if err := insertChanges(ctx, tx, id, r.Changes); err != nil {
+		return err
 	}
 
 	day := r.At.UTC().Format(time.DateOnly)

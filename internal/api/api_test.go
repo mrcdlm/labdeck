@@ -24,6 +24,7 @@ import (
 	"github.com/mrcdlm/labdeck/internal/integrations/immich/immichtest"
 	"github.com/mrcdlm/labdeck/internal/integrations/pbs"
 	"github.com/mrcdlm/labdeck/internal/integrations/prometheus"
+	"github.com/mrcdlm/labdeck/internal/notify"
 	"github.com/mrcdlm/labdeck/internal/secrets"
 	"github.com/mrcdlm/labdeck/internal/store"
 )
@@ -77,9 +78,13 @@ func newTestEnv(t *testing.T, static fstest.MapFS) *testEnv {
 	mgr := integrations.NewManager(integrations.NewRegistry(healthchecks.New(), httpjson.New(), immich.New(), pbs.New(), prometheus.New()), st, box,
 		func(string) (string, bool) { return "", false }, log)
 	mgr.Pub = broker
+	dispatcher := notify.NewDispatcher(st, func(string) (string, bool) { return "", false }, log)
+	dispatcher.Token = OpenWebhookToken(box)
 
 	s := NewServer(Deps{Store: st, Events: broker, Settings: settings, Integrations: mgr, Backups: st, Metrics: st,
-		Info: Info{Version: "v1.2.3", SecretKeySet: true}, Auth: auth, Log: log, Static: static})
+		History: st, Prefs: st, WebhookStore: st, Box: box, WebhookEnv: func(string) (string, bool) { return "", false },
+		Webhooks: dispatcher,
+		Info:     Info{Version: "v1.2.3", SecretKeySet: true}, Auth: auth, Log: log, Static: static})
 	srv := httptest.NewServer(s.Routes())
 	t.Cleanup(srv.Close)
 	return &testEnv{srv: srv, api: s, auth: auth, broker: broker, hc: hc, hcURL: hcSrv.URL, im: im, imURL: imSrv.URL}
@@ -246,7 +251,7 @@ func TestSettingsAPI(t *testing.T) {
 	}
 
 	e.language = "en"
-	resp = e.do(t, "PUT", "/api/settings", `{"timezone":"Mars/Olympus","raw_retention_days":0,"daily_retention_days":365,"backup_max_age_hours":26}`, c)
+	resp = e.do(t, "PUT", "/api/settings", `{"timezone":"Mars/Olympus","raw_retention_days":0,"daily_retention_days":365,"backup_max_age_hours":26,"notify_language":"de"}`, c)
 	var msg map[string]any
 	json.NewDecoder(resp.Body).Decode(&msg)
 	if resp.StatusCode != 400 || !strings.Contains(msg["error"].(string), "unknown time zone") ||
