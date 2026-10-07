@@ -38,14 +38,16 @@ type Flip struct {
 }
 
 type Fake struct {
-	mu       sync.Mutex
-	keys     map[string]bool // Key → read-only?
-	checks   []Check
-	fail     int           // != 0: jede Anfrage liefert diesen Status
-	broken   bool          // kaputtes JSON
-	delay    time.Duration // Antwortverzögerung
-	requests int
-	now      func() time.Time
+	mu        sync.Mutex
+	keys      map[string]bool // Key → read-only?
+	checks    []Check
+	fail      int           // != 0: jede Anfrage liefert diesen Status
+	broken    bool          // kaputtes JSON
+	delay     time.Duration // Antwortverzögerung
+	requests  int
+	failFlips int // != 0: Flips-Anfragen liefern diesen Status
+	flipReqs  int
+	now       func() time.Time
 }
 
 // New legt eine API mit einem Read-only-Key und einem Read-write-Key an.
@@ -74,7 +76,11 @@ func Demo() []Check {
 		{Name: "Zertifikate erneuern", Slug: "certs", Tags: "cron", Status: "up", LastPing: 7 * time.Hour,
 			Schedule: "0 3 * * *", TZ: "Europe/Berlin", Grace: 3600, UUID: "0b6f0c1e-1d5a-4d0e-9a51-6f1c1f6a0004"},
 		{Name: "DynDNS", Slug: "dyndns", Tags: "cron dns", Status: "up", LastPing: 4 * time.Minute,
-			Timeout: 300, Grace: 300, UUID: "0b6f0c1e-1d5a-4d0e-9a51-6f1c1f6a0005"},
+			Timeout: 300, Grace: 300, UUID: "0b6f0c1e-1d5a-4d0e-9a51-6f1c1f6a0005",
+			Flips: []Flip{
+				{Ago: 5*24*time.Hour + 2*time.Hour, Up: false}, {Ago: 5*24*time.Hour + 90*time.Minute, Up: true},
+				{Ago: 13 * time.Hour, Up: false}, {Ago: 12 * time.Hour, Up: true},
+			}},
 		{Name: "Alter Sync-Job", Slug: "old-sync", Tags: "", Status: "paused", LastPing: 30 * 24 * time.Hour,
 			Timeout: 3600, Grace: 600, UUID: "0b6f0c1e-1d5a-4d0e-9a51-6f1c1f6a0006"},
 		{Name: "Neuer Check", Slug: "new-check", Tags: "", Status: "new",
@@ -106,6 +112,12 @@ func (f *Fake) Broken(b bool) { f.mu.Lock(); f.broken = b; f.mu.Unlock() }
 
 // Delay verzögert jede Antwort.
 func (f *Fake) Delay(d time.Duration) { f.mu.Lock(); f.delay = d; f.mu.Unlock() }
+
+// FailFlips lässt nur die Flips-Anfragen mit status scheitern (0 = normal).
+func (f *Fake) FailFlips(status int) { f.mu.Lock(); f.failFlips = status; f.mu.Unlock() }
+
+// FlipRequests liefert die Anzahl der Flips-Anfragen.
+func (f *Fake) FlipRequests() int { f.mu.Lock(); defer f.mu.Unlock(); return f.flipReqs }
 
 // Requests liefert die Anzahl der API-Anfragen.
 func (f *Fake) Requests() int { f.mu.Lock(); defer f.mu.Unlock(); return f.requests }
@@ -148,6 +160,14 @@ func (f *Fake) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f.list(w, r, readOnly)
 	case strings.HasPrefix(path, "/api/v3/checks/") && strings.HasSuffix(path, "/flips/"):
 		id := strings.TrimSuffix(strings.TrimPrefix(path, "/api/v3/checks/"), "/flips/")
+		f.mu.Lock()
+		f.flipReqs++
+		failFlips := f.failFlips
+		f.mu.Unlock()
+		if failFlips != 0 {
+			http.Error(w, http.StatusText(failFlips), failFlips)
+			return
+		}
 		f.flips(w, r, id)
 	default:
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})

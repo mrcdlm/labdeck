@@ -64,8 +64,12 @@ var catalog = map[string]entry{
 	// Healthchecks.io
 	"healthchecks.unexpected": {"Antwort enthält keine Checks – ist die Adresse eine Healthchecks-Instanz?", "The response contains no checks – is the address a Healthchecks instance?"},
 
+	// Backups
+	"backup.not_found": {"Backup nicht gefunden", "Backup not found"},
+
 	// Einstellungen
 	"settings.timezone_invalid":      {"unbekannte Zeitzone {name}", "unknown time zone {name}"},
 	"settings.raw_retention_range":   {"Aufbewahrung der Rohdaten muss zwischen {min} und {max} Tagen liegen", "Raw data retention must be between {min} and {max} days"},
 	"settings.daily_retention_range": {"Aufbewahrung der Tageswerte muss zwischen {min} und {max} Tagen liegen", "Daily value retention must be between {min} and {max} days"},
+	"settings.backup_max_age_range":  {"Höchstalter von Backups muss zwischen {min} und {max} Stunden liegen", "The maximum backup age must be between {min} and {max} hours"},
 }

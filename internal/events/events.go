@@ -10,6 +10,7 @@ import "sync"
 const (
 	TopicSettings     = "settings"
 	TopicIntegrations = "integrations"
+	TopicBackups      = "backups"
 )
 
 // Publisher ist das, was Produzenten von Ereignissen brauchen. Ein nil-Publisher

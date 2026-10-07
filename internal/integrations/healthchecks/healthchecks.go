@@ -5,12 +5,16 @@ package healthchecks
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"slices"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mrcdlm/labdeck/internal/i18n"
 	"github.com/mrcdlm/labdeck/internal/integrations"
+	"github.com/mrcdlm/labdeck/internal/uptime"
 )
 
 const Type = "healthchecks"
@@ -18,13 +22,34 @@ const Type = "healthchecks"
 // DefaultBackupTag: Checks mit diesem Tag gelten zusätzlich als Backup.
 const DefaultBackupTag = "backup"
 
-type Integration struct{}
+// Verlauf (Flips) je Check: höchstens so alt, bevor er neu geholt wird – bei
+// einem Statuswechsel sofort. So bleibt es bei wenigen Anfragen, auch mit
+// vielen Checks und kurzem Abfrageintervall.
+const (
+	flipsMaxAge      = 10 * time.Minute
+	flipsPeriod      = uptime.MaxRange
+	flipsConcurrency = 4
+)
 
-func New() Integration { return Integration{} }
+type Integration struct {
+	now func() time.Time
 
-func (Integration) Type() string { return Type }
+	mu    sync.Mutex
+	flips map[string]flipsEntry // base_url + Check-ID
+}
 
-func (Integration) Schema() integrations.ConfigSchema {
+type flipsEntry struct {
+	fetched time.Time
+	status  string // Status des Checks beim Abruf
+	history []integrations.Transition
+	since   time.Time
+}
+
+func New() *Integration { return &Integration{now: time.Now, flips: map[string]flipsEntry{}} }
+
+func (*Integration) Type() string { return Type }
+
+func (*Integration) Schema() integrations.ConfigSchema {
 	type T = integrations.Text
 	return integrations.ConfigSchema{
 		Title: T{DE: "Healthchecks.io", EN: "Healthchecks.io"},
@@ -83,7 +108,7 @@ type listResponse struct {
 	Checks *[]check `json:"checks"`
 }
 
-func (Integration) fetch(ctx context.Context, cfg integrations.Config) ([]check, error) {
+func (*Integration) fetch(ctx context.Context, cfg integrations.Config) ([]check, error) {
 	var resp listResponse
 	err := integrations.GetJSON(ctx, cfg.HTTP, cfg.String("base_url")+"/api/v3/checks/",
 		http.Header{"X-Api-Key": {cfg.Secret("api_key")}}, &resp)
@@ -96,17 +121,18 @@ func (Integration) fetch(ctx context.Context, cfg integrations.Config) ([]check,
 	return *resp.Checks, nil
 }
 
-func (i Integration) Test(ctx context.Context, cfg integrations.Config) error {
+func (i *Integration) Test(ctx context.Context, cfg integrations.Config) error {
 	_, err := i.fetch(ctx, cfg)
 	return err
 }
 
-func (i Integration) Collect(ctx context.Context, cfg integrations.Config) (integrations.Snapshot, error) {
+func (i *Integration) Collect(ctx context.Context, cfg integrations.Config) (integrations.Snapshot, error) {
 	checks, err := i.fetch(ctx, cfg)
 	if err != nil {
 		return integrations.Snapshot{}, err
 	}
 	backupTag := strings.TrimSpace(cfg.String("backup_tag"))
+	flips := i.history(ctx, cfg, checks)
 
 	var snap integrations.Snapshot
 	counts := map[integrations.Status]int{}
@@ -115,13 +141,20 @@ func (i Integration) Collect(ctx context.Context, cfg integrations.Config) (inte
 		counts[st]++
 		tags := strings.Fields(c.Tags)
 		id := checkID(c)
+		h, ok := flips[id]
+		var since *time.Time
+		if ok {
+			since = &h.since
+		}
 		snap.Checks = append(snap.Checks, integrations.Check{
 			ID: id, Name: c.Name, Tags: tags, Status: st, Desc: c.Desc,
 			LastPing: c.LastPing, NextPing: c.NextPing, Raw: c.Status,
+			History: h.history, HistorySince: since,
 		})
 		if backupTag != "" && slices.Contains(tags, backupTag) {
 			snap.Backups = append(snap.Backups, integrations.Backup{
 				ID: id, Name: c.Name, LastRun: c.LastPing, Result: st, Description: c.Desc,
+				History: h.history, HistorySince: since,
 			})
 		}
 	}
@@ -142,6 +175,88 @@ func (i Integration) Collect(ctx context.Context, cfg integrations.Config) (inte
 		{Key: "checks_paused", Name: "paused", Value: float64(counts[integrations.StatusPaused]), Status: integrations.StatusOK},
 	}
 	return snap, nil
+}
+
+// flip ist ein Eintrag aus GET /api/v3/checks/{id}/flips/.
+type flip struct {
+	Timestamp time.Time `json:"timestamp"`
+	Up        int       `json:"up"`
+}
+
+// history liefert den Verlauf je Check-ID: aus dem Zwischenspeicher oder neu
+// abgerufen (veraltet bzw. Status geändert). Scheitert der Abruf, bleibt der
+// bisherige Verlauf – oder der Check hat keinen; die Abfrage selbst scheitert
+// daran nicht.
+func (i *Integration) history(ctx context.Context, cfg integrations.Config, checks []check) map[string]flipsEntry {
+	base := cfg.String("base_url")
+	now := i.now()
+	out := map[string]flipsEntry{}
+	var stale []check
+
+	i.mu.Lock()
+	for k, e := range i.flips {
+		if now.Sub(e.fetched) > 6*flipsMaxAge {
+			delete(i.flips, k) // Check gelöscht oder Integration entfernt
+		}
+	}
+	for _, c := range checks {
+		if c.UUID == "" && c.UniqueKey == "" {
+			continue // Flips-Endpunkt braucht UUID bzw. unique_key
+		}
+		e, ok := i.flips[base+"\x00"+checkID(c)]
+		if ok {
+			out[checkID(c)] = e
+		}
+		if !ok || e.status != c.Status || now.Sub(e.fetched) >= flipsMaxAge {
+			stale = append(stale, c)
+		}
+	}
+	i.mu.Unlock()
+
+	var (
+		wg  sync.WaitGroup
+		mu  sync.Mutex
+		sem = make(chan struct{}, flipsConcurrency)
+	)
+	for _, c := range stale {
+		wg.Go(func() {
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			h, err := i.fetchFlips(ctx, cfg, checkID(c))
+			if err != nil {
+				return
+			}
+			e := flipsEntry{fetched: now, status: c.Status, history: h, since: now.Add(-flipsPeriod)}
+			mu.Lock()
+			out[checkID(c)] = e
+			mu.Unlock()
+			i.mu.Lock()
+			i.flips[base+"\x00"+checkID(c)] = e
+			i.mu.Unlock()
+		})
+	}
+	wg.Wait()
+	return out
+}
+
+// fetchFlips holt die Statuswechsel der letzten 30 Tage, aufsteigend.
+func (*Integration) fetchFlips(ctx context.Context, cfg integrations.Config, id string) ([]integrations.Transition, error) {
+	var flips []flip
+	u := cfg.String("base_url") + "/api/v3/checks/" + url.PathEscape(id) + "/flips/?seconds=" +
+		strconv.Itoa(int(flipsPeriod.Seconds()))
+	if err := integrations.GetJSON(ctx, cfg.HTTP, u, http.Header{"X-Api-Key": {cfg.Secret("api_key")}}, &flips); err != nil {
+		return nil, err
+	}
+	slices.SortStableFunc(flips, func(a, b flip) int { return a.Timestamp.Compare(b.Timestamp) })
+	out := make([]integrations.Transition, 0, len(flips))
+	for _, f := range flips {
+		t := integrations.Transition{At: f.Timestamp, From: integrations.StatusOK, To: integrations.StatusError}
+		if f.Up == 1 {
+			t.From, t.To = t.To, t.From
+		}
+		out = append(out, t)
+	}
+	return out, nil
 }
 
 // checkID: UUID (Read-write-Key) bzw. unique_key (Read-only-Key); beide

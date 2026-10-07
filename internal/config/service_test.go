@@ -19,12 +19,13 @@ func (m memSettings) GetSetting(_ context.Context, k string) (string, error) {
 func (m memSettings) SetSetting(_ context.Context, k, v string) error { m[k] = v; return nil }
 
 func TestLoadSettingsDefaultsAndInvalid(t *testing.T) {
-	st := memSettings{KeyTimezone: "Mars/Olympus", KeyRawRetentionDays: "0", KeyDailyRetentionDays: "400"}
+	st := memSettings{KeyTimezone: "Mars/Olympus", KeyRawRetentionDays: "0", KeyDailyRetentionDays: "400", KeyBackupMaxAgeHours: "0"}
 	got, warnings := LoadSettings(context.Background(), st)
-	if len(warnings) != 2 {
+	if len(warnings) != 3 {
 		t.Fatalf("warnings = %v", warnings)
 	}
-	if got.Timezone != "" || got.RawRetentionDays != DefaultRawRetentionDays || got.DailyRetentionDays != 400 {
+	if got.Timezone != "" || got.RawRetentionDays != DefaultRawRetentionDays || got.DailyRetentionDays != 400 ||
+		got.BackupMaxAgeHours != DefaultBackupMaxAgeHours {
 		t.Fatalf("got = %+v", got)
 	}
 }
@@ -43,6 +44,7 @@ func TestSettingsService(t *testing.T) {
 	next := svc.Get()
 	next.Timezone = "Europe/Berlin"
 	next.RawRetentionDays = 14
+	next.BackupMaxAgeHours = 170
 	got, err := svc.Update(ctx, next)
 	if err != nil {
 		t.Fatal(err)
@@ -50,7 +52,7 @@ func TestSettingsService(t *testing.T) {
 	if called.Timezone != "Europe/Berlin" || got.RawRetentionDays != 14 {
 		t.Fatalf("got=%+v called=%+v", got, called)
 	}
-	if st[KeyTimezone] != "Europe/Berlin" || st[KeyRawRetentionDays] != "14" {
+	if st[KeyTimezone] != "Europe/Berlin" || st[KeyRawRetentionDays] != "14" || st[KeyBackupMaxAgeHours] != "170" {
 		t.Fatalf("gespeichert: %v", st)
 	}
 
@@ -66,6 +68,8 @@ func TestSettingsService(t *testing.T) {
 		func(s *Settings) { s.RawRetentionDays = 0 },
 		func(s *Settings) { s.RawRetentionDays = MaxRawRetentionDays + 1 },
 		func(s *Settings) { s.DailyRetentionDays = MinDailyRetentionDays - 1 },
+		func(s *Settings) { s.BackupMaxAgeHours = 0 },
+		func(s *Settings) { s.BackupMaxAgeHours = MaxBackupMaxAgeHours + 1 },
 	} {
 		n := svc.Get()
 		bad(&n)

@@ -61,6 +61,7 @@ func (s *SettingsService) Update(ctx context.Context, next Settings) (Settings, 
 		{KeyTimezone, next.Timezone},
 		{KeyRawRetentionDays, strconv.Itoa(next.RawRetentionDays)},
 		{KeyDailyRetentionDays, strconv.Itoa(next.DailyRetentionDays)},
+		{KeyBackupMaxAgeHours, strconv.Itoa(next.BackupMaxAgeHours)},
 	} {
 		if err := s.store.SetSetting(ctx, kv[0], kv[1]); err != nil {
 			return Settings{}, err
@@ -91,6 +92,10 @@ func validate(n Settings) error {
 	if n.DailyRetentionDays < MinDailyRetentionDays || n.DailyRetentionDays > MaxDailyRetentionDays {
 		add("settings.daily_retention_range",
 			"min", strconv.Itoa(MinDailyRetentionDays), "max", strconv.Itoa(MaxDailyRetentionDays))
+	}
+	if n.BackupMaxAgeHours < MinBackupMaxAgeHours || n.BackupMaxAgeHours > MaxBackupMaxAgeHours {
+		add("settings.backup_max_age_range",
+			"min", strconv.Itoa(MinBackupMaxAgeHours), "max", strconv.Itoa(MaxBackupMaxAgeHours))
 	}
 	if len(msgs) > 0 {
 		return &ValidationError{Msgs: msgs}

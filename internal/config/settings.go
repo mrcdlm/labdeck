@@ -15,6 +15,7 @@ const (
 	KeyTimezone           = "timezone"
 	KeyRawRetentionDays   = "raw_retention_days"
 	KeyDailyRetentionDays = "daily_retention_days"
+	KeyBackupMaxAgeHours  = "backup_max_age_hours"
 )
 
 const (
@@ -27,6 +28,12 @@ const (
 	DefaultDailyRetentionDays = 365
 	MinDailyRetentionDays     = 30
 	MaxDailyRetentionDays     = 3650
+
+	// Backups gelten nach so vielen Stunden ohne Lauf als überfällig (je
+	// Backup änderbar); täglich + 2 h Puffer
+	DefaultBackupMaxAgeHours = 26
+	MinBackupMaxAgeHours     = 1
+	MaxBackupMaxAgeHours     = 24 * 366
 )
 
 // Settings sind zur Laufzeit änderbare Einstellungen (keine Secrets).
@@ -38,6 +45,8 @@ type Settings struct {
 	RawRetentionDays int
 	// DailyRetentionDays: Aufbewahrung der Tageswerte in Tagen.
 	DailyRetentionDays int
+	// BackupMaxAgeHours: Standard-Höchstalter von Backups in Stunden.
+	BackupMaxAgeHours int
 }
 
 type settingsStore interface {
@@ -47,7 +56,8 @@ type settingsStore interface {
 // LoadSettings liest die Einstellungen aus der DB und füllt Defaults auf.
 // Ungültige Werte werden ignoriert (Default), damit die App immer startet.
 func LoadSettings(ctx context.Context, s settingsStore) (Settings, []error) {
-	out := Settings{RawRetentionDays: DefaultRawRetentionDays, DailyRetentionDays: DefaultDailyRetentionDays}
+	out := Settings{RawRetentionDays: DefaultRawRetentionDays, DailyRetentionDays: DefaultDailyRetentionDays,
+		BackupMaxAgeHours: DefaultBackupMaxAgeHours}
 	var warnings []error
 
 	if v, err := s.GetSetting(ctx, KeyTimezone); err == nil {
@@ -78,6 +88,7 @@ func LoadSettings(ctx context.Context, s settingsStore) (Settings, []error) {
 	}
 	loadInt(KeyRawRetentionDays, MinRawRetentionDays, MaxRawRetentionDays, &out.RawRetentionDays)
 	loadInt(KeyDailyRetentionDays, MinDailyRetentionDays, MaxDailyRetentionDays, &out.DailyRetentionDays)
+	loadInt(KeyBackupMaxAgeHours, MinBackupMaxAgeHours, MaxBackupMaxAgeHours, &out.BackupMaxAgeHours)
 
 	return out, warnings
 }

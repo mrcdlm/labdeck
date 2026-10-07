@@ -66,6 +66,10 @@ type Check struct {
 	NextPing *time.Time `json:"next_ping,omitempty"`
 	// Raw ist der Status der Quelle, z. B. "grace" (zur Anzeige).
 	Raw string `json:"raw,omitempty"`
+	// History: Statuswechsel laut Quelle ab HistorySince (für Uptime-Balken);
+	// HistorySince nil = Quelle liefert keinen Verlauf.
+	History      []Transition `json:"history,omitempty"`
+	HistorySince *time.Time   `json:"history_since,omitempty"`
 }
 
 // Backup ist ein Backup-Auftrag bzw. eine Backup-Gruppe.
@@ -80,6 +84,16 @@ type Backup struct {
 	SizeBytes   *int64         `json:"size_bytes,omitempty"`
 	Duration    *time.Duration `json:"duration,omitempty"`
 	Description string         `json:"description,omitempty"`
+	// History/HistorySince wie bei Check (z. B. Healthchecks-Flips).
+	History      []Transition `json:"history,omitempty"`
+	HistorySince *time.Time   `json:"history_since,omitempty"`
+}
+
+// Transition ist ein Statuswechsel zum Zeitpunkt At.
+type Transition struct {
+	At   time.Time `json:"at"`
+	From Status    `json:"from"`
+	To   Status    `json:"to"`
 }
 
 // Worst liefert den schlechtesten Status (error > warning > unknown > ok;

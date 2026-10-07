@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"slices"
 	"strconv"
 	"time"
 
@@ -98,7 +99,21 @@ type integrationDTO struct {
 	LastErrorCode string `json:"last_error_code,omitempty"`
 }
 
+// toDTO: ohne Verläufe der Checks und Backups – die liefern /api/checks und
+// /api/backups als Uptime-Balken.
 func toDTO(v integrations.View, lang i18n.Lang) integrationDTO {
+	if v.Snapshot != nil {
+		snap := *v.Snapshot
+		snap.Checks = slices.Clone(snap.Checks)
+		for i := range snap.Checks {
+			snap.Checks[i].History, snap.Checks[i].HistorySince = nil, nil
+		}
+		snap.Backups = slices.Clone(snap.Backups)
+		for i := range snap.Backups {
+			snap.Backups[i].History, snap.Backups[i].HistorySince = nil, nil
+		}
+		v.Snapshot = &snap
+	}
 	return integrationDTO{View: v, LastError: i18n.T(lang, v.LastError), LastErrorCode: v.LastError.Code}
 }
 

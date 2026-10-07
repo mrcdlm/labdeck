@@ -165,3 +165,86 @@ func TestSchemaDefaults(t *testing.T) {
 		t.Fatalf("%v %v", values, msgs)
 	}
 }
+
+func TestHistoryFromFlips(t *testing.T) {
+	fake, srv := setup(t)
+	ctx := context.Background()
+	hc := New()
+	c := cfg(srv.URL, "ro-key", time.Second)
+
+	snap, err := hc.Collect(ctx, c)
+	if err != nil {
+		t.Fatal(err)
+	}
+	byName := map[string]integrations.Check{}
+	for _, ch := range snap.Checks {
+		byName[ch.Name] = ch
+	}
+	r := byName["Restic NAS → B2"]
+	if r.HistorySince == nil || time.Since(*r.HistorySince) < 29*24*time.Hour || len(r.History) != 2 {
+		t.Fatalf("Restic: %+v", r)
+	}
+	if h := r.History; h[0].From != integrations.StatusOK || h[0].To != integrations.StatusError ||
+		h[1].To != integrations.StatusOK || !h[0].At.Before(h[1].At) {
+		t.Errorf("Flips: %+v", h)
+	}
+	if n := byName["Neuer Check"]; n.HistorySince == nil || len(n.History) != 0 {
+		t.Errorf("Neuer Check: %+v", n)
+	}
+	for _, b := range snap.Backups {
+		if b.HistorySince == nil || len(b.History) != len(byName[b.Name].History) {
+			t.Errorf("Backup %s ohne Verlauf", b.Name)
+		}
+	}
+	if n := fake.FlipRequests(); n != 7 {
+		t.Fatalf("Flips-Anfragen: %d", n)
+	}
+
+	// Zwischenspeicher: kein erneuter Abruf …
+	if _, err := hc.Collect(ctx, c); err != nil || fake.FlipRequests() != 7 {
+		t.Fatalf("zwischengespeichert: %v, %d Anfragen", err, fake.FlipRequests())
+	}
+	// … außer bei Statuswechsel …
+	fake.SetStatus("DynDNS", "down")
+	if _, err := hc.Collect(ctx, c); err != nil || fake.FlipRequests() != 8 {
+		t.Fatalf("Statuswechsel: %v, %d Anfragen", err, fake.FlipRequests())
+	}
+	// … oder wenn er veraltet ist.
+	hc.now = func() time.Time { return time.Now().Add(flipsMaxAge + time.Second) }
+	if _, err := hc.Collect(ctx, c); err != nil || fake.FlipRequests() != 15 {
+		t.Fatalf("veraltet: %v, %d Anfragen", err, fake.FlipRequests())
+	}
+
+	// Test() fragt keine Verläufe ab
+	if err := hc.Test(ctx, c); err != nil || fake.FlipRequests() != 15 {
+		t.Fatalf("Test: %v, %d Anfragen", err, fake.FlipRequests())
+	}
+}
+
+func TestHistoryUnavailable(t *testing.T) {
+	fake, srv := setup(t)
+	fake.FailFlips(http.StatusTooManyRequests)
+	hc := New()
+	snap, err := hc.Collect(context.Background(), cfg(srv.URL, "rw-key", time.Second))
+	if err != nil {
+		t.Fatalf("Flips-Fehler darf die Abfrage nicht scheitern lassen: %v", err)
+	}
+	for _, c := range snap.Checks {
+		if c.HistorySince != nil || c.History != nil {
+			t.Errorf("%s: Verlauf trotz Fehler", c.Name)
+		}
+	}
+
+	// Danach klappt es wieder; ein späterer Fehler behält den letzten Verlauf.
+	fake.FailFlips(0)
+	snap, _ = hc.Collect(context.Background(), cfg(srv.URL, "rw-key", time.Second))
+	if snap.Checks[0].HistorySince == nil {
+		t.Fatal("kein Verlauf nach Erholung")
+	}
+	fake.FailFlips(http.StatusInternalServerError)
+	hc.now = func() time.Time { return time.Now().Add(flipsMaxAge + time.Second) }
+	snap, _ = hc.Collect(context.Background(), cfg(srv.URL, "rw-key", time.Second))
+	if snap.Checks[0].HistorySince == nil || len(snap.Checks[0].History) != 2 {
+		t.Fatalf("letzter Verlauf verloren: %+v", snap.Checks[0])
+	}
+}

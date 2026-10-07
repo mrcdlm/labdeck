@@ -28,6 +28,7 @@ type settingsDTO struct {
 	Timezone           string         `json:"timezone"` // leer = Zeitzone des Browsers
 	RawRetentionDays   int            `json:"raw_retention_days"`
 	DailyRetentionDays int            `json:"daily_retention_days"`
+	BackupMaxAgeHours  int            `json:"backup_max_age_hours"`
 	Limits             map[string]int `json:"limits"`
 }
 
@@ -36,11 +37,14 @@ func settingsToDTO(c config.Settings) settingsDTO {
 		Timezone:           c.Timezone,
 		RawRetentionDays:   c.RawRetentionDays,
 		DailyRetentionDays: c.DailyRetentionDays,
+		BackupMaxAgeHours:  c.BackupMaxAgeHours,
 		Limits: map[string]int{
 			"raw_retention_days_min":   config.MinRawRetentionDays,
 			"raw_retention_days_max":   config.MaxRawRetentionDays,
 			"daily_retention_days_min": config.MinDailyRetentionDays,
 			"daily_retention_days_max": config.MaxDailyRetentionDays,
+			"backup_max_age_hours_min": config.MinBackupMaxAgeHours,
+			"backup_max_age_hours_max": config.MaxBackupMaxAgeHours,
 		},
 	}
 }
@@ -66,6 +70,7 @@ func (s *Server) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		Timezone:           in.Timezone,
 		RawRetentionDays:   in.RawRetentionDays,
 		DailyRetentionDays: in.DailyRetentionDays,
+		BackupMaxAgeHours:  in.BackupMaxAgeHours,
 	}
 
 	saved, err := s.settings.Update(r.Context(), next)
@@ -79,7 +84,7 @@ func (s *Server) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.log.Info("Einstellungen geändert", "timezone", saved.Timezone,
-		"raw_retention_days", saved.RawRetentionDays, "daily_retention_days", saved.DailyRetentionDays)
+		"raw_retention_days", saved.RawRetentionDays, "daily_retention_days", saved.DailyRetentionDays, "backup_max_age_hours", saved.BackupMaxAgeHours)
 	if s.events != nil {
 		s.events.Publish(events.TopicSettings)
 	}

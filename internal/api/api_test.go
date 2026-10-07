@@ -68,7 +68,7 @@ func newTestEnv(t *testing.T, static fstest.MapFS) *testEnv {
 		func(string) (string, bool) { return "", false }, log)
 	mgr.Pub = broker
 
-	s := NewServer(Deps{Store: st, Events: broker, Settings: settings, Integrations: mgr,
+	s := NewServer(Deps{Store: st, Events: broker, Settings: settings, Integrations: mgr, Backups: st,
 		Info: Info{Version: "v1.2.3", SecretKeySet: true}, Auth: auth, Log: log, Static: static})
 	srv := httptest.NewServer(s.Routes())
 	t.Cleanup(srv.Close)
@@ -236,7 +236,7 @@ func TestSettingsAPI(t *testing.T) {
 	}
 
 	e.language = "en"
-	resp = e.do(t, "PUT", "/api/settings", `{"timezone":"Mars/Olympus","raw_retention_days":0,"daily_retention_days":365}`, c)
+	resp = e.do(t, "PUT", "/api/settings", `{"timezone":"Mars/Olympus","raw_retention_days":0,"daily_retention_days":365,"backup_max_age_hours":26}`, c)
 	var msg map[string]any
 	json.NewDecoder(resp.Body).Decode(&msg)
 	if resp.StatusCode != 400 || !strings.Contains(msg["error"].(string), "unknown time zone") ||

@@ -149,7 +149,7 @@ func run() error {
 	srv := &http.Server{
 		Addr: fmt.Sprintf(":%d", cfg.Port),
 		Handler: api.NewServer(api.Deps{
-			Store: st, Events: broker, Settings: settings, Integrations: manager,
+			Store: st, Events: broker, Settings: settings, Integrations: manager, Backups: st,
 			TrustedProxies: cfg.TrustedProxies,
 			Info:           api.Info{Version: version, DataDir: cfg.DataDir, SecretKeySet: box != nil},
 			Auth:           auth, Log: log, Static: web.Dist(),
