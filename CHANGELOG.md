@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] – 2026-10-07
+
 ### Added
 - Checks page: all Healthchecks.io checks grouped by project or tag, tag filter, last/next ping and
   uptime bars for 24 hours, 7 days and 30 days (from the status changes in Healthchecks.io).
@@ -16,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (26 hours); a warning starts at 80 % of it.
 - Dashboard: overall status now lists overdue and failed backups and checks that are down or in
   their grace period, with tiles for backups and checks.
+
+### Changed
+- GitLab CI: every push runs the Go and web tests; images are only built for version tags
+  (`:X.Y.Z` and `:X.Y`, no `:main` or `:latest`).
 
 ### Fixed
 - GitLab CI: the image is built and pushed with BuildKit without attestations, so the GitLab
