@@ -4,6 +4,7 @@ import {
   History,
   LayoutDashboard,
   LogOut,
+  Cpu,
   Server,
   Settings,
   type LucideIcon,
@@ -20,13 +21,14 @@ import { setDisplayTimeZone } from '@/lib/format'
 import { useLogout, useSettings } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
-type NavKey = 'dashboard' | 'backups' | 'checks' | 'services' | 'history' | 'settings'
+type NavKey = 'dashboard' | 'backups' | 'checks' | 'services' | 'resources' | 'history' | 'settings'
 
 const nav: { to: string; key: NavKey; icon: LucideIcon }[] = [
   { to: '/', key: 'dashboard', icon: LayoutDashboard },
   { to: '/backups', key: 'backups', icon: DatabaseBackup },
   { to: '/checks', key: 'checks', icon: HeartPulse },
   { to: '/dienste', key: 'services', icon: Server },
+  { to: '/ressourcen', key: 'resources', icon: Cpu },
   { to: '/verlauf', key: 'history', icon: History },
   { to: '/einstellungen', key: 'settings', icon: Settings },
 ]

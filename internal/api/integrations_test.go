@@ -31,16 +31,16 @@ func TestIntegrationTypes(t *testing.T) {
 	resp := e.do(t, "GET", "/api/integration-types", "", c)
 	var got typesDTO
 	json.NewDecoder(resp.Body).Decode(&got)
-	if len(got.Types) != 5 || got.Types[0].Type != "healthchecks" || got.Types[2].Type != "immich" || !got.SecretKeySet ||
-		got.Limits["interval_min"] != 15 || got.Types[0].Fields[1].Type != "secret" ||
-		!strings.HasPrefix(got.Types[0].Fields[1].Help, "Projekt") {
+	if len(got.Types) != 8 || got.Types[1].Type != "healthchecks" || got.Types[3].Type != "immich" || !got.SecretKeySet ||
+		got.Limits["interval_min"] != 15 || got.Types[1].Fields[1].Type != "secret" ||
+		!strings.HasPrefix(got.Types[1].Fields[1].Help, "Projekt") {
 		t.Fatalf("Typen (de): %+v", got)
 	}
 	e.language = "en"
 	resp = e.do(t, "GET", "/api/integration-types", "", c)
 	json.NewDecoder(resp.Body).Decode(&got)
-	if got.Types[0].Fields[0].Label != "Address" {
-		t.Fatalf("Typen (en): %+v", got.Types[0].Fields[0])
+	if got.Types[1].Fields[0].Label != "Address" {
+		t.Fatalf("Typen (en): %+v", got.Types[1].Fields[0])
 	}
 }
 

@@ -180,6 +180,8 @@ type PollResult struct {
 type MetricSample struct {
 	Key   string
 	Value float64
+	// Short: Rohwert einer einzelnen Ressource (kürzer aufbewahrt)
+	Short bool
 }
 
 type StatusChange struct {
@@ -225,8 +227,8 @@ func (s *Store) SavePollResult(ctx context.Context, id int64, r PollResult) erro
 
 	day := r.At.UTC().Format(time.DateOnly)
 	for _, m := range r.Samples {
-		if _, err := tx.ExecContext(ctx, `INSERT INTO metric_samples (integration_id, key, at, value) VALUES (?, ?, ?, ?)`,
-			id, m.Key, at, m.Value); err != nil {
+		if _, err := tx.ExecContext(ctx, `INSERT INTO metric_samples (integration_id, key, at, value, short) VALUES (?, ?, ?, ?, ?)`,
+			id, m.Key, at, m.Value, m.Short); err != nil {
 			return fmt.Errorf("metric sample: %w", err)
 		}
 		if _, err := tx.ExecContext(ctx, `INSERT INTO metric_daily (integration_id, key, day, last, min, max)
@@ -292,12 +294,12 @@ func (s *Store) MetricDaily(ctx context.Context, integrationID int64, key, from 
 
 // PurgeResult zählt gelöschte Einträge.
 type PurgeResult struct {
-	Samples, Daily, Changes int64
+	Samples, Short, Daily, Changes int64
 }
 
-// PurgeOldData löscht Rohdaten vor rawBefore sowie Tageswerte und
-// Statuswechsel vor dailyBefore.
-func (s *Store) PurgeOldData(ctx context.Context, rawBefore, dailyBefore time.Time) (PurgeResult, error) {
+// PurgeOldData löscht Rohdaten vor rawBefore (Rohdaten einzelner Ressourcen
+// vor shortBefore) sowie Tageswerte und Statuswechsel vor dailyBefore.
+func (s *Store) PurgeOldData(ctx context.Context, rawBefore, shortBefore, dailyBefore time.Time) (PurgeResult, error) {
 	var r PurgeResult
 	for _, q := range []struct {
 		sql string
@@ -305,6 +307,7 @@ func (s *Store) PurgeOldData(ctx context.Context, rawBefore, dailyBefore time.Ti
 		n   *int64
 	}{
 		{`DELETE FROM metric_samples WHERE at < ?`, formatTime(rawBefore), &r.Samples},
+		{`DELETE FROM metric_samples WHERE short = 1 AND at < ?`, formatTime(shortBefore), &r.Short},
 		{`DELETE FROM metric_daily WHERE day < ?`, dailyBefore.UTC().Format(time.DateOnly), &r.Daily},
 		{`DELETE FROM status_changes WHERE at < ?`, formatTime(dailyBefore), &r.Changes},
 	} {

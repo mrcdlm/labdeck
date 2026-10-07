@@ -44,6 +44,47 @@ type Snapshot struct {
 	Backups []Backup `json:"backups,omitempty"`
 	// Info: zusätzliche Angaben zur Anzeige, z. B. "version".
 	Info map[string]string `json:"info,omitempty"`
+	// Resources: Hosts, VMs, Container mit CPU, RAM, Platte (Ressourcen-Seite).
+	Resources []Resource `json:"resources,omitempty"`
+}
+
+// Arten von Ressourcen.
+const (
+	KindNode      = "node"      // Host bzw. PVE-Node
+	KindVM        = "vm"        // virtuelle Maschine
+	KindCT        = "ct"        // LXC-Container
+	KindContainer = "container" // Docker-Container
+)
+
+// Resource ist ein Host, eine VM oder ein Container mit Auslastung.
+type Resource struct {
+	// ID ist innerhalb der Integration eindeutig und stabil, z. B. "qemu/100".
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Kind string `json:"kind"`
+	// Parent: Name des Hosts/Nodes (leer bei Hosts)
+	Parent string `json:"parent,omitempty"`
+	// State der Quelle, z. B. running, stopped, online, healthy
+	State string `json:"state"`
+	// Status: Ampel aus Zustand und Schwellwerten
+	Status Status `json:"status"`
+	// CPU in Prozent der zugewiesenen Kerne; CPUs = Anzahl Kerne
+	CPU  *float64 `json:"cpu,omitempty"`
+	CPUs float64  `json:"cpus,omitempty"`
+	// Speicher in Bytes
+	MemUsed   *int64 `json:"mem_used,omitempty"`
+	MemTotal  *int64 `json:"mem_total,omitempty"`
+	DiskUsed  *int64 `json:"disk_used,omitempty"`
+	DiskTotal *int64 `json:"disk_total,omitempty"`
+	// Netzwerk: Bytes seit Start (PVE) bzw. Bytes/s (Glances, NetRate)
+	NetIn   *int64 `json:"net_in,omitempty"`
+	NetOut  *int64 `json:"net_out,omitempty"`
+	NetRate bool   `json:"net_rate,omitempty"`
+	// Uptime in Sekunden
+	Uptime int64    `json:"uptime,omitempty"`
+	Tags   []string `json:"tags,omitempty"`
+	// Info: weitere Angaben, z. B. image, os
+	Info map[string]string `json:"info,omitempty"`
 }
 
 // Metric ist eine Kennzahl, z. B. Anzahl Fotos oder belegter Speicher.
@@ -60,6 +101,9 @@ type Metric struct {
 	// Derived: aus Checks/Backups abgeleitet (z. B. Anzahl down) – zählt im
 	// Gesamtstatus nicht zusätzlich als Problem
 	Derived bool `json:"derived,omitempty"`
+	// Resource: gehört zu dieser Ressource (Ressourcen-Seite statt Dienste-
+	// Seite; Rohdaten werden kürzer aufbewahrt)
+	Resource string `json:"resource,omitempty"`
 }
 
 // Check ist eine überwachte Aufgabe, z. B. ein Healthchecks.io-Check.

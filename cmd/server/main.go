@@ -19,11 +19,14 @@ import (
 	"github.com/mrcdlm/labdeck/internal/events"
 	"github.com/mrcdlm/labdeck/internal/i18n"
 	"github.com/mrcdlm/labdeck/internal/integrations"
+	"github.com/mrcdlm/labdeck/internal/integrations/glances"
 	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks"
 	"github.com/mrcdlm/labdeck/internal/integrations/httpjson"
 	"github.com/mrcdlm/labdeck/internal/integrations/immich"
+	"github.com/mrcdlm/labdeck/internal/integrations/nut"
 	"github.com/mrcdlm/labdeck/internal/integrations/pbs"
 	"github.com/mrcdlm/labdeck/internal/integrations/prometheus"
+	"github.com/mrcdlm/labdeck/internal/integrations/pve"
 	"github.com/mrcdlm/labdeck/internal/notify"
 	"github.com/mrcdlm/labdeck/internal/scheduler"
 	"github.com/mrcdlm/labdeck/internal/secrets"
@@ -103,7 +106,7 @@ func run() error {
 		return err
 	}
 	cfg.SecretKey = nil // steckt ab hier nur noch in box
-	registry := integrations.NewRegistry(healthchecks.New(), httpjson.New(), immich.New(), pbs.New(), prometheus.New())
+	registry := integrations.NewRegistry(glances.New(), healthchecks.New(), httpjson.New(), immich.New(), nut.New(), pbs.New(), prometheus.New(), pve.New())
 	manager := integrations.NewManager(registry, st, box, os.LookupEnv, log)
 	manager.Pub = broker
 	poller := scheduler.NewPoller(log, manager.Poll)
@@ -205,9 +208,10 @@ func run() error {
 		Run: func(ctx context.Context) error {
 			s := settings.Get()
 			now := time.Now()
-			r, err := st.PurgeOldData(ctx, now.AddDate(0, 0, -s.RawRetentionDays), now.AddDate(0, 0, -s.DailyRetentionDays))
+			r, err := st.PurgeOldData(ctx, now.AddDate(0, 0, -s.RawRetentionDays), now.AddDate(0, 0, -s.ResourceRetentionDays),
+				now.AddDate(0, 0, -s.DailyRetentionDays))
 			if err == nil && r != (store.PurgeResult{}) {
-				log.Info("Alte Daten gelöscht", "samples", r.Samples, "daily", r.Daily, "changes", r.Changes)
+				log.Info("Alte Daten gelöscht", "samples", r.Samples, "resource_samples", r.Short, "daily", r.Daily, "changes", r.Changes)
 			}
 			return err
 		},

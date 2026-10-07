@@ -30,6 +30,10 @@ function formatSeconds(s: number): string {
 /** Wert mit Einheit lesbar, z. B. "48.213", "412 GB", "51 %". */
 export function formatMetric(value: number, unit?: string): string {
   switch (unit) {
+    case 'mains':
+      return i18n.t(value ? 'units.mainsOn' : 'units.mainsOff')
+    case 'okfail':
+      return i18n.t(value ? 'units.ok' : 'units.fail')
     case 'bytes':
       return formatBytes(value)
     case 's':
@@ -43,8 +47,13 @@ export function formatMetric(value: number, unit?: string): string {
   return `${formatNumber(value)} ${unit}`
 }
 
+/** Zustandswerte (Netz/Batterie, OK/Fehler) stehen ohne Bezeichnung für sich. */
+export function isStateUnit(unit?: string): boolean {
+  return unit === 'mains' || unit === 'okfail'
+}
+
 /** Kurzform für Achsenbeschriftungen. */
 export function formatMetricShort(value: number, unit?: string): string {
-  if (unit === 'bytes' || unit === 's' || unit === '%') return formatMetric(value, unit)
+  if (unit === 'bytes' || unit === 's' || unit === '%' || isStateUnit(unit)) return formatMetric(value, unit)
   return new Intl.NumberFormat(i18n.language, { notation: 'compact', maximumFractionDigits: 1 }).format(value)
 }

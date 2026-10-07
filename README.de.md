@@ -44,6 +44,9 @@ Schwesterprojekt von [dnsdeck](https://github.com/mrcdlm/dnsdeck) – gleiche Op
   Nextcloud, Home Assistant … ohne eigenen Code).
 - **Prometheus** – beliebige PromQL-Abfragen mit Einheit und Schwellwerten, eine Zeile je
   Label-Wert; alles, was Exporter liefern (node_exporter, restic-/borg-Exporter, SMART …).
+- **Proxmox VE, Glances und USV** – CPU, RAM und Platte jedes Nodes, jeder VM, jedes LXC- und
+  Docker-Containers auf einer Ressourcen-Seite mit Füllständen und Verlauf; Storages, SMART,
+  ZFS, vzdump-Sicherungen; USV im Batteriebetrieb als Problem.
 - **Dienste-Seite und Diagramme** – eine Karte je Integration mit Kennzahlen und Diagramm
   (24 Stunden bis 1 Jahr; Rohwerte 30 Tage, Tageswerte 1 Jahr, einstellbar).
 - **Verlauf** – Statuswechsel und Fehler aller Integrationen, filterbar.
@@ -114,6 +117,9 @@ Zertifikate im LAN ausschaltbar). Mehrere Instanzen je Typ sind möglich.
 | Immich | API-Key eines **Admins** mit der Berechtigung `server.statistics` | Fotos, Videos, Speicher, je Benutzer |
 | HTTP-JSON | optional ein Header mit Zugangsdaten (verschlüsselt gespeichert) | beliebige Werte, Zeitstempel als Backups |
 | Prometheus | keine, Basic Auth oder Bearer-Token | beliebige PromQL-Abfragen |
+| Proxmox VE | API-Token `benutzer@realm!name`, Rolle **PVEAuditor** auf `/` | Auslastung je Node, VM und Container, Storages, SMART, ZFS, Sicherungen |
+| Glances | optional Basic Auth | Auslastung eines Hosts und je Docker-Container |
+| USV (NUT) | optional upsd-Benutzer | Netz/Batterie, Ladung, Restlaufzeit, Last |
 
 **Backups von Proxmox VE (vzdump) mit Healthchecks.io überwachen:** einen Check mit dem Tag
 `backup` und einem Zeitplan passend zum Backup-Job anlegen und vzdump per Hook-Skript pingen

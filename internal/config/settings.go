@@ -17,6 +17,7 @@ const (
 	KeyDailyRetentionDays = "daily_retention_days"
 	KeyBackupMaxAgeHours  = "backup_max_age_hours"
 	KeyNotifyLanguage     = "notify_language"
+	KeyResourceRetention  = "resource_retention_days"
 )
 
 const (
@@ -29,6 +30,11 @@ const (
 	DefaultDailyRetentionDays = 365
 	MinDailyRetentionDays     = 30
 	MaxDailyRetentionDays     = 3650
+
+	// Rohdaten einzelner Ressourcen (VMs, Container): 7 Tage
+	DefaultResourceRetentionDays = 7
+	MinResourceRetentionDays     = 1
+	MaxResourceRetentionDays     = 365
 
 	// Backups gelten nach so vielen Stunden ohne Lauf als überfällig (je
 	// Backup änderbar); täglich + 2 h Puffer
@@ -50,6 +56,8 @@ type Settings struct {
 	BackupMaxAgeHours int
 	// NotifyLanguage: Sprache der Benachrichtigungen ("de" oder "en").
 	NotifyLanguage string
+	// ResourceRetentionDays: Aufbewahrung der Rohdaten einzelner Ressourcen.
+	ResourceRetentionDays int
 }
 
 type settingsStore interface {
@@ -60,7 +68,8 @@ type settingsStore interface {
 // Ungültige Werte werden ignoriert (Default), damit die App immer startet.
 func LoadSettings(ctx context.Context, s settingsStore) (Settings, []error) {
 	out := Settings{RawRetentionDays: DefaultRawRetentionDays, DailyRetentionDays: DefaultDailyRetentionDays,
-		BackupMaxAgeHours: DefaultBackupMaxAgeHours, NotifyLanguage: "de"}
+		BackupMaxAgeHours: DefaultBackupMaxAgeHours, NotifyLanguage: "de",
+		ResourceRetentionDays: DefaultResourceRetentionDays}
 	var warnings []error
 
 	if v, err := s.GetSetting(ctx, KeyTimezone); err == nil {
@@ -92,6 +101,7 @@ func LoadSettings(ctx context.Context, s settingsStore) (Settings, []error) {
 	loadInt(KeyRawRetentionDays, MinRawRetentionDays, MaxRawRetentionDays, &out.RawRetentionDays)
 	loadInt(KeyDailyRetentionDays, MinDailyRetentionDays, MaxDailyRetentionDays, &out.DailyRetentionDays)
 	loadInt(KeyBackupMaxAgeHours, MinBackupMaxAgeHours, MaxBackupMaxAgeHours, &out.BackupMaxAgeHours)
+	loadInt(KeyResourceRetention, MinResourceRetentionDays, MaxResourceRetentionDays, &out.ResourceRetentionDays)
 	if v, err := s.GetSetting(ctx, KeyNotifyLanguage); err == nil {
 		if v == "de" || v == "en" {
 			out.NotifyLanguage = v

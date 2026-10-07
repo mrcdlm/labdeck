@@ -30,6 +30,7 @@ type settingsDTO struct {
 	DailyRetentionDays int            `json:"daily_retention_days"`
 	BackupMaxAgeHours  int            `json:"backup_max_age_hours"`
 	NotifyLanguage     string         `json:"notify_language"`
+	ResourceRetention  int            `json:"resource_retention_days"`
 	Limits             map[string]int `json:"limits"`
 }
 
@@ -40,13 +41,16 @@ func settingsToDTO(c config.Settings) settingsDTO {
 		DailyRetentionDays: c.DailyRetentionDays,
 		BackupMaxAgeHours:  c.BackupMaxAgeHours,
 		NotifyLanguage:     c.NotifyLanguage,
+		ResourceRetention:  c.ResourceRetentionDays,
 		Limits: map[string]int{
-			"raw_retention_days_min":   config.MinRawRetentionDays,
-			"raw_retention_days_max":   config.MaxRawRetentionDays,
-			"daily_retention_days_min": config.MinDailyRetentionDays,
-			"daily_retention_days_max": config.MaxDailyRetentionDays,
-			"backup_max_age_hours_min": config.MinBackupMaxAgeHours,
-			"backup_max_age_hours_max": config.MaxBackupMaxAgeHours,
+			"raw_retention_days_min":      config.MinRawRetentionDays,
+			"raw_retention_days_max":      config.MaxRawRetentionDays,
+			"daily_retention_days_min":    config.MinDailyRetentionDays,
+			"daily_retention_days_max":    config.MaxDailyRetentionDays,
+			"backup_max_age_hours_min":    config.MinBackupMaxAgeHours,
+			"backup_max_age_hours_max":    config.MaxBackupMaxAgeHours,
+			"resource_retention_days_min": config.MinResourceRetentionDays,
+			"resource_retention_days_max": config.MaxResourceRetentionDays,
 		},
 	}
 }
@@ -69,11 +73,12 @@ func (s *Server) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	next := config.Settings{
-		Timezone:           in.Timezone,
-		RawRetentionDays:   in.RawRetentionDays,
-		DailyRetentionDays: in.DailyRetentionDays,
-		BackupMaxAgeHours:  in.BackupMaxAgeHours,
-		NotifyLanguage:     in.NotifyLanguage,
+		Timezone:              in.Timezone,
+		RawRetentionDays:      in.RawRetentionDays,
+		DailyRetentionDays:    in.DailyRetentionDays,
+		BackupMaxAgeHours:     in.BackupMaxAgeHours,
+		NotifyLanguage:        in.NotifyLanguage,
+		ResourceRetentionDays: in.ResourceRetention,
 	}
 
 	saved, err := s.settings.Update(r.Context(), next)

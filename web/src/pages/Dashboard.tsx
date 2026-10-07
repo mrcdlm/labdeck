@@ -22,7 +22,7 @@ import { IntegrationIcon } from '@/components/IntegrationIcon'
 import { HistoryList } from '@/components/HistoryList'
 import type { DashboardTile, Integration, Overview, Problem } from '@/lib/api'
 import { absoluteTime, relativeTime, useNow } from '@/lib/format'
-import { formatMetric, metricLabel } from '@/lib/metrics'
+import { formatMetric, isStateUnit, metricLabel } from '@/lib/metrics'
 import { useDashboardLayout, useHistory, useIntegrations, useIntegrationTypes, useOverview } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
@@ -262,7 +262,13 @@ function ServiceTile({ integration: i, icon }: { integration: Integration; icon?
             {main.map((m, n) => (
               <span key={m.key} className="whitespace-nowrap">
                 {n > 0 && <span className="text-muted-foreground mr-1.5">·</span>}
-                {formatMetric(m.value, m.unit)} <span className="text-muted-foreground text-sm font-normal">{metricLabel(i.type, m)}</span>
+                {formatMetric(m.value, m.unit)}
+                {!isStateUnit(m.unit) && (
+                  <>
+                    {' '}
+                    <span className="text-muted-foreground text-sm font-normal">{metricLabel(i.type, m)}</span>
+                  </>
+                )}
               </span>
             ))}
             {bad.length > 0 && (

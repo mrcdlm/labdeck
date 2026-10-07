@@ -94,9 +94,18 @@ func TestPollResults(t *testing.T) {
 		t.Fatalf("gelöschte Integration: %v", err)
 	}
 
+	// Rohwert einer Ressource: wird früher gelöscht
+	if err := s.SavePollResult(ctx, it.ID, PollResult{At: t0.Add(-time.Minute), Status: "ok",
+		Samples: []MetricSample{{Key: "res/vm/cpu", Value: 3, Short: true}}}); err != nil {
+		t.Fatal(err)
+	}
+	if r, _ := s.PurgeOldData(ctx, t0.Add(-time.Hour), t0, t0.AddDate(-1, 0, 0)); r.Short != 1 || r.Samples != 0 {
+		t.Fatalf("kurze Aufbewahrung: %+v", r)
+	}
+
 	// Aufräumen: Rohdaten nach 1 h, Tageswerte/Wechsel vor dem 2. März
-	r, err := s.PurgeOldData(ctx, t0.Add(time.Hour), time.Date(2026, 3, 2, 0, 0, 0, 0, time.UTC))
-	if err != nil || r.Samples != 2 || r.Daily != 1 || r.Changes != 1 {
+	r, err := s.PurgeOldData(ctx, t0.Add(time.Hour), t0.Add(time.Hour), time.Date(2026, 3, 2, 0, 0, 0, 0, time.UTC))
+	if err != nil || r.Samples != 2 || r.Daily != 2 || r.Changes != 1 { // Tageswerte: photos + res/vm/cpu
 		t.Fatalf("purge: %+v %v", r, err)
 	}
 

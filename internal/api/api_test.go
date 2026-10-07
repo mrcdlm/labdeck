@@ -17,13 +17,16 @@ import (
 	"github.com/mrcdlm/labdeck/internal/config"
 	"github.com/mrcdlm/labdeck/internal/events"
 	"github.com/mrcdlm/labdeck/internal/integrations"
+	"github.com/mrcdlm/labdeck/internal/integrations/glances"
 	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks"
 	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks/hctest"
 	"github.com/mrcdlm/labdeck/internal/integrations/httpjson"
 	"github.com/mrcdlm/labdeck/internal/integrations/immich"
 	"github.com/mrcdlm/labdeck/internal/integrations/immich/immichtest"
+	"github.com/mrcdlm/labdeck/internal/integrations/nut"
 	"github.com/mrcdlm/labdeck/internal/integrations/pbs"
 	"github.com/mrcdlm/labdeck/internal/integrations/prometheus"
+	"github.com/mrcdlm/labdeck/internal/integrations/pve"
 	"github.com/mrcdlm/labdeck/internal/notify"
 	"github.com/mrcdlm/labdeck/internal/secrets"
 	"github.com/mrcdlm/labdeck/internal/store"
@@ -75,7 +78,7 @@ func newTestEnv(t *testing.T, static fstest.MapFS) *testEnv {
 	imSrv := httptest.NewServer(im)
 	t.Cleanup(imSrv.Close)
 	box, _ := secrets.New(bytes.Repeat([]byte{1}, 32))
-	mgr := integrations.NewManager(integrations.NewRegistry(healthchecks.New(), httpjson.New(), immich.New(), pbs.New(), prometheus.New()), st, box,
+	mgr := integrations.NewManager(integrations.NewRegistry(glances.New(), healthchecks.New(), httpjson.New(), immich.New(), nut.New(), pbs.New(), prometheus.New(), pve.New()), st, box,
 		func(string) (string, bool) { return "", false }, log)
 	mgr.Pub = broker
 	dispatcher := notify.NewDispatcher(st, func(string) (string, bool) { return "", false }, log)
@@ -251,7 +254,7 @@ func TestSettingsAPI(t *testing.T) {
 	}
 
 	e.language = "en"
-	resp = e.do(t, "PUT", "/api/settings", `{"timezone":"Mars/Olympus","raw_retention_days":0,"daily_retention_days":365,"backup_max_age_hours":26,"notify_language":"de"}`, c)
+	resp = e.do(t, "PUT", "/api/settings", `{"timezone":"Mars/Olympus","raw_retention_days":0,"daily_retention_days":365,"backup_max_age_hours":26,"notify_language":"de","resource_retention_days":7}`, c)
 	var msg map[string]any
 	json.NewDecoder(resp.Body).Decode(&msg)
 	if resp.StatusCode != 400 || !strings.Contains(msg["error"].(string), "unknown time zone") ||

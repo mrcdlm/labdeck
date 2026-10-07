@@ -12,6 +12,7 @@ const Settings = lazy(() => import('@/pages/Settings').then((m) => ({ default: m
 const Backups = lazy(() => import('@/pages/Backups').then((m) => ({ default: m.Backups })))
 const Checks = lazy(() => import('@/pages/Checks').then((m) => ({ default: m.Checks })))
 const History = lazy(() => import('@/pages/History').then((m) => ({ default: m.History })))
+const Resources = lazy(() => import('@/pages/Resources').then((m) => ({ default: m.Resources })))
 const Services = lazy(() => import('@/pages/Services').then((m) => ({ default: m.Services })))
 
 function Lazy({ children }: { children: ReactNode }) {
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="backups" element={<Lazy><Backups /></Lazy>} />
         <Route path="checks" element={<Lazy><Checks /></Lazy>} />
         <Route path="dienste" element={<Lazy><Services /></Lazy>} />
+        <Route path="ressourcen" element={<Lazy><Resources /></Lazy>} />
         <Route path="verlauf" element={<Lazy><History /></Lazy>} />
         <Route path="einstellungen" element={<Lazy><Settings /></Lazy>} />
       </Route>

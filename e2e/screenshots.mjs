@@ -33,6 +33,12 @@ const integrations = (m) => [
     secrets: { token_secret: 'pbs-secret' },
   },
   {
+    type: 'pve', name: 'Proxmox VE', config: { base_url: `${m}/pve`, token_id: 'labdeck@pve!dashboard', backups: false },
+    secrets: { token_secret: 'pve-secret' },
+  },
+  { type: 'glances', name: 'Docker-Host', config: { base_url: `${m}/glances` }, secrets: {} },
+  { type: 'nut', name: 'USV', config: { host: new URL(m).hostname, port: 8794 }, secrets: {} },
+  {
     type: 'prometheus', name: 'Prometheus', secrets: {},
     config: {
       base_url: `${m}/prometheus`,
@@ -59,6 +65,7 @@ if (mode === 'setup') {
     ['backups', '/backups'],
     ['checks', '/checks'],
     ['services', '/dienste'],
+    ['resources', '/ressourcen'],
     ['history', '/verlauf'],
     ['settings', '/einstellungen'],
   ]

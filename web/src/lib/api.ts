@@ -12,6 +12,8 @@ export interface Settings {
   backup_max_age_hours: number
   /** Sprache der Benachrichtigungen */
   notify_language: 'de' | 'en'
+  /** Aufbewahrung der Rohdaten einzelner VMs/Container in Tagen */
+  resource_retention_days: number
   /** Grenzen der Eingaben (nur lesen) */
   limits: Record<string, number>
 }
@@ -119,6 +121,38 @@ export interface Metric {
   value: number
   unit?: string
   status: Status
+  /** aus Checks/Backups abgeleitet */
+  derived?: boolean
+  /** gehört zu dieser Ressource (Ressourcen-Seite) */
+  resource?: string
+}
+
+export type ResourceKind = 'node' | 'vm' | 'ct' | 'container'
+
+/** Host, VM oder Container mit Auslastung. */
+export interface Resource {
+  id: string
+  name: string
+  kind: ResourceKind
+  /** Host/Node (leer bei Hosts) */
+  parent?: string
+  /** Zustand der Quelle: running, stopped, online, healthy … */
+  state: string
+  status: Status
+  /** Prozent der zugewiesenen Kerne */
+  cpu?: number
+  cpus?: number
+  mem_used?: number
+  mem_total?: number
+  disk_used?: number
+  disk_total?: number
+  /** Bytes seit Start bzw. Bytes/s (net_rate) */
+  net_in?: number
+  net_out?: number
+  net_rate?: boolean
+  uptime?: number
+  tags?: string[]
+  info?: Record<string, string>
 }
 
 export interface Check {
@@ -150,6 +184,7 @@ export interface Snapshot {
   backups?: Backup[]
   /** zusätzliche Angaben, z. B. version */
   info?: Record<string, string>
+  resources?: Resource[]
 }
 
 export interface Integration {

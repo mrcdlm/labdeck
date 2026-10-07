@@ -102,3 +102,13 @@ export function formatHours(hours: number): string {
   if (Number.isInteger(hours)) return formatDuration(hours * 3600)
   return i18n.t('duration.hoursFraction', { value: formatNumber(Math.round(hours * 10) / 10) })
 }
+
+/** Laufzeit kurz, z. B. "12 d 3 h", "3 h 4 min", "5 min". */
+export function formatUptime(seconds: number): string {
+  const d = Math.floor(seconds / 86400)
+  const h = Math.floor((seconds % 86400) / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  if (d > 0) return `${d} d ${h} h`
+  if (h > 0) return `${h} h ${m} min`
+  return `${m} min`
+}

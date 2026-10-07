@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Proxmox VE integration (API token, role PVEAuditor): load of the nodes (CPU, RAM, root disk),
+  status, CPU, RAM, disk and network per VM and container, storage usage, SMART state and
+  remaining life of the disks, ZFS pool health, last backup per VM/container from the backup
+  storages and the vzdump runs.
+- Glances integration: CPU, RAM, load and filesystems of a host plus status (incl. healthy /
+  unhealthy), CPU, RAM and network per Docker container.
+- UPS via Network UPS Tools (upsd): mains or battery, charge, runtime, load, input voltage;
+  running on battery and low runtime appear as problems.
+- Resources page: one card per host/node with CPU, RAM and disk meters, below it the VMs and
+  containers with search, state filter, sorting and a history chart per resource.
+- Setting "Keep raw data per VM/container" (default 7 days) – with many guests this keeps the
+  database small; daily values stay.
+
 ## [0.4.0] – 2026-10-07
 
 ### Added

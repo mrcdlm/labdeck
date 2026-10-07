@@ -144,10 +144,28 @@ var catalog = map[string]entry{
 	// Dashboard
 	"dashboard.tile_invalid": {"unbekannte oder doppelte Kachel {id} bzw. Größe nicht 1–3", "unknown or duplicate tile {id} or size not 1–3"},
 
+	// Proxmox VE
+	"pve.unexpected":   {"Antwort ist keine PVE-API – Adresse mit Port 8006 prüfen", "The response is not the PVE API – check the address with port 8006"},
+	"pve.no_nodes":     {"Das Token sieht keine Nodes – Rolle PVEAuditor auf / für das Token vergeben", "The token sees no nodes – give the token the role PVEAuditor on /"},
+	"pve.node_missing": {"Node {nodes} nicht gefunden oder für das Token nicht sichtbar", "Node {nodes} not found or not visible to the token"},
+
+	// Glances
+	"glances.no_v4":      {"Keine Glances-API v4 unter dieser Adresse – Glances 4 im Webserver-Modus (glances -w) und Port 61208 prüfen", "No Glances API v4 at this address – check Glances 4 in web server mode (glances -w) and port 61208"},
+	"glances.unexpected": {"Antwort ist keine Glances-API – ist die Adresse Glances?", "The response is not the Glances API – is the address Glances?"},
+
+	// USV (NUT)
+	"nut.protocol":      {"Antwort ist kein NUT-Protokoll – läuft unter Host und Port upsd?", "The response is not the NUT protocol – is upsd running at host and port?"},
+	"nut.access_denied": {"upsd verweigert den Zugriff ({code}) – Benutzer/Passwort aus upsd.users prüfen", "upsd denies access ({code}) – check user/password from upsd.users"},
+	"nut.unknown_ups":   {"USV unbekannt – Namen aus „upsc -l“ verwenden", "Unknown UPS – use a name from \"upsc -l\""},
+	"nut.no_ups":        {"upsd kennt keine USV", "upsd knows no UPS"},
+	"nut.driver":        {"Der USV-Treiber liefert keine Daten ({code}) – Kabel und Treiber prüfen", "The UPS driver delivers no data ({code}) – check cable and driver"},
+	"nut.error":         {"upsd meldet einen Fehler: {code}", "upsd reports an error: {code}"},
+
 	// Einstellungen
-	"settings.notify_language_invalid": {"Sprache der Benachrichtigungen muss de oder en sein", "The notification language must be de or en"},
-	"settings.timezone_invalid":        {"unbekannte Zeitzone {name}", "unknown time zone {name}"},
-	"settings.raw_retention_range":     {"Aufbewahrung der Rohdaten muss zwischen {min} und {max} Tagen liegen", "Raw data retention must be between {min} and {max} days"},
-	"settings.daily_retention_range":   {"Aufbewahrung der Tageswerte muss zwischen {min} und {max} Tagen liegen", "Daily value retention must be between {min} and {max} days"},
-	"settings.backup_max_age_range":    {"Höchstalter von Backups muss zwischen {min} und {max} Stunden liegen", "The maximum backup age must be between {min} and {max} hours"},
+	"settings.resource_retention_range": {"Aufbewahrung der Rohdaten je Ressource muss zwischen {min} und {max} Tagen liegen", "Raw data retention per resource must be between {min} and {max} days"},
+	"settings.notify_language_invalid":  {"Sprache der Benachrichtigungen muss de oder en sein", "The notification language must be de or en"},
+	"settings.timezone_invalid":         {"unbekannte Zeitzone {name}", "unknown time zone {name}"},
+	"settings.raw_retention_range":      {"Aufbewahrung der Rohdaten muss zwischen {min} und {max} Tagen liegen", "Raw data retention must be between {min} and {max} days"},
+	"settings.daily_retention_range":    {"Aufbewahrung der Tageswerte muss zwischen {min} und {max} Tagen liegen", "Daily value retention must be between {min} and {max} days"},
+	"settings.backup_max_age_range":     {"Höchstalter von Backups muss zwischen {min} und {max} Stunden liegen", "The maximum backup age must be between {min} and {max} hours"},
 }

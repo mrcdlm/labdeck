@@ -11,7 +11,8 @@
     "checks": "Checks",
     "services": "Dienste",
     "history": "Verlauf",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "resources": "Ressourcen"
   },
   "live": {
     "on": "Live",
@@ -192,7 +193,9 @@
       "user": "Benutzer",
       "group": "Gruppe",
       "datastore": "Datastore"
-    }
+    },
+    "toResources_one": "{{count}} Ressource ansehen",
+    "toResources_other": "{{count}} Ressourcen ansehen"
   },
   "history": {
     "subtitle": "Statuswechsel und Fehler aller Integrationen",
@@ -247,7 +250,9 @@
     "notifications": "Benachrichtigungen",
     "notificationsHint": "Gilt für alle Webhooks.",
     "notifyLanguage": "Sprache der Benachrichtigungen",
-    "notifyLanguageHint": "Titel und Text der Nachrichten."
+    "notifyLanguageHint": "Titel und Text der Nachrichten.",
+    "resourceRetention": "Rohdaten je VM/Container aufbewahren",
+    "resourceRetentionHint": "CPU, RAM und Platte einzelner Gäste und Container – bei vielen Gästen kürzer halten; Tageswerte bleiben."
   },
   "system": {
     "title": "System",
@@ -375,6 +380,41 @@
       "total": "Kapazität",
       "used_pct": "Belegung",
       "snapshots": "Snapshots"
+    },
+    "pve": {
+      "nodes": "Nodes",
+      "guests_running": "Gäste aktiv",
+      "guests": "Gäste",
+      "cpu": "CPU",
+      "mem_pct": "RAM",
+      "smart_failed": "SMART-Fehler",
+      "used_pct": "Belegung",
+      "used": "Belegt",
+      "total": "Kapazität",
+      "health": "SMART",
+      "wearout": "Restlebensdauer",
+      "zfs_health": "ZFS-Zustand",
+      "online": "Online",
+      "disk_pct": "Platte"
+    },
+    "glances": {
+      "cpu": "CPU",
+      "mem_pct": "RAM",
+      "containers_running": "Container aktiv",
+      "load5": "Load (5 min)",
+      "used_pct": "Belegung",
+      "used": "Belegt",
+      "total": "Kapazität",
+      "disk_pct": "Platte",
+      "mem": "RAM",
+      "container_health": "Container unhealthy"
+    },
+    "nut": {
+      "power": "Versorgung",
+      "charge": "Ladung",
+      "runtime": "Restlaufzeit",
+      "load": "Last",
+      "input_voltage": "Eingangsspannung"
     }
   },
   "webhooks": {
@@ -465,5 +505,69 @@
       "label": "Schwellwert überschritten",
       "hint": "Eine Kennzahl erreicht ihre Warn- oder Fehlerschwelle."
     }
+  },
+  "resources": {
+    "subtitle": "CPU, RAM und Platten der Hosts, VMs und Container",
+    "emptyTitle": "Noch keine Ressourcen",
+    "empty": "Hier erscheinen Nodes, VMs und Container, sobald eine Integration für Proxmox VE oder Glances eingerichtet ist.",
+    "search": "Name, ID, Tag oder Image suchen",
+    "filter": "Zustand",
+    "filters": {
+      "all": "Alle",
+      "running": "Laufend",
+      "stopped": "Gestoppt"
+    },
+    "sort": "Sortieren",
+    "sorts": {
+      "name": "Name",
+      "cpu": "CPU",
+      "mem": "RAM"
+    },
+    "cpu": "CPU",
+    "mem": "RAM",
+    "disk": "Platte",
+    "cores_one": "{{count}} Kern",
+    "cores_other": "{{count}} Kerne",
+    "uptime": "läuft seit {{time}}",
+    "running": "{{count}} von {{total}} laufen",
+    "history": "Verlauf",
+    "noHistory": "Für diese Ressource gibt es keinen Verlauf.",
+    "metric": "Kennzahl",
+    "col": {
+      "name": "Name",
+      "state": "Zustand",
+      "net": "Netzwerk",
+      "uptime": "Laufzeit"
+    },
+    "kind": {
+      "node": "Host",
+      "vm": "VM",
+      "ct": "CT",
+      "container": "Docker"
+    },
+    "state": {
+      "running": "Läuft",
+      "stopped": "Gestoppt",
+      "online": "Online",
+      "offline": "Offline",
+      "healthy": "Gesund",
+      "unhealthy": "Unhealthy",
+      "exited": "Beendet",
+      "paused": "Pausiert",
+      "starting": "Startet"
+    },
+    "metrics": {
+      "cpu": "CPU",
+      "mem_pct": "RAM",
+      "mem": "RAM",
+      "disk_pct": "Platte"
+    },
+    "hint": "Zeile anklicken für den Verlauf. Netzwerk: bei Proxmox seit dem Start, bei Glances je Sekunde."
+  },
+  "units": {
+    "mainsOn": "Netzbetrieb",
+    "mainsOff": "Batterie",
+    "ok": "OK",
+    "fail": "Fehler"
   }
 }

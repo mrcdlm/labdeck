@@ -11,7 +11,8 @@
     "checks": "Checks",
     "services": "Services",
     "history": "History",
-    "settings": "Settings"
+    "settings": "Settings",
+    "resources": "Resources"
   },
   "live": {
     "on": "Live",
@@ -192,7 +193,9 @@
       "user": "User",
       "group": "Group",
       "datastore": "Datastore"
-    }
+    },
+    "toResources_one": "View {{count}} resource",
+    "toResources_other": "View {{count}} resources"
   },
   "history": {
     "subtitle": "Status changes and errors of all integrations",
@@ -247,7 +250,9 @@
     "notifications": "Notifications",
     "notificationsHint": "Applies to all webhooks.",
     "notifyLanguage": "Notification language",
-    "notifyLanguageHint": "Title and text of the messages."
+    "notifyLanguageHint": "Title and text of the messages.",
+    "resourceRetention": "Keep raw data per VM/container",
+    "resourceRetentionHint": "CPU, RAM and disk of single guests and containers – keep it shorter with many guests; daily values stay."
   },
   "system": {
     "title": "System",
@@ -375,6 +380,41 @@
       "total": "capacity",
       "used_pct": "usage",
       "snapshots": "snapshots"
+    },
+    "pve": {
+      "nodes": "nodes",
+      "guests_running": "guests running",
+      "guests": "guests",
+      "cpu": "CPU",
+      "mem_pct": "RAM",
+      "smart_failed": "SMART errors",
+      "used_pct": "usage",
+      "used": "used",
+      "total": "capacity",
+      "health": "SMART",
+      "wearout": "remaining life",
+      "zfs_health": "ZFS health",
+      "online": "online",
+      "disk_pct": "disk"
+    },
+    "glances": {
+      "cpu": "CPU",
+      "mem_pct": "RAM",
+      "containers_running": "containers running",
+      "load5": "load (5 min)",
+      "used_pct": "usage",
+      "used": "used",
+      "total": "capacity",
+      "disk_pct": "disk",
+      "mem": "RAM",
+      "container_health": "container unhealthy"
+    },
+    "nut": {
+      "power": "power",
+      "charge": "charge",
+      "runtime": "runtime",
+      "load": "load",
+      "input_voltage": "input voltage"
     }
   },
   "webhooks": {
@@ -465,5 +505,69 @@
       "label": "Threshold exceeded",
       "hint": "A metric reaches its warning or error threshold."
     }
+  },
+  "resources": {
+    "subtitle": "CPU, RAM and disks of hosts, VMs and containers",
+    "emptyTitle": "No resources yet",
+    "empty": "Nodes, VMs and containers appear here once an integration for Proxmox VE or Glances is set up.",
+    "search": "Search name, ID, tag or image",
+    "filter": "State",
+    "filters": {
+      "all": "All",
+      "running": "Running",
+      "stopped": "Stopped"
+    },
+    "sort": "Sort",
+    "sorts": {
+      "name": "Name",
+      "cpu": "CPU",
+      "mem": "RAM"
+    },
+    "cpu": "CPU",
+    "mem": "RAM",
+    "disk": "Disk",
+    "cores_one": "{{count}} core",
+    "cores_other": "{{count}} cores",
+    "uptime": "up for {{time}}",
+    "running": "{{count}} of {{total}} running",
+    "history": "History",
+    "noHistory": "There is no history for this resource.",
+    "metric": "Metric",
+    "col": {
+      "name": "Name",
+      "state": "State",
+      "net": "Network",
+      "uptime": "Uptime"
+    },
+    "kind": {
+      "node": "Host",
+      "vm": "VM",
+      "ct": "CT",
+      "container": "Docker"
+    },
+    "state": {
+      "running": "Running",
+      "stopped": "Stopped",
+      "online": "Online",
+      "offline": "Offline",
+      "healthy": "Healthy",
+      "unhealthy": "Unhealthy",
+      "exited": "Exited",
+      "paused": "Paused",
+      "starting": "Starting"
+    },
+    "metrics": {
+      "cpu": "CPU",
+      "mem_pct": "RAM",
+      "mem": "RAM",
+      "disk_pct": "Disk"
+    },
+    "hint": "Click a row for its history. Network: since start for Proxmox, per second for Glances."
+  },
+  "units": {
+    "mainsOn": "On mains",
+    "mainsOff": "On battery",
+    "ok": "OK",
+    "fail": "Failed"
   }
 }

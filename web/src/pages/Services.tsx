@@ -1,4 +1,4 @@
-import { CloudOff, Plug, Server } from 'lucide-react'
+import { CloudOff, Cpu, Plug, Server } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router'
@@ -91,7 +91,9 @@ function Groups({ type, metrics }: { type: string; metrics: Metric[] }) {
 function ServiceCard({ integration: i, type }: { integration: Integration; type?: IntegrationType }) {
   const { t } = useTranslation()
   const now = useNow()
-  const metrics = i.snapshot?.metrics ?? []
+  // Werte einzelner VMs/Container stehen auf der Ressourcen-Seite
+  const metrics = (i.snapshot?.metrics ?? []).filter((m) => !m.resource)
+  const resources = i.snapshot?.resources?.length ?? 0
   const main = metrics.filter((m) => !m.group)
   const grouped = metrics.filter((m) => m.group)
   const [selected, setSelected] = useState<string>()
@@ -123,6 +125,12 @@ function ServiceCard({ integration: i, type }: { integration: Integration; type?
             </p>
           </div>
         </div>
+
+        {resources > 0 && (
+          <Link to="/ressourcen" className="text-primary flex w-fit items-center gap-1 text-sm font-medium hover:underline">
+            <Cpu className="size-4" /> {t('services.toResources', { count: resources })}
+          </Link>
+        )}
 
         {i.status === 'error' && i.last_error && (
           <p className="text-destructive flex items-start gap-2 text-sm">

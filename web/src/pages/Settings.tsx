@@ -217,6 +217,20 @@ function SettingsForm({
             onChange={(v) => update({ daily_retention_days: v })}
           />
         </SettingRow>
+        <SettingRow
+          id="resource-retention"
+          label={t('settings.resourceRetention')}
+          hint={t('settings.resourceRetentionHint')}
+        >
+          <NumberInput
+            id="resource-retention"
+            value={draft.resource_retention_days}
+            min={l.resource_retention_days_min}
+            max={l.resource_retention_days_max}
+            unit={t('settings.days')}
+            onChange={(v) => update({ resource_retention_days: v })}
+          />
+        </SettingRow>
       </Section>
 
       <div className="bg-background/90 sticky bottom-0 -mx-4 flex flex-wrap items-center justify-end gap-3 border-t px-4 py-3 backdrop-blur md:-mx-8 md:px-8">

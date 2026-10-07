@@ -195,7 +195,7 @@ func TestBackupsAPI(t *testing.T) {
 	}
 
 	// Standard-Höchstalter aus den Einstellungen
-	e.do(t, "PUT", "/api/settings", `{"timezone":"","raw_retention_days":30,"daily_retention_days":365,"backup_max_age_hours":100,"notify_language":"de"}`, c)
+	e.do(t, "PUT", "/api/settings", `{"timezone":"","raw_retention_days":30,"daily_retention_days":365,"backup_max_age_hours":100,"notify_language":"de","resource_retention_days":7}`, c)
 	json.NewDecoder(e.do(t, "GET", "/api/backups", "", c).Body).Decode(&got)
 	if got.DefaultMaxAgeHours != 100 || got.Backups[0].Name != "Proxmox vzdump" || got.Backups[0].State != "failed" {
 		t.Errorf("Standard 100 h: %+v", got)

@@ -41,6 +41,9 @@ Sister project of [dnsdeck](https://github.com/mrcdlm/dnsdeck) – same look, sa
   file can be monitored (Uptime Kuma, Paperless, Nextcloud, Home Assistant … without code).
 - **Prometheus** – any PromQL queries with unit and thresholds, one row per label value;
   everything exporters provide (node_exporter, restic/borg exporters, SMART …).
+- **Proxmox VE, Glances and UPS** – CPU, RAM and disk of every node, VM, LXC and Docker
+  container on a resources page with meters and history; storages, SMART, ZFS, vzdump backups;
+  UPS on battery as a problem.
 - **Services page and charts** – one card per integration with its metrics and a chart
   (24 hours to 1 year; raw values 30 days, daily values 1 year, configurable).
 - **History** – status changes and errors of all integrations, filterable.
@@ -110,6 +113,9 @@ LAN). Several instances per type are possible.
 | Immich | API key of an **admin** with the permission `server.statistics` | photos, videos, storage, per user |
 | HTTP JSON | optional header with credentials (stored encrypted) | any values, timestamps as backups |
 | Prometheus | none, basic auth or bearer token | any PromQL query |
+| Proxmox VE | API token `user@realm!name`, role **PVEAuditor** on `/` | load per node, VM and container, storages, SMART, ZFS, backups |
+| Glances | optional basic auth | load of a host and per Docker container |
+| UPS (NUT) | optional upsd user | mains/battery, charge, runtime, load |
 
 **Monitoring Proxmox VE backups (vzdump) with Healthchecks.io:** create a check with the tag
 `backup` and a schedule matching your backup job, then let vzdump ping it via a hook script:

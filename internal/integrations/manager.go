@@ -610,7 +610,7 @@ func (m *Manager) Poll(ctx context.Context, id int64) error {
 		}
 		res.Changes = itemChanges(prev, snap, at)
 		for _, mt := range snap.Metrics {
-			res.Samples = append(res.Samples, store.MetricSample{Key: mt.Key, Value: mt.Value})
+			res.Samples = append(res.Samples, store.MetricSample{Key: mt.Key, Value: mt.Value, Short: mt.Resource != ""})
 		}
 		if prevStatus == StatusError {
 			m.log.Info("Integration wieder erreichbar", "id", id, "name", it.Name)
