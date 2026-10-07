@@ -60,7 +60,7 @@ func FromPoll(src Source, changes []store.StatusChange, metrics map[string]integ
 			}
 		case "check":
 			switch {
-			case to == integrations.StatusError && from != integrations.StatusUnknown:
+			case to == integrations.StatusError && from != integrations.StatusUnknown && from != integrations.StatusNew:
 				last := i18n.Ref("notify.backup_never")
 				lastISO := ""
 				if t := lastPing[c.ItemID]; t != nil {
@@ -78,7 +78,7 @@ func FromPoll(src Source, changes []store.StatusChange, metrics map[string]integ
 			}
 		case "metric":
 			worse := (to == integrations.StatusWarning || to == integrations.StatusError) &&
-				(from == integrations.StatusOK || from == integrations.StatusUnknown ||
+				(from == integrations.StatusOK || from == integrations.StatusUnknown || from == integrations.StatusNew ||
 					from == integrations.StatusWarning && to == integrations.StatusError)
 			if !worse {
 				continue

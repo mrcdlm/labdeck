@@ -28,6 +28,21 @@ const api = (page, method, path, body) =>
 const integrations = (m) => [
   { type: 'healthchecks', name: 'Healthchecks Homelab', config: { base_url: `${m}/healthchecks` }, secrets: { api_key: 'hc-readonly' } },
   { type: 'immich', name: 'Immich', config: { base_url: `${m}/immich` }, secrets: { api_key: 'immich-admin' } },
+  {
+    type: 'pbs', name: 'Proxmox Backup', config: { base_url: `${m}/pbs`, token_id: 'labdeck@pbs!dashboard' },
+    secrets: { token_secret: 'pbs-secret' },
+  },
+  {
+    type: 'prometheus', name: 'Prometheus', secrets: {},
+    config: {
+      base_url: `${m}/prometheus`,
+      queries: [
+        { name: 'Freier Speicher', unit: '%', label: 'instance', direction: 'below', warn: 15, error: 5,
+          query: 'node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} * 100' },
+        { name: 'CPU', unit: '%', warn: 80, query: '100 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100' },
+      ],
+    },
+  },
 ]
 
 if (mode === 'setup') {
@@ -44,6 +59,7 @@ if (mode === 'setup') {
     ['backups', '/backups'],
     ['checks', '/checks'],
     ['services', '/dienste'],
+    ['history', '/verlauf'],
     ['settings', '/einstellungen'],
   ]
   for (const [scheme, suffix] of [['light', ''], ['dark', '-dark']]) {

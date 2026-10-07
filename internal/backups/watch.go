@@ -72,7 +72,7 @@ func (w *Watcher) Run(ctx context.Context) error {
 		}
 		// Erstmals gesehen: nur Probleme in den Verlauf, nichts melden.
 		if seen || it.State.Problem() {
-			from := StateUnknown
+			from := State(integrations.StatusNew) // erstmals gesehen
 			if seen {
 				from = State(old)
 			}

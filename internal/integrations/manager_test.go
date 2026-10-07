@@ -211,8 +211,8 @@ func TestPollStatusChanges(t *testing.T) {
 	for _, c := range changes {
 		kinds[c.Kind]++
 	}
-	// Integration unknown→ok; Checks ohne „new“ (bleibt unknown); Kennzahlen (Backups: internal/backups)
-	if kinds["integration"] != 1 || kinds["check"] != 6 || kinds["backup"] != 0 || kinds["metric"] != 3 {
+	// Integration unknown→ok; neue Checks/Kennzahlen nur mit Problem (vzdump down, Borg grace)
+	if kinds["integration"] != 1 || kinds["check"] != 2 || kinds["backup"] != 0 || kinds["metric"] != 0 {
 		t.Fatalf("erste Abfrage: %v", kinds)
 	}
 

@@ -64,7 +64,7 @@ test('Healthchecks: anlegen, testen, abfragen, bearbeiten, deaktivieren, lösche
   await mock.hcFail(500)
   await api(page, 'POST', `/api/integrations/${list.json[0].id}/poll`)
   await expect(page.getByText('3 Probleme')).toBeVisible()
-  await expect(page.getByText('Dienst antwortet mit HTTP 500')).toBeVisible()
+  await expect(page.getByRole('list', { name: 'Probleme' }).getByText('Dienst antwortet mit HTTP 500')).toBeVisible()
   await mock.hcFail(0)
 
   // Abfragen per Button → wieder in Ordnung

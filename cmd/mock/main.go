@@ -21,6 +21,9 @@
 //	GET  /_{svc}/requests                           Anzahl der API-Anfragen
 //	POST /_healthchecks/status?name=DynDNS&status=down   Status eines Checks setzen
 //	POST /_immich/photos?n=100                      Fotos hinzufügen (Verlauf)
+//
+// Webhook-Empfänger: beliebige Anfragen an /hook/… werden aufgezeichnet,
+// GET /_hooks liefert sie, DELETE /_hooks leert die Liste.
 package main
 
 import (
@@ -104,6 +107,8 @@ func main() {
 	mount(mux, "prometheus", promtest.New("", "", "").Demo(time.Now()))
 	mount(mux, "json", &jsonStatus{})
 	mount(mux, "pbs", pbstest.New("labdeck@pbs!dashboard:pbs-secret", pbstest.Demo()...))
+
+	(&hookRecorder{}).mount(mux)
 
 	mux.HandleFunc("GET /_health", func(w http.ResponseWriter, _ *http.Request) { w.Write([]byte("ok")) })
 

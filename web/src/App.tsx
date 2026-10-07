@@ -6,12 +6,12 @@ import { Layout } from '@/components/Layout'
 import { RequireAuth } from '@/components/RequireAuth'
 import { Dashboard } from '@/pages/Dashboard'
 import { Login } from '@/pages/Login'
-import { Placeholder } from '@/pages/Placeholder'
 
 // Unterseiten erst bei Bedarf laden (kleineres Start-Bundle).
 const Settings = lazy(() => import('@/pages/Settings').then((m) => ({ default: m.Settings })))
 const Backups = lazy(() => import('@/pages/Backups').then((m) => ({ default: m.Backups })))
 const Checks = lazy(() => import('@/pages/Checks').then((m) => ({ default: m.Checks })))
+const History = lazy(() => import('@/pages/History').then((m) => ({ default: m.History })))
 const Services = lazy(() => import('@/pages/Services').then((m) => ({ default: m.Services })))
 
 function Lazy({ children }: { children: ReactNode }) {
@@ -43,7 +43,7 @@ export default function App() {
         <Route path="backups" element={<Lazy><Backups /></Lazy>} />
         <Route path="checks" element={<Lazy><Checks /></Lazy>} />
         <Route path="dienste" element={<Lazy><Services /></Lazy>} />
-        <Route path="verlauf" element={<Placeholder page="history" />} />
+        <Route path="verlauf" element={<Lazy><History /></Lazy>} />
         <Route path="einstellungen" element={<Lazy><Settings /></Lazy>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

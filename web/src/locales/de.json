@@ -2,7 +2,8 @@
   "common": {
     "save": "Speichern",
     "cancel": "Abbrechen",
-    "delete": "Löschen"
+    "delete": "Löschen",
+    "add": "Hinzufügen"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -90,7 +91,9 @@
     "checksGrace": "{{count}} Karenzzeit",
     "checksDown": "{{count}} down",
     "thresholds_one": "{{count}} Schwellwert",
-    "thresholds_other": "{{count}} Schwellwerte"
+    "thresholds_other": "{{count}} Schwellwerte",
+    "events": "Letzte Ereignisse",
+    "allEvents": "Alle anzeigen"
   },
   "backups": {
     "subtitle": "Letzte Läufe, Ergebnisse und überfällige Backups",
@@ -193,10 +196,24 @@
   },
   "history": {
     "subtitle": "Statuswechsel und Fehler aller Integrationen",
-    "empty": "Hier erscheinen Statuswechsel und Fehler, sobald Integrationen Daten liefern."
+    "empty": "Noch keine Statuswechsel – sie erscheinen, sobald Integrationen Daten liefern.",
+    "loadError": "Verlauf konnte nicht geladen werden: {{error}}",
+    "integration": "Integration",
+    "kind": "Art",
+    "all": "Alle",
+    "kinds": {
+      "integration": "Integrationen",
+      "check": "Checks",
+      "backup": "Backups",
+      "metric": "Kennzahlen"
+    },
+    "problemsOnly": "Nur Probleme",
+    "more": "Ältere laden",
+    "to": "wurde zu",
+    "new": "Neu"
   },
   "settings": {
-    "subtitle": "Integrationen, Backups, Anzeige und System",
+    "subtitle": "Integrationen, Dashboard, Benachrichtigungen, Backups, Anzeige und System",
     "loadError": "Einstellungen konnten nicht geladen werden: {{error}}",
     "general": "Allgemein",
     "generalHint": "Änderungen gelten sofort, ohne Neustart.",
@@ -217,7 +234,20 @@
     "hours": "Stunden",
     "backupTag": "Backup-Tag (Healthchecks.io)",
     "backupTagHint": "Checks mit diesem Tag erscheinen auf der Backups-Seite. Der Tag wird je Integration eingestellt (Integrationen → Bearbeiten).",
-    "backupTagNone": "kein Tag – keine Backups"
+    "backupTagNone": "kein Tag – keine Backups",
+    "dashboard": "Dashboard",
+    "dashboardHint": "Kacheln unter dem Gesamtstatus: Reihenfolge per Ziehen oder Pfeilen, ein- und ausblenden, Breite in Spalten. Wird sofort gespeichert.",
+    "dashboardTiles": "Kacheln",
+    "tileVisible": "{{name}} anzeigen",
+    "tileSize": "Breite von {{name}}",
+    "tileUp": "{{name}} nach oben",
+    "tileDown": "{{name}} nach unten",
+    "columns_one": "{{count}} Spalte",
+    "columns_other": "{{count}} Spalten",
+    "notifications": "Benachrichtigungen",
+    "notificationsHint": "Gilt für alle Webhooks.",
+    "notifyLanguage": "Sprache der Benachrichtigungen",
+    "notifyLanguageHint": "Titel und Text der Nachrichten."
   },
   "system": {
     "title": "System",
@@ -302,9 +332,6 @@
     "listAdd": "Hinzufügen",
     "listEmpty": "Noch keine Einträge."
   },
-  "placeholder": {
-    "title": "Noch nichts zu sehen"
-  },
   "uptime": {
     "title": "Uptime {{range}}",
     "period": "Zeitraum",
@@ -348,6 +375,95 @@
       "total": "Kapazität",
       "used_pct": "Belegung",
       "snapshots": "Snapshots"
+    }
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "subtitle": "Beliebige Dienste per HTTP-Anfrage benachrichtigen – Vorlagen für ntfy, Gotify, Discord, Slack, Telegram und Home Assistant.",
+    "loadError": "Webhooks konnten nicht geladen werden: {{error}}",
+    "empty": "Noch keine Webhooks.",
+    "add": "Webhook hinzufügen",
+    "addTitle": "Webhook hinzufügen",
+    "editTitle": "Webhook bearbeiten",
+    "activeLabel": "{{name}} aktiv",
+    "editLabel": "{{name}} bearbeiten",
+    "deleteLabel": "{{name}} löschen",
+    "inactive": "inaktiv",
+    "test": "Testen",
+    "testDelivered": "Testnachricht zugestellt",
+    "noEvents": "Kein Ereignis ausgewählt – sendet nur Testnachrichten",
+    "missingEnv": "Nicht gesetzt: <code>{{names}}</code> – in deploy/.env eintragen und Container neu starten.",
+    "tokenMissing": "${TOKEN} wird verwendet, aber kein Token gespeichert – beim Bearbeiten eintragen.",
+    "saveFailed": "Speichern fehlgeschlagen: {{error}}",
+    "lastFailed": "Letzte Zustellung fehlgeschlagen: {{error}}",
+    "lastSent": "Zuletzt zugestellt {{time}}",
+    "nothingSent": "Noch nichts gesendet",
+    "deleteTitle": "Webhook löschen?",
+    "deleteHint": "„{{name}}“ wird samt gespeichertem Token gelöscht und erhält keine Benachrichtigungen mehr.",
+    "secretsHint": "Geheimnisse nie direkt eintragen: ins Feld Token, eingesetzt als <code>{{urlVar}}</code> in URL und Headern bzw. <code>{{bodyVar}}</code> im Body. Alternativ Env-Variablen wie <code>{{envVar}}</code>.",
+    "preset": "Vorlage",
+    "presetGeneric": "Allgemein (JSON)",
+    "name": "Name",
+    "token": "Token",
+    "tokenSet": "gespeichert – leer lassen = unverändert",
+    "tokenHint": "Wird verschlüsselt gespeichert und nie angezeigt; eingesetzt als <code>{{urlVar}}</code> bzw. <code>{{bodyVar}}</code>.",
+    "tokenNeeded": "Diese Konfiguration verwendet ein Token – bitte eintragen.",
+    "tokenFor": {
+      "ntfy": "Topic im Body anpassen (wie ein Passwort behandeln). Für geschützte Server Header Authorization: Bearer ${TOKEN} ergänzen und den Zugriffstoken ins Feld Token.",
+      "gotify": "Token: App-Token aus Gotify. Adresse anpassen.",
+      "discord": "Token: die komplette Webhook-URL aus den Kanaleinstellungen.",
+      "slack": "Token: die Incoming-Webhook-URL.",
+      "telegram": "Token: Bot-Token von @BotFather; chat_id im Body anpassen.",
+      "homeassistant": "Token: die Webhook-ID der Automation. Adresse anpassen."
+    },
+    "method": "Methode",
+    "noHeaders": "Keine zusätzlichen Header.",
+    "headerName": "Header {{n}} Name",
+    "headerValue": "Header {{n}} Wert",
+    "headerValuePlaceholder": "Wert, z. B. {{example}}",
+    "headerRemove": "Header {{n}} entfernen",
+    "body": "Body-Template",
+    "bodyPlaceholder": "Leer = Standard-JSON mit type, title, message, priority, time, data",
+    "bodyHelp": "Verfügbar: <code>{{fields}}</code> · Funktionen: <code>json</code> (für JSON-Werte), <code>token</code>, <code>env</code>, <code>{{funcs}}</code>",
+    "sendOn": "Senden bei",
+    "active": "Aktiv",
+    "preview": "Vorschau",
+    "sampleEvent": "Beispielereignis",
+    "sample": "Beispiel: {{event}}",
+    "previewHint": "Platzhalter bleiben in der Vorschau sichtbar – Werte werden nie angezeigt."
+  },
+  "events": {
+    "check_down": {
+      "label": "Check down",
+      "hint": "Ein Healthchecks-Check ist ausgefallen (nicht bei der Karenzzeit)."
+    },
+    "check_up": {
+      "label": "Check wieder up",
+      "hint": "Ein ausgefallener Check meldet sich wieder."
+    },
+    "backup_overdue": {
+      "label": "Backup überfällig",
+      "hint": "Der letzte Lauf ist älter als das Höchstalter."
+    },
+    "backup_failed": {
+      "label": "Backup fehlgeschlagen",
+      "hint": "Die Quelle meldet einen Fehler (z. B. Verify fehlgeschlagen)."
+    },
+    "backup_recovered": {
+      "label": "Backup wieder OK",
+      "hint": "Ein überfälliges oder fehlgeschlagenes Backup ist wieder gelaufen."
+    },
+    "integration_down": {
+      "label": "Integration nicht erreichbar",
+      "hint": "Eine Datenquelle lässt sich nicht abfragen."
+    },
+    "integration_recovered": {
+      "label": "Integration wieder erreichbar",
+      "hint": "Die Abfrage funktioniert wieder."
+    },
+    "threshold": {
+      "label": "Schwellwert überschritten",
+      "hint": "Eine Kennzahl erreicht ihre Warn- oder Fehlerschwelle."
     }
   }
 }

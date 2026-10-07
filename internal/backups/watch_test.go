@@ -83,7 +83,7 @@ func TestWatcher(t *testing.T) {
 	}
 	step(0)
 	hist, _ = st.ListHistory(ctx, store.HistoryFilter{IntegrationID: it2.ID})
-	if len(changes) != 0 || len(hist) != 1 || hist[0].From != "unknown" || hist[0].To != "overdue" {
+	if len(changes) != 0 || len(hist) != 1 || hist[0].From != "new" || hist[0].To != "overdue" {
 		t.Fatalf("erstmals überfällig: %+v %+v", changes, hist)
 	}
 }

@@ -10,6 +10,8 @@ export interface Settings {
   daily_retention_days: number
   /** Standard-Höchstalter von Backups in Stunden */
   backup_max_age_hours: number
+  /** Sprache der Benachrichtigungen */
+  notify_language: 'de' | 'en'
   /** Grenzen der Eingaben (nur lesen) */
   limits: Record<string, number>
 }
@@ -337,4 +339,124 @@ export interface MetricHistory {
   range: MetricRange
   /** 24 h/7 Tage: letzter Wert je Abschnitt; 30 Tage/1 Jahr: Tageswerte */
   points: { t: string; v: number; min?: number; max?: number }[]
+}
+
+// --- Benachrichtigungen (Webhooks wie dnsdeck) -------------------------------
+
+export type NotifyEventType =
+  | 'check_down'
+  | 'check_up'
+  | 'backup_overdue'
+  | 'backup_failed'
+  | 'backup_recovered'
+  | 'integration_down'
+  | 'integration_recovered'
+  | 'threshold'
+
+export type WebhookMethod = 'POST' | 'PUT' | 'PATCH' | 'GET'
+
+export interface WebhookInput {
+  name: string
+  enabled: boolean
+  method: WebhookMethod
+  url: string
+  headers: { name: string; value: string }[]
+  content_type: string
+  body_template: string
+  events: NotifyEventType[]
+  /** neuer Wert für ${TOKEN}; leer = unverändert */
+  token?: string
+  clear_token?: boolean
+}
+
+export interface Webhook extends Omit<WebhookInput, 'token' | 'clear_token'> {
+  id: number
+  last_sent_at?: string
+  last_error?: string
+  created_at: string
+  updated_at: string
+  /** verwendete, aber nicht gesetzte Env-Variablen (nur Namen) */
+  missing_env: string[]
+  /** Token gespeichert (der Wert wird nie ausgeliefert) */
+  token_set: boolean
+  /** ${TOKEN} wird verwendet, aber keins ist gespeichert */
+  token_missing: boolean
+}
+
+export interface WebhookPreview {
+  method: string
+  url: string
+  headers: Record<string, string[]>
+  body: string
+}
+
+export interface WebhookTestResult {
+  ok: boolean
+  error?: string
+}
+
+export const webhookApi = {
+  list: () => request<Webhook[]>('GET', '/api/webhooks'),
+  create: (w: WebhookInput) => request<Webhook>('POST', '/api/webhooks', w),
+  update: (id: number, w: WebhookInput) => request<Webhook>('PUT', `/api/webhooks/${id}`, w),
+  remove: (id: number) => request<void>('DELETE', `/api/webhooks/${id}`),
+  test: (id: number) => request<WebhookTestResult>('POST', `/api/webhooks/${id}/test`),
+  preview: (w: WebhookInput, eventType: string) =>
+    request<WebhookPreview>('POST', '/api/webhooks/preview', { ...w, event_type: eventType }),
+}
+
+// --- Verlauf und Dashboard ---------------------------------------------------
+
+export type HistoryKind = 'integration' | 'check' | 'backup' | 'metric'
+
+export interface HistoryEntry {
+  id: number
+  integration_id: number
+  integration_name: string
+  integration_type: string
+  kind: HistoryKind
+  item_id?: string
+  item_name: string
+  item_group?: string
+  /** Status (ok, error …) bzw. bei Backups der Zustand (overdue, failed …) */
+  from: string
+  to: string
+  message?: string
+  at: string
+}
+
+export interface HistoryFilter {
+  integration?: number
+  kind?: HistoryKind
+  problems?: boolean
+}
+
+export interface HistoryPage {
+  entries: HistoryEntry[]
+  more: boolean
+}
+
+export interface DashboardTile {
+  /** backups, checks, events, integration:<id> */
+  id: string
+  visible: boolean
+  /** Spalten 1–3 */
+  size: number
+}
+
+export interface DashboardLayout {
+  tiles: DashboardTile[]
+}
+
+export const historyApi = {
+  list: (f: HistoryFilter, before?: number, limit = 50) => {
+    const q = new URLSearchParams({ limit: String(limit) })
+    if (f.integration) q.set('integration', String(f.integration))
+    if (f.kind) q.set('kind', f.kind)
+    if (f.problems) q.set('problems', '1')
+    if (before) q.set('before', String(before))
+    return request<HistoryPage>('GET', `/api/history?${q}`)
+  },
+  dashboard: () => request<DashboardLayout>('GET', '/api/dashboard'),
+  saveDashboard: (l: DashboardLayout) => request<DashboardLayout>('PUT', '/api/dashboard', l),
 }

@@ -1,5 +1,14 @@
 import type { LucideIcon } from 'lucide-react'
-import { AlertTriangle, ChevronRight, DatabaseBackup, HeartPulse, PauseCircle, Plug, ShieldCheck } from 'lucide-react'
+import {
+  AlertTriangle,
+  ChevronRight,
+  DatabaseBackup,
+  HeartPulse,
+  History as HistoryIcon,
+  PauseCircle,
+  Plug,
+  ShieldCheck,
+} from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
@@ -10,10 +19,11 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { IntegrationIcon } from '@/components/IntegrationIcon'
-import type { Integration, Overview, Problem } from '@/lib/api'
+import { HistoryList } from '@/components/HistoryList'
+import type { DashboardTile, Integration, Overview, Problem } from '@/lib/api'
 import { absoluteTime, relativeTime, useNow } from '@/lib/format'
 import { formatMetric, metricLabel } from '@/lib/metrics'
-import { useIntegrations, useIntegrationTypes, useOverview } from '@/lib/queries'
+import { useDashboardLayout, useHistory, useIntegrations, useIntegrationTypes, useOverview } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
 /** Hinweis, solange keine Integration eingerichtet ist. */
@@ -91,7 +101,7 @@ function ProblemRow({ p, now }: { p: Problem; now: number }) {
         <StatusBadge status={p.status} label={label} />
         <span className="min-w-0 flex-1">
           <span className="block font-medium [overflow-wrap:anywhere]">
-            <span className="first-letter:uppercase inline-block">{name}</span>
+            <span className={cn('inline-block', p.kind === 'metric' && 'first-letter:uppercase')}>{name}</span>
             {p.group && <span className="text-muted-foreground font-normal"> · {p.group}</span>}
             <span className="text-muted-foreground ml-2 text-xs font-normal">{t(`dashboard.kind.${p.kind}`)}</span>
           </span>
@@ -268,14 +278,78 @@ function ServiceTile({ integration: i, icon }: { integration: Integration; icon?
   )
 }
 
-function ServiceTiles() {
+/** Letzte Statuswechsel aller Integrationen (unten auf dem Dashboard). */
+function EventsTile() {
+  const { t } = useTranslation()
+  const history = useHistory({}, 8)
+  const entries = history.data?.pages[0]?.entries ?? []
+  return (
+    <Card className="gap-2" data-tile="events">
+      <CardContent className="flex flex-col gap-1">
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2 font-medium">
+            <HistoryIcon className="size-4" />
+            {t('dashboard.events')}
+          </span>
+          <Link to="/verlauf" className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm">
+            {t('dashboard.allEvents')}
+            <ChevronRight className="size-4" />
+          </Link>
+        </div>
+        {history.isPending ? (
+          <Skeleton className="h-24" />
+        ) : entries.length === 0 ? (
+          <p className="text-muted-foreground py-4 text-sm">{t('history.empty')}</p>
+        ) : (
+          <HistoryList entries={entries} compact />
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+const span: Record<number, string> = { 1: '', 2: 'sm:col-span-2', 3: 'sm:col-span-2 lg:col-span-3' }
+const defaultTiles: DashboardTile[] = [
+  { id: 'backups', visible: true, size: 1 },
+  { id: 'checks', visible: true, size: 1 },
+  { id: 'events', visible: true, size: 3 },
+]
+
+/** Kacheln in der Anordnung aus Einstellungen → Dashboard. */
+function Tiles({ overview }: { overview: Overview }) {
+  const layout = useDashboardLayout()
   const integrations = useIntegrations()
   const types = useIntegrationTypes()
-  // Healthchecks hat die Checks-Kachel
-  const list = (integrations.data ?? []).filter((i) => i.enabled && i.type !== 'healthchecks')
-  return list.map((i) => (
-    <ServiceTile key={i.id} integration={i} icon={types.data?.types.find((x) => x.type === i.type)?.icon} />
-  ))
+  const tiles = layout.data?.tiles ?? defaultTiles
+
+  function tile(id: string) {
+    switch (id) {
+      case 'backups':
+        return <BackupsTile overview={overview} />
+      case 'checks':
+        return <ChecksTile overview={overview} />
+      case 'events':
+        return <EventsTile />
+    }
+    const i = integrations.data?.find((x) => `integration:${x.id}` === id)
+    if (!i || !i.enabled) return null
+    return <ServiceTile integration={i} icon={types.data?.types.find((x) => x.type === i.type)?.icon} />
+  }
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {tiles
+        .filter((x) => x.visible)
+        .map((x) => {
+          const content = tile(x.id)
+          return content ? (
+            <div key={x.id} className={cn('min-w-0 [&>*]:h-full', span[x.size])}>
+              {content}
+            </div>
+          ) : null
+        })}
+    </div>
+  )
 }
 
 export function Dashboard() {
@@ -301,11 +375,7 @@ export function Dashboard() {
       ) : (
         <>
           <OverallStatus overview={o!} />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <BackupsTile overview={o!} />
-            <ChecksTile overview={o!} />
-            <ServiceTiles />
-          </div>
+          <Tiles overview={o!} />
         </>
       )}
     </div>

@@ -665,10 +665,12 @@ func itemChanges(prev, cur Snapshot, at time.Time) []store.StatusChange {
 			return
 		}
 		if from == "" {
-			from = StatusUnknown
-			if to == StatusUnknown {
+			// Neu aufgetaucht: nur Probleme in den Verlauf, sonst flutet die
+			// erste Abfrage ihn mit „neu → ok“.
+			if to != StatusWarning && to != StatusError {
 				return
 			}
+			from = StatusNew
 		}
 		out = append(out, store.StatusChange{Kind: kind, ItemID: id, ItemName: name, ItemGroup: group,
 			From: string(from), To: string(to), At: at})

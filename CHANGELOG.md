@@ -24,6 +24,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   A failed verify marks the backup as failed.
 - Backups without a history from their source get one from their runs (e.g. PBS snapshots):
   OK after a run, due soon from 80 % of the maximum age, then overdue until the next run.
+- Notifications via webhooks (as in dnsdeck) with presets for ntfy, Gotify, Discord, Slack,
+  Telegram and Home Assistant, live preview and test message. Each webhook has an encrypted token
+  field, used as `${TOKEN}`; plain-text secrets are rejected. Events: check down / up again,
+  backup overdue / failed / OK again, integration unreachable / reachable again, threshold
+  exceeded. Language of the notifications is configurable.
+- Backups are evaluated every minute and after every poll, so "overdue" is detected without new
+  data and reported once.
+- History page: status changes and errors of all integrations, filter by integration, kind and
+  problems only, load older entries.
+- Dashboard editor (Settings → Dashboard): show/hide tiles, order by drag and drop or arrows,
+  width 1–3 columns; stored in the database. New tile "Recent events".
 
 ### Changed
 - Addresses of integrations are stored as entered (a trailing slash is kept, some APIs need it).

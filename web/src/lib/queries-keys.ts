@@ -8,4 +8,7 @@ export const keys = {
   checks: ['checks'] as const,
   backups: ['backups'] as const,
   history: ['history'] as const,
+  events: ['events'] as const,
+  dashboard: ['dashboard'] as const,
+  webhooks: ['webhooks'] as const,
 }

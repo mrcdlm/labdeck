@@ -1,6 +1,18 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { api, integrationApi, monitoringApi, type IntegrationInput, type MetricRange, type Settings } from './api'
+import {
+  api,
+  historyApi,
+  integrationApi,
+  monitoringApi,
+  webhookApi,
+  type DashboardLayout,
+  type HistoryFilter,
+  type IntegrationInput,
+  type MetricRange,
+  type Settings,
+  type WebhookInput,
+} from './api'
 import { useLive } from './live-context'
 import { keys } from './queries-keys'
 
@@ -134,5 +146,56 @@ export function useMetricHistory(id: number, key: string | undefined, range: Met
     queryFn: () => integrationApi.history(id, key!, range),
     enabled: key !== undefined,
     placeholderData: (prev) => (prev?.key === key ? prev : undefined),
+  })
+}
+
+export function useWebhooks() {
+  return useQuery({ queryKey: keys.webhooks, queryFn: webhookApi.list })
+}
+
+export function useSaveWebhook() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, input }: { id?: number; input: WebhookInput }) =>
+      id ? webhookApi.update(id, input) : webhookApi.create(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.webhooks }),
+  })
+}
+
+export function useDeleteWebhook() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: webhookApi.remove,
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.webhooks }),
+  })
+}
+
+export function useTestWebhook() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: webhookApi.test,
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.webhooks }),
+  })
+}
+
+/** Verlauf seitenweise (ältere per fetchNextPage). */
+export function useHistory(filter: HistoryFilter, limit = 50) {
+  return useInfiniteQuery({
+    queryKey: [...keys.events, filter, limit],
+    queryFn: ({ pageParam }) => historyApi.list(filter, pageParam, limit),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (last) => (last.more ? last.entries[last.entries.length - 1]?.id : undefined),
+  })
+}
+
+export function useDashboardLayout() {
+  return useQuery({ queryKey: keys.dashboard, queryFn: historyApi.dashboard })
+}
+
+export function useSaveDashboardLayout() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (l: DashboardLayout) => historyApi.saveDashboard(l),
+    onSuccess: (l) => qc.setQueryData(keys.dashboard, l),
   })
 }

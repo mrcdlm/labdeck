@@ -33,6 +33,8 @@ const (
 	StatusError   Status = "error"
 	StatusUnknown Status = "unknown"
 	StatusPaused  Status = "paused"
+	// StatusNew steht nur im Verlauf: der Eintrag ist neu aufgetaucht.
+	StatusNew Status = "new"
 )
 
 // Snapshot sind die normierten Daten einer Abfrage.

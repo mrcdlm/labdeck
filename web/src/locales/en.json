@@ -2,7 +2,8 @@
   "common": {
     "save": "Save",
     "cancel": "Cancel",
-    "delete": "Delete"
+    "delete": "Delete",
+    "add": "Add"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -90,7 +91,9 @@
     "checksGrace": "{{count}} grace",
     "checksDown": "{{count}} down",
     "thresholds_one": "{{count}} threshold",
-    "thresholds_other": "{{count}} thresholds"
+    "thresholds_other": "{{count}} thresholds",
+    "events": "Recent events",
+    "allEvents": "Show all"
   },
   "backups": {
     "subtitle": "Last runs, results and overdue backups",
@@ -193,10 +196,24 @@
   },
   "history": {
     "subtitle": "Status changes and errors of all integrations",
-    "empty": "Status changes and errors appear here once integrations deliver data."
+    "empty": "No status changes yet – they appear once integrations deliver data.",
+    "loadError": "Could not load the history: {{error}}",
+    "integration": "Integration",
+    "kind": "Kind",
+    "all": "All",
+    "kinds": {
+      "integration": "Integrations",
+      "check": "Checks",
+      "backup": "Backups",
+      "metric": "Metrics"
+    },
+    "problemsOnly": "Problems only",
+    "more": "Load older",
+    "to": "changed to",
+    "new": "New"
   },
   "settings": {
-    "subtitle": "Integrations, backups, display and system",
+    "subtitle": "Integrations, dashboard, notifications, backups, display and system",
     "loadError": "Could not load settings: {{error}}",
     "general": "General",
     "generalHint": "Changes take effect immediately, without a restart.",
@@ -217,7 +234,20 @@
     "hours": "hours",
     "backupTag": "Backup tag (Healthchecks.io)",
     "backupTagHint": "Checks with this tag appear on the Backups page. The tag is set per integration (Integrations → Edit).",
-    "backupTagNone": "no tag – no backups"
+    "backupTagNone": "no tag – no backups",
+    "dashboard": "Dashboard",
+    "dashboardHint": "Tiles below the overall status: order by dragging or arrows, show and hide, width in columns. Saved immediately.",
+    "dashboardTiles": "Tiles",
+    "tileVisible": "Show {{name}}",
+    "tileSize": "Width of {{name}}",
+    "tileUp": "Move {{name}} up",
+    "tileDown": "Move {{name}} down",
+    "columns_one": "{{count}} column",
+    "columns_other": "{{count}} columns",
+    "notifications": "Notifications",
+    "notificationsHint": "Applies to all webhooks.",
+    "notifyLanguage": "Notification language",
+    "notifyLanguageHint": "Title and text of the messages."
   },
   "system": {
     "title": "System",
@@ -302,9 +332,6 @@
     "listAdd": "Add",
     "listEmpty": "No entries yet."
   },
-  "placeholder": {
-    "title": "Nothing to see yet"
-  },
   "uptime": {
     "title": "Uptime {{range}}",
     "period": "Period",
@@ -348,6 +375,95 @@
       "total": "capacity",
       "used_pct": "usage",
       "snapshots": "snapshots"
+    }
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "subtitle": "Notify any service via HTTP request – presets for ntfy, Gotify, Discord, Slack, Telegram and Home Assistant.",
+    "loadError": "Could not load webhooks: {{error}}",
+    "empty": "No webhooks yet.",
+    "add": "Add webhook",
+    "addTitle": "Add webhook",
+    "editTitle": "Edit webhook",
+    "activeLabel": "{{name}} active",
+    "editLabel": "Edit {{name}}",
+    "deleteLabel": "Delete {{name}}",
+    "inactive": "inactive",
+    "test": "Test",
+    "testDelivered": "Test message delivered",
+    "noEvents": "No event selected – sends test messages only",
+    "missingEnv": "Not set: <code>{{names}}</code> – add to deploy/.env and restart the container.",
+    "tokenMissing": "${TOKEN} is used, but no token is stored – enter it when editing.",
+    "saveFailed": "Saving failed: {{error}}",
+    "lastFailed": "Last delivery failed: {{error}}",
+    "lastSent": "Last delivered {{time}}",
+    "nothingSent": "Nothing sent yet",
+    "deleteTitle": "Delete webhook?",
+    "deleteHint": "“{{name}}” will be deleted including its stored token and receive no more notifications.",
+    "secretsHint": "Never enter secrets directly: put them into the token field, inserted as <code>{{urlVar}}</code> in URL and headers or <code>{{bodyVar}}</code> in the body. Alternatively environment variables like <code>{{envVar}}</code>.",
+    "preset": "Preset",
+    "presetGeneric": "Generic (JSON)",
+    "name": "Name",
+    "token": "Token",
+    "tokenSet": "stored – leave empty to keep",
+    "tokenHint": "Stored encrypted and never shown; inserted as <code>{{urlVar}}</code> or <code>{{bodyVar}}</code>.",
+    "tokenNeeded": "This configuration uses a token – please enter it.",
+    "tokenFor": {
+      "ntfy": "Adjust the topic in the body (treat it like a password). For protected servers add the header Authorization: Bearer ${TOKEN} and put the access token into the token field.",
+      "gotify": "Token: app token from Gotify. Adjust the address.",
+      "discord": "Token: the full webhook URL from the channel settings.",
+      "slack": "Token: the incoming webhook URL.",
+      "telegram": "Token: bot token from @BotFather; adjust chat_id in the body.",
+      "homeassistant": "Token: the webhook ID of the automation. Adjust the address."
+    },
+    "method": "Method",
+    "noHeaders": "No additional headers.",
+    "headerName": "Header {{n}} name",
+    "headerValue": "Header {{n}} value",
+    "headerValuePlaceholder": "Value, e.g. {{example}}",
+    "headerRemove": "Remove header {{n}}",
+    "body": "Body template",
+    "bodyPlaceholder": "Empty = default JSON with type, title, message, priority, time, data",
+    "bodyHelp": "Available: <code>{{fields}}</code> · Functions: <code>json</code> (for JSON values), <code>token</code>, <code>env</code>, <code>{{funcs}}</code>",
+    "sendOn": "Send on",
+    "active": "Active",
+    "preview": "Preview",
+    "sampleEvent": "Sample event",
+    "sample": "Sample: {{event}}",
+    "previewHint": "Placeholders stay visible in the preview – values are never shown."
+  },
+  "events": {
+    "check_down": {
+      "label": "Check down",
+      "hint": "A Healthchecks check went down (not during the grace period)."
+    },
+    "check_up": {
+      "label": "Check up again",
+      "hint": "A check that was down reports again."
+    },
+    "backup_overdue": {
+      "label": "Backup overdue",
+      "hint": "The last run is older than the maximum age."
+    },
+    "backup_failed": {
+      "label": "Backup failed",
+      "hint": "The source reports an error (e.g. verify failed)."
+    },
+    "backup_recovered": {
+      "label": "Backup OK again",
+      "hint": "An overdue or failed backup ran again."
+    },
+    "integration_down": {
+      "label": "Integration unreachable",
+      "hint": "A data source cannot be polled."
+    },
+    "integration_recovered": {
+      "label": "Integration reachable again",
+      "hint": "Polling works again."
+    },
+    "threshold": {
+      "label": "Threshold exceeded",
+      "hint": "A metric reaches its warning or error threshold."
     }
   }
 }

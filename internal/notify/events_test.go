@@ -24,12 +24,12 @@ func TestFromPoll(t *testing.T) {
 		{Kind: "integration", ItemName: "Homelab", From: "ok", To: "error", At: at,
 			Message: i18n.Encode(i18n.M("integration.timeout"))},
 		ch("check", "a", "DynDNS", "", "ok", "error"),
-		ch("check", "b", "Neu", "", "unknown", "error"), // erstmals gesehen: nicht melden
+		ch("check", "b", "Neu", "", "new", "error"), // erstmals gesehen: nicht melden
 		ch("check", "c", "Certs", "", "error", "ok"),
 		ch("check", "d", "Borg", "", "ok", "warning"), // Karenzzeit: nicht melden
 		ch("metric", "frei/nas/frei", "Frei", "nas", "ok", "warning"),
 		ch("metric", "cpu", "CPU", "", "warning", "ok"), // Erholung: nicht melden
-		ch("metric", "temp", "Temp", "", "unknown", "error"),
+		ch("metric", "temp", "Temp", "", "new", "error"),
 	}, map[string]integrations.Metric{"frei/nas/frei": {Value: 18.4, Unit: "%"}, "temp": {Value: 71}},
 		map[string]*time.Time{"a": &ping}, tf)
 

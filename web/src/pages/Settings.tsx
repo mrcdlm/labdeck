@@ -1,8 +1,10 @@
-import { Check, DatabaseBackup, Info as InfoIcon, Loader2, SlidersHorizontal } from 'lucide-react'
+import { Check, DatabaseBackup, Info as InfoIcon, Languages, Loader2, SlidersHorizontal } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { DashboardEditor } from '@/components/DashboardEditor'
 import { PageHeader } from '@/components/PageHeader'
+import { WebhooksSection } from '@/components/WebhooksSection'
 import { IntegrationsSection } from '@/components/IntegrationsSection'
 import { Section } from '@/components/Section'
 import { Button } from '@/components/ui/button'
@@ -152,6 +154,27 @@ function SettingsForm({
       </Section>
 
       <Section
+        icon={<Languages className="size-5" />}
+        title={t('settings.notifications')}
+        description={t('settings.notificationsHint')}
+      >
+        <SettingRow id="notify-language" label={t('settings.notifyLanguage')} hint={t('settings.notifyLanguageHint')}>
+          <Select
+            value={draft.notify_language}
+            onValueChange={(v) => update({ notify_language: v as SettingsData['notify_language'] })}
+          >
+            <SelectTrigger id="notify-language" className="w-full sm:w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="de">{t('prefs.languageName.de')}</SelectItem>
+              <SelectItem value="en">{t('prefs.languageName.en')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </SettingRow>
+      </Section>
+
+      <Section
         icon={<SlidersHorizontal className="size-5" />}
         title={t('settings.general')}
         description={t('settings.generalHint')}
@@ -273,6 +296,8 @@ export function Settings() {
     <div className="flex flex-col gap-6">
       <PageHeader title={t('nav.settings')} subtitle={t('settings.subtitle')} />
       <IntegrationsSection />
+      <DashboardEditor />
+      <WebhooksSection />
       {settings.isPending ? (
         <Skeleton className="h-64" />
       ) : settings.isError ? (
