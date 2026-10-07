@@ -1,15 +1,13 @@
 import type { LucideIcon } from 'lucide-react'
-import { DatabaseBackup, HeartPulse, History, Server } from 'lucide-react'
+import { History, Server } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { PageHeader } from '@/components/PageHeader'
 import { Card, CardContent } from '@/components/ui/card'
 
-type PageKey = 'backups' | 'checks' | 'services' | 'history'
+type PageKey = 'services' | 'history'
 
 const icons: Record<PageKey, LucideIcon> = {
-  backups: DatabaseBackup,
-  checks: HeartPulse,
   services: Server,
   history: History,
 }

@@ -49,9 +49,6 @@
     "unknown": "Unbekannt",
     "paused": "Pausiert"
   },
-  "placeholder": {
-    "title": "Noch nichts zu sehen"
-  },
   "dashboard": {
     "subtitle": "Zustand des HomeLabs auf einen Blick",
     "noIntegrations": "Noch keine Integrationen eingerichtet",
@@ -61,15 +58,106 @@
     "problems_other": "{{count}} Probleme",
     "activeIntegrations_one": "{{count}} Integration aktiv",
     "activeIntegrations_other": "{{count}} Integrationen aktiv",
-    "lastSuccess": "zuletzt erfolgreich {{time}}"
+    "loadError": "Gesamtstatus konnte nicht geladen werden: {{error}}",
+    "noneActive": "Keine Integration aktiv",
+    "problemList": "Probleme",
+    "problem": {
+      "integration": "Nicht erreichbar",
+      "at": {
+        "integration": "zuletzt erfolgreich {{time}}",
+        "backup": "letzter Lauf {{time}}",
+        "check": "letzter Ping {{time}}"
+      }
+    },
+    "kind": {
+      "integration": "Integration",
+      "backup": "Backup",
+      "check": "Check"
+    },
+    "noBackups": "Noch keine Backups",
+    "monitored": "{{count}} überwacht",
+    "backupsOk": "{{count}} OK",
+    "backupsDueSoon": "{{count}} bald fällig",
+    "backupsBad": "{{count}} überfällig/fehlgeschlagen",
+    "other": "{{count}} sonstige",
+    "noChecks": "Noch keine Checks",
+    "checks_one": "{{count}} Check",
+    "checks_other": "{{count}} Checks",
+    "checksUp": "{{count}} up",
+    "checksGrace": "{{count}} Karenzzeit",
+    "checksDown": "{{count}} down"
   },
   "backups": {
     "subtitle": "Letzte Läufe, Ergebnisse und überfällige Backups",
-    "empty": "Hier erscheinen Backups aus Healthchecks.io, Proxmox Backup Server und eigenen Quellen, sobald sie eingerichtet sind."
+    "empty": "Hier erscheinen Backups aus Healthchecks.io (Checks mit dem Backup-Tag) und künftig aus Proxmox Backup Server und eigenen Quellen.",
+    "emptyTitle": "Noch keine Backups",
+    "toSettings": "Integration einrichten",
+    "loadError": "Backups konnten nicht geladen werden: {{error}}",
+    "state": {
+      "ok": "OK",
+      "due_soon": "Bald fällig",
+      "overdue": "Überfällig",
+      "failed": "Fehlgeschlagen",
+      "unknown": "Noch nie gelaufen",
+      "paused": "Pausiert"
+    },
+    "never": "noch nie",
+    "due": "fällig {{time}}",
+    "col": {
+      "name": "Backup",
+      "status": "Status",
+      "lastRun": "Letzter Lauf",
+      "size": "Größe",
+      "history": "Verlauf {{range}}",
+      "maxAge": "Höchstalter"
+    },
+    "maxAgeDefault": "Standard aus den Einstellungen",
+    "editMaxAge": "Höchstalter ändern",
+    "editMaxAgeLabel": "Höchstalter von {{name}} ändern",
+    "maxAgeTitle": "Höchstalter",
+    "maxAgeHint": "Ist der letzte Lauf von „{{name}}“ älter, gilt das Backup als überfällig – ab {{percent}} % davon als bald fällig.",
+    "maxAgeHours": "Höchstalter in Stunden",
+    "maxAgePreview": "Höchstalter {{age}} – Warnung ab {{warn}}.",
+    "maxAgeRange": "Erlaubt sind {{min}} bis {{max}} Stunden.",
+    "useDefault": "Standard verwenden ({{age}})",
+    "total_one": "{{count}} Backup",
+    "total_other": "{{count}} Backups",
+    "stale": "Mindestens eine Quelle ist gerade nicht erreichbar – angezeigt werden die Daten vom letzten erfolgreichen Abruf.",
+    "howItWorks": "Ein Backup ist überfällig, wenn sein letzter Lauf älter als das Höchstalter ist (Standard {{age}}, mit * markiert), und ab {{percent}} % davon bald fällig. Fehlgeschlagen heißt: Die Quelle meldet einen Fehler. Healthchecks-Checks mit dem Backup-Tag erscheinen hier automatisch."
   },
   "checks": {
     "subtitle": "Healthchecks.io-Checks mit Uptime-Verlauf",
-    "empty": "Hier erscheinen die Checks deiner Healthchecks.io-Projekte, sobald eine Integration eingerichtet ist."
+    "empty": "Hier erscheinen die Checks deiner Healthchecks.io-Projekte, sobald eine Integration eingerichtet ist.",
+    "emptyTitle": "Noch keine Checks",
+    "toSettings": "Integration einrichten",
+    "loadError": "Checks konnten nicht geladen werden: {{error}}",
+    "count_one": "{{count}} Check",
+    "count_other": "{{count}} Checks",
+    "problems_one": "{{count}} Problem",
+    "problems_other": "{{count}} Probleme",
+    "stale": "Nicht erreichbar – Daten vom letzten Abruf",
+    "col": {
+      "name": "Check",
+      "status": "Status",
+      "lastPing": "Letzter Ping",
+      "nextPing": "Nächster Ping",
+      "history": "Verlauf {{range}}"
+    },
+    "lastPingAgo": "Letzter Ping {{time}}",
+    "groupBy": "Gruppieren nach",
+    "byProject": "Projekt",
+    "byTag": "Tag",
+    "filterTags": "Nach Tags filtern",
+    "clearFilter": "Filter zurücksetzen",
+    "noTag": "Ohne Tag",
+    "howItWorks": "Je Healthchecks-Projekt eine Integration. Der Verlauf stammt aus den Statuswechseln von Healthchecks.io (bis 30 Tage) und wird alle 10 Minuten sowie bei jedem Statuswechsel aktualisiert. Gelb: Karenzzeit – der Ping ist überfällig, der Check aber noch nicht down.",
+    "raw": {
+      "up": "Up",
+      "grace": "Karenzzeit",
+      "down": "Down",
+      "paused": "Pausiert",
+      "new": "Neu"
+    }
   },
   "services": {
     "subtitle": "Kennzahlen und Diagramme je Integration",
@@ -80,7 +168,7 @@
     "empty": "Hier erscheinen Statuswechsel und Fehler, sobald Integrationen Daten liefern."
   },
   "settings": {
-    "subtitle": "Anzeige, Aufbewahrung und System",
+    "subtitle": "Integrationen, Backups, Anzeige und System",
     "loadError": "Einstellungen konnten nicht geladen werden: {{error}}",
     "general": "Allgemein",
     "generalHint": "Änderungen gelten sofort, ohne Neustart.",
@@ -93,7 +181,15 @@
     "dailyRetentionHint": "Ein Wert pro Tag und Kennzahl – für langfristige Diagramme.",
     "days": "Tage",
     "saved": "Gespeichert",
-    "discard": "Verwerfen"
+    "discard": "Verwerfen",
+    "backups": "Backups",
+    "backupsHint": "Wann ein Backup als überfällig gilt. Je Backup lässt sich das auf der Backups-Seite abweichend einstellen.",
+    "backupMaxAge": "Standard-Höchstalter",
+    "backupMaxAgeHint": "Ohne neuen Lauf gilt ein Backup danach als überfällig, ab 80 % davon als bald fällig.",
+    "hours": "Stunden",
+    "backupTag": "Backup-Tag (Healthchecks.io)",
+    "backupTagHint": "Checks mit diesem Tag erscheinen auf der Backups-Seite. Der Tag wird je Integration eingestellt (Integrationen → Bearbeiten).",
+    "backupTagNone": "kein Tag – keine Backups"
   },
   "system": {
     "title": "System",
@@ -113,7 +209,8 @@
     "hours_one": "{{count}} Stunde",
     "hours_other": "{{count}} Stunden",
     "days_one": "{{count}} Tag",
-    "days_other": "{{count}} Tage"
+    "days_other": "{{count}} Tage",
+    "hoursFraction": "{{value}} Stunden"
   },
   "integrations": {
     "title": "Integrationen",
@@ -172,5 +269,25 @@
     "notPolled": "Noch nicht abgefragt",
     "deleteTitle": "Integration löschen?",
     "deleteHint": "„{{name}}“ wird samt Verlauf und Kennzahlen gelöscht."
+  },
+  "placeholder": {
+    "title": "Noch nichts zu sehen"
+  },
+  "uptime": {
+    "title": "Uptime {{range}}",
+    "period": "Zeitraum",
+    "range": {
+      "24h": "24 h",
+      "7d": "7 Tage",
+      "30d": "30 Tage"
+    },
+    "bucket": {
+      "ok": "OK",
+      "warning": "Karenzzeit",
+      "error": "Ausfall",
+      "paused": "Pausiert",
+      "unknown": "Keine Daten"
+    },
+    "gaps": "Lücken im Zeitraum (grau): kein Verlauf bekannt"
   }
 }

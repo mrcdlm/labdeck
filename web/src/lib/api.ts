@@ -8,6 +8,8 @@ export interface Settings {
   timezone: string
   raw_retention_days: number
   daily_retention_days: number
+  /** Standard-Höchstalter von Backups in Stunden */
+  backup_max_age_hours: number
   /** Grenzen der Eingaben (nur lesen) */
   limits: Record<string, number>
 }
@@ -189,4 +191,113 @@ export const integrationApi = {
   /** id: gespeicherte Integration ergänzt leer gelassene Secrets */
   test: (i: IntegrationInput, id?: number) => request<TestResult>('POST', '/api/integrations/test', { ...i, id }),
   poll: (id: number) => request<Integration>('POST', `/api/integrations/${id}/poll`),
+}
+
+// --- Checks, Backups, Gesamtstatus -----------------------------------------
+
+export type UptimeRange = '24h' | '7d' | '30d'
+export const uptimeRanges: UptimeRange[] = ['24h', '7d', '30d']
+
+export interface Uptime {
+  /** Anteil erreichbarer an bekannter Zeit; null = nichts bekannt */
+  percent: number | null
+  /** Anteil bekannter Zeit am Zeitraum (0..1) */
+  observed: number
+  start: string
+  bucket_seconds: number
+  /** schlechtester Status je Abschnitt (unknown = keine Daten) */
+  buckets: Status[]
+}
+
+/** Uptime je Zeitraum; null = die Quelle liefert keinen Verlauf */
+export type Uptimes = Record<UptimeRange, Uptime> | null
+
+export interface CheckItem {
+  integration_id: number
+  integration_name: string
+  id: string
+  name: string
+  group?: string
+  tags: string[]
+  status: Status
+  /** Status der Quelle, z. B. "grace" */
+  raw?: string
+  desc?: string
+  last_ping?: string
+  next_ping?: string
+  /** Integration gerade nicht erreichbar – Daten vom letzten Abruf */
+  stale?: boolean
+  uptime: Uptimes
+}
+
+export type BackupState = 'ok' | 'due_soon' | 'overdue' | 'failed' | 'unknown' | 'paused'
+
+export interface BackupItem {
+  integration_id: number
+  integration_name: string
+  integration_type: string
+  id: string
+  name: string
+  group?: string
+  description?: string
+  last_run?: string
+  result: Status
+  size_bytes?: number
+  duration_seconds?: number
+  state: BackupState
+  status: Status
+  max_age_hours: number
+  max_age_custom: boolean
+  due_at?: string
+  stale?: boolean
+  uptime: Uptimes
+}
+
+export interface BackupSummary {
+  total: number
+  states: Partial<Record<BackupState, number>>
+  status: Status
+}
+
+export interface BackupsOverview {
+  backups: BackupItem[]
+  summary: BackupSummary
+  default_max_age_hours: number
+  warn_percent: number
+  limits: Record<string, number>
+}
+
+export interface Problem {
+  kind: 'integration' | 'check' | 'backup'
+  status: Status
+  integration_id: number
+  integration_name: string
+  item_id?: string
+  name: string
+  /** Backup: overdue, failed, due_soon; Check: Status der Quelle (down, grace) */
+  state?: string
+  /** Fehlermeldung der Integration */
+  detail?: string
+  at?: string
+}
+
+export interface Overview {
+  status: Status
+  integrations: { total: number; active: number; error: number }
+  checks: { total: number; statuses: Partial<Record<Status, number>>; status: Status }
+  backups: BackupSummary
+  problems: Problem[]
+}
+
+export const monitoringApi = {
+  overview: () => request<Overview>('GET', '/api/overview'),
+  checks: () => request<{ checks: CheckItem[] }>('GET', '/api/checks'),
+  backups: () => request<BackupsOverview>('GET', '/api/backups'),
+  /** maxAgeHours 0 = Standard */
+  setBackupMaxAge: (integrationId: number, itemId: string, maxAgeHours: number) =>
+    request<void>('PUT', '/api/backups/max-age', {
+      integration_id: integrationId,
+      item_id: itemId,
+      max_age_hours: maxAgeHours,
+    }),
 }

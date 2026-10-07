@@ -1,4 +1,4 @@
-import { Check, Info as InfoIcon, Loader2, SlidersHorizontal } from 'lucide-react'
+import { Check, DatabaseBackup, Info as InfoIcon, Loader2, SlidersHorizontal } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Settings as SettingsData } from '@/lib/api'
-import { useInfo, useSaveSettings, useSettings } from '@/lib/queries'
+import { useInfo, useIntegrations, useSaveSettings, useSettings } from '@/lib/queries'
 
 // Radix-Select erlaubt keinen leeren Wert.
 const BROWSER_TZ = 'browser'
@@ -41,20 +41,21 @@ function SettingRow({ id, label, hint, children }: { id: string; label: string; 
   )
 }
 
-function DaysInput({
+function NumberInput({
   id,
   value,
   min,
   max,
+  unit,
   onChange,
 }: {
   id: string
   value: number
   min: number
   max: number
+  unit: string
   onChange: (v: number) => void
 }) {
-  const { t } = useTranslation()
   return (
     <div className="flex items-center gap-2">
       <Input
@@ -68,7 +69,36 @@ function DaysInput({
         value={Number.isNaN(value) ? '' : value}
         onChange={(e) => onChange(e.target.valueAsNumber)}
       />
-      <span className="text-muted-foreground w-12 text-sm">{t('settings.days')}</span>
+      <span className="text-muted-foreground w-16 text-sm">{unit}</span>
+    </div>
+  )
+}
+
+/** Backup-Tags der Healthchecks-Integrationen (werden je Integration eingestellt). */
+function BackupTags() {
+  const { t } = useTranslation()
+  const integrations = useIntegrations()
+  const hc = (integrations.data ?? []).filter((i) => i.type === 'healthchecks')
+  if (hc.length === 0) return null
+  return (
+    <div className="grid gap-1">
+      <span className="text-sm font-medium">{t('settings.backupTag')}</span>
+      <p className="text-muted-foreground text-xs">{t('settings.backupTagHint')}</p>
+      <ul className="mt-1 flex flex-col gap-1 text-sm">
+        {hc.map((i) => {
+          const tag = String(i.config.backup_tag ?? '')
+          return (
+            <li key={i.id} className="flex flex-wrap items-center gap-2">
+              <span>{i.name}</span>
+              {tag ? (
+                <code className="bg-muted rounded px-1.5 py-0.5 text-xs">{tag}</code>
+              ) : (
+                <span className="text-muted-foreground text-xs">{t('settings.backupTagNone')}</span>
+              )}
+            </li>
+          )
+        })}
+      </ul>
     </div>
   )
 }
@@ -104,6 +134,24 @@ function SettingsForm({
       }}
     >
       <Section
+        icon={<DatabaseBackup className="size-5" />}
+        title={t('settings.backups')}
+        description={t('settings.backupsHint')}
+      >
+        <SettingRow id="backup-max-age" label={t('settings.backupMaxAge')} hint={t('settings.backupMaxAgeHint')}>
+          <NumberInput
+            id="backup-max-age"
+            value={draft.backup_max_age_hours}
+            min={l.backup_max_age_hours_min}
+            max={l.backup_max_age_hours_max}
+            unit={t('settings.hours')}
+            onChange={(v) => update({ backup_max_age_hours: v })}
+          />
+        </SettingRow>
+        <BackupTags />
+      </Section>
+
+      <Section
         icon={<SlidersHorizontal className="size-5" />}
         title={t('settings.general')}
         description={t('settings.generalHint')}
@@ -127,20 +175,22 @@ function SettingsForm({
           </Select>
         </SettingRow>
         <SettingRow id="raw-retention" label={t('settings.rawRetention')} hint={t('settings.rawRetentionHint')}>
-          <DaysInput
+          <NumberInput
             id="raw-retention"
             value={draft.raw_retention_days}
             min={l.raw_retention_days_min}
             max={l.raw_retention_days_max}
+            unit={t('settings.days')}
             onChange={(v) => update({ raw_retention_days: v })}
           />
         </SettingRow>
         <SettingRow id="daily-retention" label={t('settings.dailyRetention')} hint={t('settings.dailyRetentionHint')}>
-          <DaysInput
+          <NumberInput
             id="daily-retention"
             value={draft.daily_retention_days}
             min={l.daily_retention_days_min}
             max={l.daily_retention_days_max}
+            unit={t('settings.days')}
             onChange={(v) => update({ daily_retention_days: v })}
           />
         </SettingRow>

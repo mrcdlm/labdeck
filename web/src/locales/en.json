@@ -49,9 +49,6 @@
     "unknown": "Unknown",
     "paused": "Paused"
   },
-  "placeholder": {
-    "title": "Nothing to see yet"
-  },
   "dashboard": {
     "subtitle": "The state of your home lab at a glance",
     "noIntegrations": "No integrations set up yet",
@@ -61,15 +58,106 @@
     "problems_other": "{{count}} problems",
     "activeIntegrations_one": "{{count}} integration active",
     "activeIntegrations_other": "{{count}} integrations active",
-    "lastSuccess": "last successful {{time}}"
+    "loadError": "Could not load the overall status: {{error}}",
+    "noneActive": "No integration active",
+    "problemList": "Problems",
+    "problem": {
+      "integration": "Unreachable",
+      "at": {
+        "integration": "last successful {{time}}",
+        "backup": "last run {{time}}",
+        "check": "last ping {{time}}"
+      }
+    },
+    "kind": {
+      "integration": "Integration",
+      "backup": "Backup",
+      "check": "Check"
+    },
+    "noBackups": "No backups yet",
+    "monitored": "{{count}} monitored",
+    "backupsOk": "{{count}} OK",
+    "backupsDueSoon": "{{count}} due soon",
+    "backupsBad": "{{count}} overdue/failed",
+    "other": "{{count}} other",
+    "noChecks": "No checks yet",
+    "checks_one": "{{count}} check",
+    "checks_other": "{{count}} checks",
+    "checksUp": "{{count}} up",
+    "checksGrace": "{{count}} grace",
+    "checksDown": "{{count}} down"
   },
   "backups": {
     "subtitle": "Last runs, results and overdue backups",
-    "empty": "Backups from Healthchecks.io, Proxmox Backup Server and custom sources appear here once they are set up."
+    "empty": "Backups from Healthchecks.io (checks with the backup tag) appear here, and later also from Proxmox Backup Server and your own sources.",
+    "emptyTitle": "No backups yet",
+    "toSettings": "Set up an integration",
+    "loadError": "Could not load backups: {{error}}",
+    "state": {
+      "ok": "OK",
+      "due_soon": "Due soon",
+      "overdue": "Overdue",
+      "failed": "Failed",
+      "unknown": "Never ran",
+      "paused": "Paused"
+    },
+    "never": "never",
+    "due": "due {{time}}",
+    "col": {
+      "name": "Backup",
+      "status": "Status",
+      "lastRun": "Last run",
+      "size": "Size",
+      "history": "History {{range}}",
+      "maxAge": "Max. age"
+    },
+    "maxAgeDefault": "Default from the settings",
+    "editMaxAge": "Change maximum age",
+    "editMaxAgeLabel": "Change maximum age of {{name}}",
+    "maxAgeTitle": "Maximum age",
+    "maxAgeHint": "If the last run of \"{{name}}\" is older, the backup is overdue – from {{percent}} % of it, it is due soon.",
+    "maxAgeHours": "Maximum age in hours",
+    "maxAgePreview": "Maximum age {{age}} – warning from {{warn}}.",
+    "maxAgeRange": "Allowed are {{min}} to {{max}} hours.",
+    "useDefault": "Use default ({{age}})",
+    "total_one": "{{count}} backup",
+    "total_other": "{{count}} backups",
+    "stale": "At least one source is currently unreachable – showing the data from the last successful poll.",
+    "howItWorks": "A backup is overdue when its last run is older than the maximum age (default {{age}}, marked with *), and due soon from {{percent}} % of it. Failed means: the source reports an error. Healthchecks checks with the backup tag appear here automatically."
   },
   "checks": {
     "subtitle": "Healthchecks.io checks with uptime history",
-    "empty": "The checks of your Healthchecks.io projects appear here once an integration is set up."
+    "empty": "The checks of your Healthchecks.io projects appear here once an integration is set up.",
+    "emptyTitle": "No checks yet",
+    "toSettings": "Set up an integration",
+    "loadError": "Could not load checks: {{error}}",
+    "count_one": "{{count}} check",
+    "count_other": "{{count}} checks",
+    "problems_one": "{{count}} problem",
+    "problems_other": "{{count}} problems",
+    "stale": "Unreachable – data from the last poll",
+    "col": {
+      "name": "Check",
+      "status": "Status",
+      "lastPing": "Last ping",
+      "nextPing": "Next ping",
+      "history": "History {{range}}"
+    },
+    "lastPingAgo": "Last ping {{time}}",
+    "groupBy": "Group by",
+    "byProject": "Project",
+    "byTag": "Tag",
+    "filterTags": "Filter by tags",
+    "clearFilter": "Clear filter",
+    "noTag": "No tag",
+    "howItWorks": "One integration per Healthchecks project. The history comes from the status changes in Healthchecks.io (up to 30 days) and is refreshed every 10 minutes and on every status change. Yellow: grace period – the ping is late, but the check is not down yet.",
+    "raw": {
+      "up": "Up",
+      "grace": "Grace",
+      "down": "Down",
+      "paused": "Paused",
+      "new": "New"
+    }
   },
   "services": {
     "subtitle": "Metrics and charts per integration",
@@ -80,7 +168,7 @@
     "empty": "Status changes and errors appear here once integrations deliver data."
   },
   "settings": {
-    "subtitle": "Display, retention and system",
+    "subtitle": "Integrations, backups, display and system",
     "loadError": "Could not load settings: {{error}}",
     "general": "General",
     "generalHint": "Changes take effect immediately, without a restart.",
@@ -93,7 +181,15 @@
     "dailyRetentionHint": "One value per day and metric – for long-term charts.",
     "days": "days",
     "saved": "Saved",
-    "discard": "Discard"
+    "discard": "Discard",
+    "backups": "Backups",
+    "backupsHint": "When a backup counts as overdue. You can set a different value per backup on the Backups page.",
+    "backupMaxAge": "Default maximum age",
+    "backupMaxAgeHint": "Without a new run, a backup is overdue after this time, and due soon from 80 % of it.",
+    "hours": "hours",
+    "backupTag": "Backup tag (Healthchecks.io)",
+    "backupTagHint": "Checks with this tag appear on the Backups page. The tag is set per integration (Integrations → Edit).",
+    "backupTagNone": "no tag – no backups"
   },
   "system": {
     "title": "System",
@@ -113,7 +209,8 @@
     "hours_one": "{{count}} hour",
     "hours_other": "{{count}} hours",
     "days_one": "{{count}} day",
-    "days_other": "{{count}} days"
+    "days_other": "{{count}} days",
+    "hoursFraction": "{{value}} hours"
   },
   "integrations": {
     "title": "Integrations",
@@ -172,5 +269,25 @@
     "notPolled": "Not polled yet",
     "deleteTitle": "Delete integration?",
     "deleteHint": "\"{{name}}\" will be deleted including its history and metrics."
+  },
+  "placeholder": {
+    "title": "Nothing to see yet"
+  },
+  "uptime": {
+    "title": "Uptime {{range}}",
+    "period": "Period",
+    "range": {
+      "24h": "24 h",
+      "7d": "7 days",
+      "30d": "30 days"
+    },
+    "bucket": {
+      "ok": "OK",
+      "warning": "Grace period",
+      "error": "Outage",
+      "paused": "Paused",
+      "unknown": "No data"
+    },
+    "gaps": "Gaps in this period (grey): no history known"
   }
 }

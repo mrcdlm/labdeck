@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { api, integrationApi, type IntegrationInput, type Settings } from './api'
+import { api, integrationApi, monitoringApi, type IntegrationInput, type Settings } from './api'
 import { useLive } from './live-context'
 import { keys } from './queries-keys'
 
@@ -27,7 +27,12 @@ export function useSaveSettings() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (s: Settings) => api.saveSettings(s),
-    onSuccess: (s) => qc.setQueryData(keys.settings, s),
+    onSuccess: (s) => {
+      qc.setQueryData(keys.settings, s)
+      // Standard-Höchstalter der Backups
+      void qc.invalidateQueries({ queryKey: keys.backups })
+      void qc.invalidateQueries({ queryKey: keys.overview })
+    },
   })
 }
 
@@ -92,6 +97,33 @@ export function useLogout() {
       // Beobachter zu benachrichtigen – RequireAuth bekäme den Logout nie mit.
       qc.setQueryData(keys.session, { authenticated: false })
       qc.removeQueries({ predicate: (q) => q.queryKey[0] !== keys.session[0] })
+    },
+  })
+}
+
+export function useOverview() {
+  const poll = usePollInterval()
+  return useQuery({ queryKey: keys.overview, queryFn: monitoringApi.overview, refetchInterval: poll })
+}
+
+export function useChecks() {
+  const poll = usePollInterval()
+  return useQuery({ queryKey: keys.checks, queryFn: monitoringApi.checks, refetchInterval: poll })
+}
+
+// Backups altern auch ohne neue Daten (bald fällig → überfällig): regelmäßig neu auswerten.
+export function useBackups() {
+  return useQuery({ queryKey: keys.backups, queryFn: monitoringApi.backups, refetchInterval: POLL_MS })
+}
+
+export function useSetBackupMaxAge() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ integrationId, itemId, hours }: { integrationId: number; itemId: string; hours: number }) =>
+      monitoringApi.setBackupMaxAge(integrationId, itemId, hours),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: keys.backups })
+      void qc.invalidateQueries({ queryKey: keys.overview })
     },
   })
 }

@@ -54,13 +54,14 @@ test('Healthchecks: anlegen, testen, abfragen, bearbeiten, deaktivieren, lösche
 
   // Dashboard: Gesamtstatus
   await page.getByRole('link', { name: 'Dashboard' }).first().click()
-  await expect(page.getByText('Alles in Ordnung')).toBeVisible()
+  // Demo-Daten: vzdump überfällig, Borg bald fällig
+  await expect(page.getByText('2 Probleme')).toBeVisible()
   await expect(page.getByText('1 Integration aktiv')).toBeVisible()
 
   // Ausfall der Quelle → Problem auf dem Dashboard (live)
   await mock.hcFail(500)
   await api(page, 'POST', `/api/integrations/${list.json[0].id}/poll`)
-  await expect(page.getByText('1 Problem')).toBeVisible()
+  await expect(page.getByText('3 Probleme')).toBeVisible()
   await expect(page.getByText('Dienst antwortet mit HTTP 500')).toBeVisible()
   await mock.hcFail(0)
 

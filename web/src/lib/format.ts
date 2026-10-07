@@ -49,8 +49,12 @@ export function relativeTime(iso: string, now: number): string {
   const diff = (new Date(iso).getTime() - now) / 1000
   const abs = Math.abs(diff)
   if (abs < 45) return i18n.t('time.justNow')
-  for (const [unit, secs] of units) {
-    if (abs >= secs) return fmt().rtf.format(Math.round(diff / secs), unit)
+  for (const [i, [unit, secs]] of units.entries()) {
+    if (abs < secs) continue
+    // 59,7 Minuten nicht als „60 Minuten“, sondern als „1 Stunde“
+    const bigger = units[i - 1]
+    if (bigger && Math.round(abs / secs) * secs >= bigger[1]) return fmt().rtf.format(Math.sign(diff), bigger[0])
+    return fmt().rtf.format(Math.round(diff / secs), unit)
   }
   return fmt().rtf.format(Math.round(diff / 60), 'minute')
 }
@@ -79,4 +83,22 @@ export function formatDuration(seconds: number): string {
   if (seconds >= 3600 && seconds % 3600 === 0) return i18n.t('duration.hours', { count: seconds / 3600 })
   if (seconds >= 60 && seconds % 60 === 0) return i18n.t('duration.minutes', { count: seconds / 60 })
   return i18n.t('duration.seconds', { count: seconds })
+}
+
+const byteUnits = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+
+/** Größe lesbar (Basis 1000 wie bei Festplatten), z. B. "412 GB". */
+export function formatBytes(n: number): string {
+  let i = 0
+  while (n >= 1000 && i < byteUnits.length - 1) {
+    n /= 1000
+    i++
+  }
+  return `${formatNumber(i === 0 || n >= 100 ? Math.round(n) : Math.round(n * 10) / 10)} ${byteUnits[i]}`
+}
+
+/** Stunden lesbar: ganze Tage als Tage, sonst Stunden ("26 Stunden", "7 Tage", "20,8 Stunden"). */
+export function formatHours(hours: number): string {
+  if (Number.isInteger(hours)) return formatDuration(hours * 3600)
+  return i18n.t('duration.hoursFraction', { value: formatNumber(Math.round(hours * 10) / 10) })
 }

@@ -10,6 +10,8 @@ import { Placeholder } from '@/pages/Placeholder'
 
 // Unterseiten erst bei Bedarf laden (kleineres Start-Bundle).
 const Settings = lazy(() => import('@/pages/Settings').then((m) => ({ default: m.Settings })))
+const Backups = lazy(() => import('@/pages/Backups').then((m) => ({ default: m.Backups })))
+const Checks = lazy(() => import('@/pages/Checks').then((m) => ({ default: m.Checks })))
 
 function Lazy({ children }: { children: ReactNode }) {
   return (
@@ -37,8 +39,8 @@ export default function App() {
         }
       >
         <Route index element={<Dashboard />} />
-        <Route path="backups" element={<Placeholder page="backups" />} />
-        <Route path="checks" element={<Placeholder page="checks" />} />
+        <Route path="backups" element={<Lazy><Backups /></Lazy>} />
+        <Route path="checks" element={<Lazy><Checks /></Lazy>} />
         <Route path="dienste" element={<Placeholder page="services" />} />
         <Route path="verlauf" element={<Placeholder page="history" />} />
         <Route path="einstellungen" element={<Lazy><Settings /></Lazy>} />

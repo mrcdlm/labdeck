@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Checks page: all Healthchecks.io checks grouped by project or tag, tag filter, last/next ping and
+  uptime bars for 24 hours, 7 days and 30 days (from the status changes in Healthchecks.io).
+- Backups page: every backup with status (OK, due soon, overdue, failed, never ran, paused), last
+  run, when it is due, size and history; problems first. Checks with the backup tag appear
+  automatically.
+- Maximum age per backup (from the Backups page) and a default maximum age in Settings → Backups
+  (26 hours); a warning starts at 80 % of it.
+- Dashboard: overall status now lists overdue and failed backups and checks that are down or in
+  their grace period, with tiles for backups and checks.
+
 ### Fixed
 - GitLab CI: the image is built and pushed with BuildKit without attestations, so the GitLab
   registry accepts the manifest.
