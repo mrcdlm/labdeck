@@ -85,7 +85,9 @@
     "checks_other": "{{count}} checks",
     "checksUp": "{{count}} up",
     "checksGrace": "{{count}} grace",
-    "checksDown": "{{count}} down"
+    "checksDown": "{{count}} down",
+    "thresholds_one": "{{count}} threshold",
+    "thresholds_other": "{{count}} thresholds"
   },
   "backups": {
     "subtitle": "Last runs, results and overdue backups",
@@ -161,7 +163,24 @@
   },
   "services": {
     "subtitle": "Metrics and charts per integration",
-    "empty": "Each integration gets a card with its metrics here, e.g. photos, videos and storage in Immich."
+    "empty": "Each integration gets a card with its metrics here, e.g. photos, videos and storage in Immich.",
+    "emptyTitle": "No services yet",
+    "noMetrics": "No metrics yet",
+    "staleSince": "values from the last successful poll {{time}}",
+    "chartTitle": "History: {{metric}}",
+    "chartLabel": "History of {{metric}}",
+    "chartTooFew": "Not enough values for a chart yet – it fills up with every poll.",
+    "chartError": "Could not load the history: {{error}}",
+    "range": {
+      "24h": "24 h",
+      "7d": "7 days",
+      "30d": "30 days",
+      "1y": "1 year"
+    },
+    "groupTitle": {
+      "user": "User",
+      "group": "Group"
+    }
   },
   "history": {
     "subtitle": "Status changes and errors of all integrations",
@@ -289,5 +308,24 @@
       "unknown": "No data"
     },
     "gaps": "Gaps in this period (grey): no history known"
+  },
+  "metrics": {
+    "immich": {
+      "photos": "photos",
+      "videos": "videos",
+      "usage": "storage",
+      "usage_photos": "storage photos",
+      "usage_videos": "storage videos",
+      "users": "users",
+      "quota": "quota",
+      "quota_used": "quota used"
+    },
+    "healthchecks": {
+      "checks_total": "checks",
+      "checks_up": "up",
+      "checks_grace": "grace",
+      "checks_down": "down",
+      "checks_paused": "paused"
+    }
   }
 }

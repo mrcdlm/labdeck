@@ -1,14 +1,13 @@
 import type { LucideIcon } from 'lucide-react'
-import { History, Server } from 'lucide-react'
+import { History } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { PageHeader } from '@/components/PageHeader'
 import { Card, CardContent } from '@/components/ui/card'
 
-type PageKey = 'services' | 'history'
+type PageKey = 'history'
 
 const icons: Record<PageKey, LucideIcon> = {
-  services: Server,
   history: History,
 }
 

@@ -7,4 +7,5 @@ export const keys = {
   overview: ['overview'] as const,
   checks: ['checks'] as const,
   backups: ['backups'] as const,
+  history: ['history'] as const,
 }

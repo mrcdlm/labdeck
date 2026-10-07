@@ -320,3 +320,47 @@ func (s *Store) PurgeOldData(ctx context.Context, rawBefore, dailyBefore time.Ti
 	}
 	return r, nil
 }
+
+// Sample ist ein Rohwert einer Kennzahl.
+type Sample struct {
+	At    time.Time
+	Value float64
+}
+
+// MetricSamples liefert die Rohwerte einer Kennzahl ab from, aufsteigend.
+func (s *Store) MetricSamples(ctx context.Context, integrationID int64, key string, from time.Time) ([]Sample, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT at, value FROM metric_samples
+		WHERE integration_id = ? AND key = ? AND at >= ? ORDER BY at`, integrationID, key, formatTime(from))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Sample
+	for rows.Next() {
+		var at string
+		var smp Sample
+		if err := rows.Scan(&at, &smp.Value); err != nil {
+			return nil, err
+		}
+		if smp.At, err = parseTime(at); err != nil {
+			return nil, err
+		}
+		out = append(out, smp)
+	}
+	return out, rows.Err()
+}
+
+// SaveSample speichert einen einzelnen Wert (Rohwert und Tageswert) – für
+// Werkzeuge wie cmd/devseed; die Abfragen nutzen SavePollResult.
+func (s *Store) SaveSample(ctx context.Context, integrationID int64, key string, at time.Time, value float64) error {
+	if _, err := s.db.ExecContext(ctx, `INSERT INTO metric_samples (integration_id, key, at, value) VALUES (?, ?, ?, ?)`,
+		integrationID, key, formatTime(at), value); err != nil {
+		return err
+	}
+	_, err := s.db.ExecContext(ctx, `INSERT INTO metric_daily (integration_id, key, day, last, min, max)
+		VALUES (?, ?, ?, ?, ?, ?)
+		ON CONFLICT (integration_id, key, day) DO UPDATE SET
+			last = excluded.last, min = MIN(min, excluded.min), max = MAX(max, excluded.max)`,
+		integrationID, key, at.UTC().Format(time.DateOnly), value, value, value)
+	return err
+}

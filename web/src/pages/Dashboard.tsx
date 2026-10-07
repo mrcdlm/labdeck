@@ -9,9 +9,11 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { Overview, Problem } from '@/lib/api'
+import { IntegrationIcon } from '@/components/IntegrationIcon'
+import type { Integration, Overview, Problem } from '@/lib/api'
 import { absoluteTime, relativeTime, useNow } from '@/lib/format'
-import { useOverview } from '@/lib/queries'
+import { formatMetric, metricLabel } from '@/lib/metrics'
+import { useIntegrations, useIntegrationTypes, useOverview } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
 /** Hinweis, solange keine Integration eingerichtet ist. */
@@ -212,6 +214,58 @@ function ChecksTile({ overview }: { overview: Overview }) {
   )
 }
 
+/** Kachel je Dienst mit Kennzahlen, z. B. „Immich – 48.213 Fotos · 1.204 Videos · 412 GB“. */
+function ServiceTile({ integration: i, icon }: { integration: Integration; icon?: string }) {
+  const { t } = useTranslation()
+  const main = (i.snapshot?.metrics ?? []).filter((m) => !m.group).slice(0, 3)
+  const bad = (i.snapshot?.metrics ?? []).filter((m) => m.status === 'error' || m.status === 'warning')
+  return (
+    <Link
+      to={`/dienste#integration-${i.id}`}
+      className="group bg-card hover:bg-accent/40 flex items-center gap-4 rounded-xl border p-5 transition-colors"
+      data-tile={i.name}
+    >
+      <span className="bg-muted grid size-10 shrink-0 place-items-center rounded-lg">
+        <IntegrationIcon name={icon} className="size-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
+          {i.name}
+          {i.status === 'error' && <StatusBadge status="error" label={t('dashboard.problem.integration')} />}
+        </div>
+        {main.length === 0 ? (
+          <div className="text-muted-foreground font-medium">{t('services.noMetrics')}</div>
+        ) : (
+          <div className="flex flex-wrap items-baseline gap-x-1.5 font-medium tabular-nums">
+            {main.map((m, n) => (
+              <span key={m.key} className="whitespace-nowrap">
+                {n > 0 && <span className="text-muted-foreground mr-1.5">·</span>}
+                {formatMetric(m.value, m.unit)} <span className="text-muted-foreground text-sm font-normal">{metricLabel(i.type, m)}</span>
+              </span>
+            ))}
+            {bad.length > 0 && (
+              <Badge variant={bad.some((m) => m.status === 'error') ? 'destructive' : 'warning'} className="ml-1">
+                {t('dashboard.thresholds', { count: bad.length })}
+              </Badge>
+            )}
+          </div>
+        )}
+      </div>
+      <ChevronRight className="text-muted-foreground size-4 transition-transform group-hover:translate-x-0.5" />
+    </Link>
+  )
+}
+
+function ServiceTiles() {
+  const integrations = useIntegrations()
+  const types = useIntegrationTypes()
+  // Healthchecks hat die Checks-Kachel
+  const list = (integrations.data ?? []).filter((i) => i.enabled && i.type !== 'healthchecks')
+  return list.map((i) => (
+    <ServiceTile key={i.id} integration={i} icon={types.data?.types.find((x) => x.type === i.type)?.icon} />
+  ))
+}
+
 export function Dashboard() {
   const { t } = useTranslation()
   const overview = useOverview()
@@ -238,6 +292,7 @@ export function Dashboard() {
           <div className="grid gap-4 sm:grid-cols-2">
             <BackupsTile overview={o!} />
             <ChecksTile overview={o!} />
+            <ServiceTiles />
           </div>
         </>
       )}

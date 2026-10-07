@@ -85,7 +85,9 @@
     "checks_other": "{{count}} Checks",
     "checksUp": "{{count}} up",
     "checksGrace": "{{count}} Karenzzeit",
-    "checksDown": "{{count}} down"
+    "checksDown": "{{count}} down",
+    "thresholds_one": "{{count}} Schwellwert",
+    "thresholds_other": "{{count}} Schwellwerte"
   },
   "backups": {
     "subtitle": "Letzte Läufe, Ergebnisse und überfällige Backups",
@@ -161,7 +163,24 @@
   },
   "services": {
     "subtitle": "Kennzahlen und Diagramme je Integration",
-    "empty": "Hier erscheint je Integration eine Karte mit ihren Kennzahlen, z. B. Fotos, Videos und Speicher in Immich."
+    "empty": "Hier erscheint je Integration eine Karte mit ihren Kennzahlen, z. B. Fotos, Videos und Speicher in Immich.",
+    "emptyTitle": "Noch keine Dienste",
+    "noMetrics": "Noch keine Kennzahlen",
+    "staleSince": "Werte vom letzten erfolgreichen Abruf {{time}}",
+    "chartTitle": "Verlauf: {{metric}}",
+    "chartLabel": "Verlauf von {{metric}}",
+    "chartTooFew": "Noch zu wenige Werte für ein Diagramm – es füllt sich mit jeder Abfrage.",
+    "chartError": "Verlauf konnte nicht geladen werden: {{error}}",
+    "range": {
+      "24h": "24 h",
+      "7d": "7 Tage",
+      "30d": "30 Tage",
+      "1y": "1 Jahr"
+    },
+    "groupTitle": {
+      "user": "Benutzer",
+      "group": "Gruppe"
+    }
   },
   "history": {
     "subtitle": "Statuswechsel und Fehler aller Integrationen",
@@ -289,5 +308,24 @@
       "unknown": "Keine Daten"
     },
     "gaps": "Lücken im Zeitraum (grau): kein Verlauf bekannt"
+  },
+  "metrics": {
+    "immich": {
+      "photos": "Fotos",
+      "videos": "Videos",
+      "usage": "Speicher",
+      "usage_photos": "Speicher Fotos",
+      "usage_videos": "Speicher Videos",
+      "users": "Benutzer",
+      "quota": "Kontingent",
+      "quota_used": "Kontingent belegt"
+    },
+    "healthchecks": {
+      "checks_total": "Checks",
+      "checks_up": "Up",
+      "checks_grace": "Karenzzeit",
+      "checks_down": "Down",
+      "checks_paused": "Pausiert"
+    }
   }
 }

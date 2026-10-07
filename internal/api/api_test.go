@@ -19,6 +19,8 @@ import (
 	"github.com/mrcdlm/labdeck/internal/integrations"
 	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks"
 	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks/hctest"
+	"github.com/mrcdlm/labdeck/internal/integrations/immich"
+	"github.com/mrcdlm/labdeck/internal/integrations/immich/immichtest"
 	"github.com/mrcdlm/labdeck/internal/secrets"
 	"github.com/mrcdlm/labdeck/internal/store"
 )
@@ -30,6 +32,8 @@ type testEnv struct {
 	broker   *events.Broker
 	hc       *hctest.Fake
 	hcURL    string
+	im       *immichtest.Fake
+	imURL    string
 	language string // Accept-Language der Anfragen (Standard "de")
 }
 
@@ -63,16 +67,19 @@ func newTestEnv(t *testing.T, static fstest.MapFS) *testEnv {
 	hc := hctest.New("ro-key", "", hctest.Demo()...)
 	hcSrv := httptest.NewServer(hc)
 	t.Cleanup(hcSrv.Close)
+	im := immichtest.New("im-key", "im-user", immichtest.Demo()...)
+	imSrv := httptest.NewServer(im)
+	t.Cleanup(imSrv.Close)
 	box, _ := secrets.New(bytes.Repeat([]byte{1}, 32))
-	mgr := integrations.NewManager(integrations.NewRegistry(healthchecks.New()), st, box,
+	mgr := integrations.NewManager(integrations.NewRegistry(healthchecks.New(), immich.New()), st, box,
 		func(string) (string, bool) { return "", false }, log)
 	mgr.Pub = broker
 
-	s := NewServer(Deps{Store: st, Events: broker, Settings: settings, Integrations: mgr, Backups: st,
+	s := NewServer(Deps{Store: st, Events: broker, Settings: settings, Integrations: mgr, Backups: st, Metrics: st,
 		Info: Info{Version: "v1.2.3", SecretKeySet: true}, Auth: auth, Log: log, Static: static})
 	srv := httptest.NewServer(s.Routes())
 	t.Cleanup(srv.Close)
-	return &testEnv{srv: srv, api: s, auth: auth, broker: broker, hc: hc, hcURL: hcSrv.URL}
+	return &testEnv{srv: srv, api: s, auth: auth, broker: broker, hc: hc, hcURL: hcSrv.URL, im: im, imURL: imSrv.URL}
 }
 
 func (e *testEnv) do(t *testing.T, method, path, body string, cookie *http.Cookie) *http.Response {

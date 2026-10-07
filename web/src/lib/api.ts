@@ -104,6 +104,8 @@ export type ConfigValue = string | number | boolean
 export interface Metric {
   key: string
   name: string
+  /** fasst Kennzahlen zusammen, z. B. je Benutzer; leer = Hauptkennzahl */
+  group?: string
   value: number
   unit?: string
   status: Status
@@ -136,6 +138,8 @@ export interface Snapshot {
   metrics?: Metric[]
   checks?: Check[]
   backups?: Backup[]
+  /** zusätzliche Angaben, z. B. version */
+  info?: Record<string, string>
 }
 
 export interface Integration {
@@ -191,6 +195,8 @@ export const integrationApi = {
   /** id: gespeicherte Integration ergänzt leer gelassene Secrets */
   test: (i: IntegrationInput, id?: number) => request<TestResult>('POST', '/api/integrations/test', { ...i, id }),
   poll: (id: number) => request<Integration>('POST', `/api/integrations/${id}/poll`),
+  history: (id: number, key: string, range: MetricRange) =>
+    request<MetricHistory>('GET', `/api/integrations/${id}/history?key=${encodeURIComponent(key)}&range=${range}`),
 }
 
 // --- Checks, Backups, Gesamtstatus -----------------------------------------
@@ -300,4 +306,19 @@ export const monitoringApi = {
       item_id: itemId,
       max_age_hours: maxAgeHours,
     }),
+}
+
+// --- Verlauf von Kennzahlen --------------------------------------------------
+
+export type MetricRange = '24h' | '7d' | '30d' | '1y'
+export const metricRanges: MetricRange[] = ['24h', '7d', '30d', '1y']
+
+export interface MetricHistory {
+  key: string
+  name: string
+  group?: string
+  unit?: string
+  range: MetricRange
+  /** 24 h/7 Tage: letzter Wert je Abschnitt; 30 Tage/1 Jahr: Tageswerte */
+  points: { t: string; v: number; min?: number; max?: number }[]
 }

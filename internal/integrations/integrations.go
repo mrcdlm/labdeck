@@ -40,13 +40,17 @@ type Snapshot struct {
 	Metrics []Metric `json:"metrics,omitempty"`
 	Checks  []Check  `json:"checks,omitempty"`
 	Backups []Backup `json:"backups,omitempty"`
+	// Info: zusätzliche Angaben zur Anzeige, z. B. "version".
+	Info map[string]string `json:"info,omitempty"`
 }
 
 // Metric ist eine Kennzahl, z. B. Anzahl Fotos oder belegter Speicher.
 type Metric struct {
 	// Key ist innerhalb der Integration eindeutig und stabil (für den Verlauf).
-	Key   string  `json:"key"`
-	Name  string  `json:"name"`
+	Key  string `json:"key"`
+	Name string `json:"name"`
+	// Group fasst Kennzahlen zusammen, z. B. je Benutzer (leer = Hauptkennzahl).
+	Group string  `json:"group,omitempty"`
 	Value float64 `json:"value"`
 	// Unit: z. B. "bytes", "s", "%", "" (Anzahl)
 	Unit   string `json:"unit,omitempty"`

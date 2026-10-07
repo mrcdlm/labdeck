@@ -67,6 +67,10 @@ var catalog = map[string]entry{
 	// Backups
 	"backup.not_found": {"Backup nicht gefunden", "Backup not found"},
 
+	// Immich
+	"immich.forbidden":  {"Zugriff verweigert (HTTP 403) – der API-Key muss zu einem Admin gehören und die Berechtigung server.statistics haben", "Access denied (HTTP 403) – the API key must belong to an admin and have the server.statistics permission"},
+	"immich.unexpected": {"Antwort enthält keine Statistik – ist die Adresse eine Immich-Instanz?", "The response contains no statistics – is the address an Immich instance?"},
+
 	// Einstellungen
 	"settings.timezone_invalid":      {"unbekannte Zeitzone {name}", "unknown time zone {name}"},
 	"settings.raw_retention_range":   {"Aufbewahrung der Rohdaten muss zwischen {min} und {max} Tagen liegen", "Raw data retention must be between {min} and {max} days"},

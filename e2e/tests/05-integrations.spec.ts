@@ -15,9 +15,11 @@ test('Healthchecks: anlegen, testen, abfragen, bearbeiten, deaktivieren, lösche
   const section = page.locator('[data-slot=card]').filter({ hasText: 'Integrationen' })
   await expect(section.getByText('Noch keine Integration eingerichtet.')).toBeVisible()
 
-  // Nur ein Typ verfügbar → Formular erscheint direkt
+  // Typ wählen → Formular aus dem Schema
   await section.getByRole('button', { name: 'Hinzufügen' }).click()
   const dialog = page.getByRole('dialog')
+  await expect(dialog.getByText('Welche Datenquelle möchtest du anbinden?')).toBeVisible()
+  await dialog.getByRole('button', { name: /^Healthchecks\.io/ }).click()
   await expect(dialog.getByRole('heading', { name: 'Healthchecks.io hinzufügen' })).toBeVisible()
   await expect(dialog.getByLabel('Adresse')).toHaveValue('https://healthchecks.io')
   await expect(dialog.getByLabel('Backup-Tag')).toHaveValue('backup')

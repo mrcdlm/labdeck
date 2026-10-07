@@ -8,14 +8,16 @@
 // Dienste (Basis-URL in labdeck eintragen):
 //
 //	Healthchecks.io   http://localhost:8790/healthchecks   API-Key: hc-readonly (Read-only) oder hc-readwrite
+//	Immich            http://localhost:8790/immich         API-Key: immich-admin (oder immich-user: ohne Berechtigung)
 //
-// Steuerung (ohne Key):
+// Steuerung (ohne Key), {svc} = healthchecks | immich:
 //
-//	POST /_healthchecks/fail?status=500             Ausfälle simulieren (status=0 beendet)
-//	POST /_healthchecks/broken?on=1                 kaputtes JSON liefern (on=0 beendet)
-//	POST /_healthchecks/delay?ms=3000               Antworten verzögern (ms=0 beendet)
+//	POST /_{svc}/fail?status=500                    Ausfälle simulieren (status=0 beendet)
+//	POST /_{svc}/broken?on=1                        kaputtes JSON liefern (on=0 beendet)
+//	POST /_{svc}/delay?ms=3000                      Antworten verzögern (ms=0 beendet)
+//	GET  /_{svc}/requests                           Anzahl der API-Anfragen
 //	POST /_healthchecks/status?name=DynDNS&status=down   Status eines Checks setzen
-//	GET  /_healthchecks/requests                    Anzahl der API-Anfragen
+//	POST /_immich/photos?n=100                      Fotos hinzufügen (Verlauf)
 package main
 
 import (
@@ -27,35 +29,51 @@ import (
 	"time"
 
 	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks/hctest"
+	"github.com/mrcdlm/labdeck/internal/integrations/immich/immichtest"
 )
+
+// controllable sind die gemeinsamen Steuerfunktionen der Fakes.
+type controllable interface {
+	http.Handler
+	Fail(status int)
+	Broken(on bool)
+	Delay(d time.Duration)
+	Requests() int
+}
+
+func intParam(r *http.Request, name string) int {
+	n, _ := strconv.Atoi(r.URL.Query().Get(name))
+	return n
+}
+
+// mount hängt einen Fake unter /{name}/ ein und seine Steuerung unter /_{name}/.
+func mount(mux *http.ServeMux, name string, f controllable) {
+	mux.Handle("/"+name+"/", http.StripPrefix("/"+name, f))
+	mux.HandleFunc("POST /_"+name+"/fail", func(w http.ResponseWriter, r *http.Request) {
+		f.Fail(intParam(r, "status"))
+		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("POST /_"+name+"/broken", func(w http.ResponseWriter, r *http.Request) {
+		f.Broken(r.URL.Query().Get("on") == "1")
+		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("POST /_"+name+"/delay", func(w http.ResponseWriter, r *http.Request) {
+		f.Delay(time.Duration(intParam(r, "ms")) * time.Millisecond)
+		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("GET /_"+name+"/requests", func(w http.ResponseWriter, _ *http.Request) {
+		fmt.Fprintln(w, f.Requests())
+	})
+}
 
 func main() {
 	addr := flag.String("addr", ":8790", "Listen-Adresse")
-	hcRO := flag.String("hc-key", "hc-readonly", "Read-only-API-Key für Healthchecks")
-	hcRW := flag.String("hc-rw-key", "hc-readwrite", "Read-write-API-Key für Healthchecks")
 	flag.Parse()
 
-	hc := hctest.New(*hcRO, *hcRW, hctest.Demo()...)
-
 	mux := http.NewServeMux()
-	mux.Handle("/healthchecks/", http.StripPrefix("/healthchecks", hc))
 
-	intParam := func(r *http.Request, name string) int {
-		n, _ := strconv.Atoi(r.URL.Query().Get(name))
-		return n
-	}
-	mux.HandleFunc("POST /_healthchecks/fail", func(w http.ResponseWriter, r *http.Request) {
-		hc.Fail(intParam(r, "status"))
-		w.WriteHeader(http.StatusNoContent)
-	})
-	mux.HandleFunc("POST /_healthchecks/broken", func(w http.ResponseWriter, r *http.Request) {
-		hc.Broken(r.URL.Query().Get("on") == "1")
-		w.WriteHeader(http.StatusNoContent)
-	})
-	mux.HandleFunc("POST /_healthchecks/delay", func(w http.ResponseWriter, r *http.Request) {
-		hc.Delay(time.Duration(intParam(r, "ms")) * time.Millisecond)
-		w.WriteHeader(http.StatusNoContent)
-	})
+	hc := hctest.New("hc-readonly", "hc-readwrite", hctest.Demo()...)
+	mount(mux, "healthchecks", hc)
 	mux.HandleFunc("POST /_healthchecks/status", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
 		switch q.Get("status") {
@@ -70,11 +88,16 @@ func main() {
 		}
 		w.WriteHeader(http.StatusNoContent)
 	})
-	mux.HandleFunc("GET /_healthchecks/requests", func(w http.ResponseWriter, _ *http.Request) {
-		fmt.Fprintln(w, hc.Requests())
+
+	im := immichtest.New("immich-admin", "immich-user", immichtest.Demo()...)
+	mount(mux, "immich", im)
+	mux.HandleFunc("POST /_immich/photos", func(w http.ResponseWriter, r *http.Request) {
+		im.AddPhotos(int64(intParam(r, "n")))
+		w.WriteHeader(http.StatusNoContent)
 	})
+
 	mux.HandleFunc("GET /_health", func(w http.ResponseWriter, _ *http.Request) { w.Write([]byte("ok")) })
 
-	log.Printf("Mock auf %s – Healthchecks: http://localhost%s/healthchecks (Keys %s / %s)", *addr, *addr, *hcRO, *hcRW)
+	log.Printf("Mock auf %s – Healthchecks: /healthchecks (hc-readonly), Immich: /immich (immich-admin)", *addr)
 	log.Fatal(http.ListenAndServe(*addr, mux))
 }

@@ -25,6 +25,8 @@
   --ring: oklch(0.705 0.015 286.067);
   --success: oklch(0.627 0.17 149.2);
   --warning: oklch(0.705 0.16 70.08);
+  /* Diagramme: Blau aus der validierten dnsdeck-Palette (Farbsehschwächen + Kontrast zur Karte) */
+  --chart-1: #2a78d6;
 }
 
 .dark {
@@ -48,6 +50,7 @@
   --ring: oklch(0.552 0.016 285.938);
   --success: oklch(0.723 0.192 149.58);
   --warning: oklch(0.795 0.162 70.08);
+  --chart-1: #3987e5;
 }
 
 @theme inline {
@@ -75,6 +78,7 @@
   --color-ring: var(--ring);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-chart-1: var(--chart-1);
 }
 
 @layer base {

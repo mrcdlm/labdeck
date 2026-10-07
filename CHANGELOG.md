@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Immich integration: photos, videos and storage usage in total and per user (with quota),
+  server version. Needs an admin API key with the `server.statistics` permission.
+- Services page: one card per integration with its metrics, a chart of the selected metric
+  (24 hours, 7 days, 30 days, 1 year) and a table per user/group.
+- Dashboard: a tile per service, e.g. "Immich – 48,213 photos · 1,204 videos · 412 GB".
+
 ## [0.3.0] – 2026-10-07
 
 ### Added

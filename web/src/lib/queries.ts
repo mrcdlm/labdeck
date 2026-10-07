@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { api, integrationApi, monitoringApi, type IntegrationInput, type Settings } from './api'
+import { api, integrationApi, monitoringApi, type IntegrationInput, type MetricRange, type Settings } from './api'
 import { useLive } from './live-context'
 import { keys } from './queries-keys'
 
@@ -125,5 +125,14 @@ export function useSetBackupMaxAge() {
       void qc.invalidateQueries({ queryKey: keys.backups })
       void qc.invalidateQueries({ queryKey: keys.overview })
     },
+  })
+}
+
+export function useMetricHistory(id: number, key: string | undefined, range: MetricRange) {
+  return useQuery({
+    queryKey: [...keys.history, id, key, range],
+    queryFn: () => integrationApi.history(id, key!, range),
+    enabled: key !== undefined,
+    placeholderData: (prev) => (prev?.key === key ? prev : undefined),
   })
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/mrcdlm/labdeck/internal/events"
 	"github.com/mrcdlm/labdeck/internal/integrations"
 	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks"
+	"github.com/mrcdlm/labdeck/internal/integrations/immich"
 	"github.com/mrcdlm/labdeck/internal/scheduler"
 	"github.com/mrcdlm/labdeck/internal/secrets"
 	"github.com/mrcdlm/labdeck/internal/store"
@@ -96,7 +97,7 @@ func run() error {
 		return err
 	}
 	cfg.SecretKey = nil // steckt ab hier nur noch in box
-	registry := integrations.NewRegistry(healthchecks.New())
+	registry := integrations.NewRegistry(healthchecks.New(), immich.New())
 	manager := integrations.NewManager(registry, st, box, os.LookupEnv, log)
 	manager.Pub = broker
 	poller := scheduler.NewPoller(log, manager.Poll)
@@ -149,7 +150,7 @@ func run() error {
 	srv := &http.Server{
 		Addr: fmt.Sprintf(":%d", cfg.Port),
 		Handler: api.NewServer(api.Deps{
-			Store: st, Events: broker, Settings: settings, Integrations: manager, Backups: st,
+			Store: st, Events: broker, Settings: settings, Integrations: manager, Backups: st, Metrics: st,
 			TrustedProxies: cfg.TrustedProxies,
 			Info:           api.Info{Version: version, DataDir: cfg.DataDir, SecretKeySet: box != nil},
 			Auth:           auth, Log: log, Static: web.Dist(),
