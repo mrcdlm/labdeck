@@ -1,22 +1,21 @@
 # labdeck – GitLab CI
-# Tests auf jedem Push/MR, Image-Push in die GitLab Container Registry auf main und bei Tags vX.Y.Z
+#
+# Jeder Push:        nur Tests (test-go, test-web)
+# Tag vX.Y.Z:        Tests + Image bauen und pushen als X.Y.Z und X.Y
+# Kein :main, kein :latest – Version wird auf dem Server fest in .env gesetzt.
 
 stages:
   - test
-  - build
+  - release
 
 variables:
-  DOCKER_TLS_CERTDIR: "/certs"
   GOPATH: "$CI_PROJECT_DIR/.go"
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
 
 workflow:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
-      when: never
-    - if: $CI_COMMIT_BRANCH
     - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH
 
 # ---------- test ----------
 
@@ -24,10 +23,10 @@ test-go:
   stage: test
   image: golang:1.27
   cache:
-    key: go-$CI_COMMIT_REF_SLUG
+    key: go-mod
     paths: [.go/pkg/mod/]
   before_script:
-    # go:embed braucht web/dist – im Test reicht ein Platzhalter
+    # go:embed braucht web/dist – für die Tests reicht ein Platzhalter
     - mkdir -p web/dist && [ -e web/dist/index.html ] || echo '<!doctype html>' > web/dist/index.html
   script:
     - go vet ./...
@@ -46,44 +45,29 @@ test-web:
     - npm run lint
     - npm run build
 
-# ---------- build ----------
+# ---------- release (nur bei Tags) ----------
 
-# Nur prüfen, ob das Image baut (Merge Requests und andere Branches)
-build-check:
-  stage: build
+release-image:
+  stage: release
   image: docker:27
   services: [docker:27-dind]
-  script:
-    - docker build --build-arg VERSION="$CI_COMMIT_SHORT_SHA" -t labdeck:check .
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
   rules:
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: never
-    - when: on_success
-
-# Bauen und in die Registry pushen (main → :main, vX.Y.Z → :X.Y.Z, :X.Y, :latest)
-publish-image:
-  stage: build
-  image: docker:27
-  services: [docker:27-dind]
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-  script:
-    - |
-      if [ -n "$CI_COMMIT_TAG" ]; then
-        VERSION="${CI_COMMIT_TAG#v}"
-      else
-        VERSION="$CI_COMMIT_SHORT_SHA"
-      fi
-    - TAGS="-t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
-    - |
-      if [ -n "$CI_COMMIT_TAG" ]; then
-        TAGS="$TAGS -t $CI_REGISTRY_IMAGE:$VERSION -t $CI_REGISTRY_IMAGE:${VERSION%.*} -t $CI_REGISTRY_IMAGE:latest"
-      fi
-    # Direkt mit BuildKit pushen, ohne Attestations – sonst lehnt die GitLab-Registry das Manifest ab ("blob unknown")
+    # BuildKit-Builder: pusht direkt in die Registry, nicht über den Docker-Daemon
     - docker buildx create --use --driver docker-container
-    - docker buildx build --provenance=false --sbom=false --build-arg VERSION="$VERSION" $TAGS --push .
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
+  script:
+    - VERSION="${CI_COMMIT_TAG#v}"          # v0.2.0 -> 0.2.0
+    - MINOR="${VERSION%.*}"                  # 0.2.0  -> 0.2
+    - echo "Baue $CI_REGISTRY_IMAGE:$VERSION und :$MINOR"
+    # --provenance/--sbom=false: keine Attestation-Manifeste (sonst "blob unknown to registry")
+    - >
+      docker buildx build
+      --provenance=false --sbom=false
+      --build-arg VERSION="$VERSION"
+      -t "$CI_REGISTRY_IMAGE:$VERSION"
+      -t "$CI_REGISTRY_IMAGE:$MINOR"
+      --push .
