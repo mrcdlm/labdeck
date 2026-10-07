@@ -1,8 +1,13 @@
 # labdeck – GitLab CI
 #
-# Jeder Push:        nur Tests (test-go, test-web)
-# Tag vX.Y.Z:        Tests + Image bauen und pushen als X.Y.Z und X.Y
-# Kein :main, kein :latest – Version wird auf dem Server fest in .env gesetzt.
+# Die Pipeline läuft AUSSCHLIESSLICH bei einem neuen Versions-Tag vX.Y.Z.
+# Push auf main/Branches, Merge Requests, manuelle Starts, Zeitpläne: KEINE Pipeline.
+#
+#   Release:  git tag v0.4.0 && git push origin v0.4.0
+#   Ergebnis: registry.netvrkit.de/mrcdlm/labdeck:0.4.0
+#
+# Es gibt nur feste Versionen – kein :main, kein :latest, kein :0.4.
+# Auf dem Server wird die Version fest in /opt/stacks/labdeck/.env gesetzt.
 
 stages:
   - test
@@ -14,8 +19,8 @@ variables:
 
 workflow:
   rules:
-    - if: $CI_COMMIT_TAG
-    - if: $CI_COMMIT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
+    - when: never
 
 # ---------- test ----------
 
@@ -45,7 +50,7 @@ test-web:
     - npm run lint
     - npm run build
 
-# ---------- release (nur bei Tags) ----------
+# ---------- release (nur bei Tags, nur wenn die Tests grün sind) ----------
 
 release-image:
   stage: release
@@ -60,14 +65,12 @@ release-image:
     # BuildKit-Builder: pusht direkt in die Registry, nicht über den Docker-Daemon
     - docker buildx create --use --driver docker-container
   script:
-    - VERSION="${CI_COMMIT_TAG#v}"          # v0.2.0 -> 0.2.0
-    - MINOR="${VERSION%.*}"                  # 0.2.0  -> 0.2
-    - echo "Baue $CI_REGISTRY_IMAGE:$VERSION und :$MINOR"
+    - VERSION="${CI_COMMIT_TAG#v}"          # v0.4.0 -> 0.4.0
+    - echo "Baue $CI_REGISTRY_IMAGE:$VERSION"
     # --provenance/--sbom=false: keine Attestation-Manifeste (sonst "blob unknown to registry")
     - >
       docker buildx build
       --provenance=false --sbom=false
       --build-arg VERSION="$VERSION"
       -t "$CI_REGISTRY_IMAGE:$VERSION"
-      -t "$CI_REGISTRY_IMAGE:$MINOR"
       --push .
