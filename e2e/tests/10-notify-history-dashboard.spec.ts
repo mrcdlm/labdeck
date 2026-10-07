@@ -92,6 +92,8 @@ test('Dashboard-Editor: Kacheln ausblenden, verschieben, Breite; letzte Ereignis
 
   await page.goto('/einstellungen')
   const editor = page.locator('[data-slot=card]').filter({ hasText: 'Kacheln unter dem Gesamtstatus' })
+  await editor.getByRole('switch', { name: 'Kacheln mit Problemen nach vorne' }).click()
+  await expect.poll(async () => (await api<{ problems_first: boolean }>(page, 'GET', '/api/dashboard')).json.problems_first).toBe(false)
   await editor.getByRole('switch', { name: 'Checks anzeigen' }).click()
   await editor.getByRole('button', { name: 'Letzte Ereignisse nach oben' }).click()
   await editor
@@ -102,14 +104,18 @@ test('Dashboard-Editor: Kacheln ausblenden, verschieben, Breite; letzte Ereignis
     .poll(async () => (await api<{ tiles: { id: string; visible: boolean; size: number }[] }>(page, 'GET', '/api/dashboard')).json.tiles)
     .toEqual([
       { id: 'backups', visible: true, size: 2 },
-      { id: 'events', visible: true, size: 3 },
       { id: 'checks', visible: false, size: 1 },
+      { id: 'events', visible: true, size: 3 },
+      { id: 'backup-timeline', visible: true, size: 3 },
     ])
 
   await page.goto('/')
   await expect(page.locator('[data-tile="events"]')).toBeVisible()
-  await expect(page.getByRole('link', { name: /7 Checks/ })).toHaveCount(0)
-  await expect(page.getByRole('link', { name: /3 überwacht/ })).toBeVisible()
+  await expect(page.locator('[data-tile="checks"]')).toHaveCount(0)
+  await expect(page.locator('[data-tile="backups"]')).toContainText('3 Backups überwacht')
+  // ohne „Probleme nach vorne“ gilt die eigene Reihenfolge, obwohl Backups rot sind
+  const order = await page.locator('[data-tile]').evaluateAll((els) => els.map((e) => e.getAttribute('data-tile')))
+  expect(order).toEqual(['backups', 'events', 'backup-timeline'])
 
   await api(page, 'PUT', '/api/dashboard', before.json)
   await api(page, 'DELETE', `/api/integrations/${hc.json.id}`)

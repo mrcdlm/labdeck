@@ -26,7 +26,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on live changes, the overall status pulses on errors and draws a check mark when all is good,
   uptime bars grow, meters fill, chart lines draw. Everything is off with "reduce motion".
 
+- Dashboard tile "Hosts": all Proxmox VE nodes and Dockhand hosts with small CPU and RAM bars.
+- Dashboard tile "Backup timeline": a history bar per backup (24 hours / 7 days), problems first.
+- Small history charts (sparklines) in the service tiles, e.g. CPU over 24 hours or photos over
+  30 days; hidden while there is too little data or the line is flat.
+
 ### Changed
+- Dashboard is flatter: the tiles are the traffic light (colored bar on the left), each tile
+  shows one large number, one secondary line and its own problems (two, more on click). The
+  long problem list at the top is gone; the overall status is one line with counts of errors and
+  warnings. Tiles with problems move to the front (can be turned off in Settings → Dashboard).
 - Healthchecks.io as a traffic light: the Checks tile only shows green "All 7 checks OK" or red
   "2 checks down" with their names; failed checks are bundled into one problem row per project,
   checks in their grace period are no longer a problem; on the Services page Healthchecks is a

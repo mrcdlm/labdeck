@@ -61,9 +61,9 @@ test('HTTP-JSON: Werte per Formular-Liste, Schwellwert, Zeitstempel als Backup',
 
   // Schwellwert überschritten → Problem auf dem Dashboard
   await page.goto('/')
-  const problem = page.locator('[data-problem="Dokumente"]')
-  await expect(problem).toContainText('Warnung')
-  await expect(problem).toContainText('Paperless · Wert 1.523')
+  const problem = page.locator('[data-tile="Paperless"] [data-problem="Dokumente"]')
+  await expect(problem).toContainText('1.523')
+  await expect(page.locator('[data-tile="Paperless"]')).toHaveAttribute('data-tone', 'warning')
 
   // Zeitstempel als Backup
   await page.goto('/backups')

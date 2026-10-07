@@ -17,18 +17,25 @@ test('Backups, Checks und Gesamtstatus aus Healthchecks.io', async ({ page }) =>
   const id = created.json.id
   await api(page, 'POST', `/api/integrations/${id}/poll`)
 
-  // Dashboard: Probleme ganz oben, Kacheln darunter
+  // Dashboard: Gesamtstatus oben, Probleme in ihren Kacheln
   await page.goto('/')
   await expect(page.getByText('2 Probleme')).toBeVisible()
-  const problems = page.getByRole('list', { name: 'Probleme' })
+  const problems = page.locator('[data-tile="backups"]')
+  await expect(problems).toHaveAttribute('data-tone', 'error')
   await expect(problems.locator('[data-problem="Proxmox vzdump"]')).toContainText('Überfällig')
   await expect(problems.locator('[data-problem="Borg Laptop"]')).toContainText('Bald fällig')
-  await expect(page.getByRole('link', { name: /Backups 3 überwacht/ })).toBeVisible()
+  await expect(problems).toContainText('3 Backups überwacht')
+  // Zeitleiste: je Backup ein Balken, Probleme zuerst
+  const timeline = page.locator('[data-tile="backup-timeline"]')
+  await expect(timeline.locator('[data-backup]').first()).toHaveAttribute('data-backup', 'Proxmox vzdump')
+  await expect(timeline.locator('[data-backup="Restic NAS → B2"]').getByRole('img')).toBeVisible()
+  await timeline.getByRole('button', { name: '7 Tage' }).click()
+  await expect(timeline.getByRole('img').first()).toHaveAttribute('aria-label', /7 Tage/)
   // Healthchecks als Ampel: vzdump ist down (zählt hier mit, steht aber als Backup in der Liste)
   await expect(page.locator('[data-tile="checks"]')).toContainText('1 Check ausgefallen')
 
   // Backups: Probleme zuerst, Verlauf als Balken
-  await page.getByRole('link', { name: /Backups 3 überwacht/ }).click()
+  await page.locator('[data-tile="backups"]').click()
   await expect(page).toHaveURL('/backups')
   const rows = page.locator('tr[data-backup]')
   await expect(rows).toHaveCount(3)
@@ -76,11 +83,11 @@ test('Backups, Checks und Gesamtstatus aus Healthchecks.io', async ({ page }) =>
   await mock.hcStatus('DynDNS', 'down')
   await api(page, 'POST', `/api/integrations/${id}/poll`)
   await expect(page.getByText('3 Probleme')).toBeVisible()
-  // ausgefallene Checks je Projekt in einer Zeile
-  const hc = problems.locator('[data-problem="Homelab"]')
-  await expect(hc).toContainText('1 Check down')
-  await expect(hc).toContainText('DynDNS')
-  await expect(page.locator('[data-tile="checks"]')).toContainText('2 Checks ausgefallen')
+  // ausgefallene Checks stehen in der Checks-Kachel, die nach vorne rückt
+  const checksTile = page.locator('[data-tile="checks"]')
+  await expect(checksTile.locator('[data-problem="DynDNS"]')).toContainText('ausgefallen')
+  await expect(checksTile).toContainText('2 Checks ausgefallen')
+  await expect(checksTile).toHaveAttribute('data-tone', 'error')
   await mock.hcStatus('DynDNS', 'up')
   await api(page, 'POST', `/api/integrations/${id}/poll`)
   await expect(page.getByText('2 Probleme')).toBeVisible()

@@ -61,10 +61,18 @@ test('Proxmox VE und Dockhand: Ressourcen-Seite mit Hosts, VMs, Containern', asy
   // Dashboard: Kachel und Probleme (SMART, ZFS, unhealthy Container, Dateisystem voll)
   await page.goto('/')
   await expect(page.locator('[data-tile="PVE"]')).toContainText('2 Nodes')
-  const problems = page.getByRole('list', { name: 'Probleme' })
-  await expect(problems.getByText('SMART', { exact: true })).toBeVisible()
-  await expect(problems.getByText('ZFS-Zustand')).toBeVisible()
-  await expect(problems.getByText('Container unhealthy')).toBeVisible()
+  const pveTile = page.locator('[data-tile="PVE"]')
+  await expect(pveTile).toHaveAttribute('data-tone', 'error')
+  await expect(pveTile.getByText('SMART', { exact: true })).toBeVisible()
+  await expect(pveTile.getByText('ZFS-Zustand')).toBeVisible()
+  await expect(page.locator('[data-tile="Dockhand"]').getByText('Container unhealthy')).toBeVisible()
+  // Hosts aller Quellen in einer Kachel
+  const hosts = page.locator('[data-tile="hosts"]')
+  await expect(hosts).toContainText('4 von 4 online')
+  await expect(hosts.locator('[data-host="pve1"]').getByRole('meter', { name: 'CPU' })).toHaveAttribute('aria-valuenow', '18')
+  await expect(hosts.locator('[data-host="docker01"]')).toBeVisible()
+  await hosts.click()
+  await expect(page).toHaveURL(/\/ressourcen$/)
 
   // Dienste: PVE-Karte verweist auf die Ressourcen
   await page.goto('/dienste')
@@ -94,7 +102,8 @@ test('USV über NUT: Netzbetrieb, Stromausfall als Problem', async ({ page }) =>
   await fetch(`${MOCK}/_nut/status?value=OB+DISCHRG`, { method: 'POST' })
   await api(page, 'POST', `/api/integrations/${ups.json.id}/poll`)
   await expect(tile).toContainText('Batterie')
-  await expect(page.getByRole('list', { name: 'Probleme' }).getByText('Versorgung')).toBeVisible()
+  await expect(tile.getByText('Versorgung')).toBeVisible()
+  await expect(tile).toHaveAttribute('data-tone', 'warning')
 
   await fetch(`${MOCK}/_nut/status?value=OL`, { method: 'POST' })
   await api(page, 'DELETE', `/api/integrations/${ups.json.id}`)

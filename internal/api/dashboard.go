@@ -16,7 +16,8 @@ import (
 )
 
 // Kacheln des Dashboards: Backups, Checks, je Integration (außer
-// Healthchecks – dafür gibt es die Checks-Kachel) und die letzten Ereignisse.
+// Healthchecks – dafür gibt es die Checks-Kachel), Hosts (sobald es eine
+// Quelle mit Hosts gibt), Backup-Zeitleiste und die letzten Ereignisse.
 // Der Gesamtstatus steht immer oben. Gespeichert wird die Anordnung als JSON
 // in den Einstellungen.
 
@@ -28,18 +29,26 @@ type prefsStore interface {
 }
 
 type tileDTO struct {
-	ID      string `json:"id"` // backups, checks, events, integration:<id>
+	ID      string `json:"id"` // backups, checks, hosts, backup-timeline, events, integration:<id>
 	Visible bool   `json:"visible"`
 	Size    int    `json:"size"` // Spalten: 1–3
 }
 
 type layoutDTO struct {
 	Tiles []tileDTO `json:"tiles"`
+	// Kacheln mit Problemen nach vorne (Standard: ja)
+	ProblemsFirst bool `json:"problems_first"`
 }
 
+// Integrationstypen, die Hosts/Nodes liefern (Kachel „Hosts“).
+var hostTypes = []string{"pve", "dockhand"}
+
 func defaultSize(id string) int {
-	if id == "events" {
+	switch id {
+	case "events", "backup-timeline":
 		return 3
+	case "hosts":
+		return 2
 	}
 	return 1
 }
@@ -47,12 +56,17 @@ func defaultSize(id string) int {
 // availableTiles: Kacheln, die es gerade geben kann, in Standardreihenfolge.
 func availableTiles(list []integrations.View) []string {
 	out := []string{"backups", "checks"}
+	hosts := false
 	for _, v := range list {
 		if v.Type != "healthchecks" {
 			out = append(out, "integration:"+strconv.FormatInt(v.ID, 10))
 		}
+		hosts = hosts || slices.Contains(hostTypes, v.Type)
 	}
-	return append(out, "events")
+	if hosts {
+		out = append(out, "hosts")
+	}
+	return append(out, "backup-timeline", "events")
 }
 
 // mergeLayout gleicht die gespeicherte Anordnung mit den verfügbaren Kacheln
@@ -83,7 +97,7 @@ func (s *Server) layout(ctx context.Context) (layoutDTO, error) {
 	if err != nil {
 		return layoutDTO{}, err
 	}
-	var saved layoutDTO
+	saved := layoutDTO{ProblemsFirst: true} // fehlt das Feld, bleibt es an
 	raw, err := s.prefs.GetSetting(ctx, keyDashboard)
 	if err != nil && !errors.Is(err, store.ErrNotFound) {
 		return layoutDTO{}, err
@@ -91,7 +105,7 @@ func (s *Server) layout(ctx context.Context) (layoutDTO, error) {
 	if raw != "" {
 		_ = json.Unmarshal([]byte(raw), &saved) // kaputt = Standard
 	}
-	return layoutDTO{Tiles: mergeLayout(saved.Tiles, availableTiles(list))}, nil
+	return layoutDTO{Tiles: mergeLayout(saved.Tiles, availableTiles(list)), ProblemsFirst: saved.ProblemsFirst}, nil
 }
 
 func (s *Server) handleGetDashboard(w http.ResponseWriter, r *http.Request) {
@@ -104,7 +118,7 @@ func (s *Server) handleGetDashboard(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlePutDashboard(w http.ResponseWriter, r *http.Request) {
-	var in layoutDTO
+	in := layoutDTO{ProblemsFirst: true}
 	if !decodeJSON(w, r, &in) {
 		return
 	}
@@ -122,11 +136,11 @@ func (s *Server) handlePutDashboard(w http.ResponseWriter, r *http.Request) {
 		}
 		seen[t.ID] = true
 	}
-	b, _ := json.Marshal(layoutDTO{Tiles: in.Tiles})
+	b, _ := json.Marshal(in)
 	if err := s.prefs.SetSetting(r.Context(), keyDashboard, string(b)); err != nil {
 		s.internalError(w, r, "Dashboard speichern", err)
 		return
 	}
 	events.Publish(s.events, events.TopicDashboard)
-	writeJSON(w, http.StatusOK, layoutDTO{Tiles: mergeLayout(in.Tiles, available)})
+	writeJSON(w, http.StatusOK, layoutDTO{Tiles: mergeLayout(in.Tiles, available), ProblemsFirst: in.ProblemsFirst})
 }

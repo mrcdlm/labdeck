@@ -475,7 +475,7 @@ export interface HistoryPage {
 }
 
 export interface DashboardTile {
-  /** backups, checks, events, integration:<id> */
+  /** backups, checks, hosts, backup-timeline, events, integration:<id> */
   id: string
   visible: boolean
   /** Spalten 1–3 */
@@ -484,6 +484,8 @@ export interface DashboardTile {
 
 export interface DashboardLayout {
   tiles: DashboardTile[]
+  /** Kacheln mit Problemen nach vorne (Standard: ja) */
+  problems_first: boolean
 }
 
 export const historyApi = {

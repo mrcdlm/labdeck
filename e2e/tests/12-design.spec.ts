@@ -23,7 +23,9 @@ test('Logos laden ohne CSP-Fehler, Checks-Kachel als Ampel (live grün → rot)'
 
   await page.goto('/')
   const tile = page.locator('[data-tile="checks"]')
-  await expect(tile).toContainText('Alle 6 Checks OK')
+  await expect(tile).toContainText('6 Checks aktiv')
+  await expect(tile).toContainText('alle OK')
+  await expect(tile).toHaveAttribute('data-tone', 'ok')
   // Logo statt Symbol, tatsächlich geladen
   const logo = tile.locator('img')
   await expect(logo).toHaveCount(1)

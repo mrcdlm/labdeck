@@ -1,21 +1,41 @@
-import { AlertTriangle, ChevronRight, DatabaseBackup, History as HistoryIcon, PauseCircle, Plug } from 'lucide-react'
-import type { ReactNode } from 'react'
+import {
+  AlertTriangle,
+  ChevronRight,
+  DatabaseBackup,
+  GanttChart,
+  History as HistoryIcon,
+  PauseCircle,
+  Plug,
+  Server,
+} from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 
 import { AnimatedNumber } from '@/components/AnimatedNumber'
 import { HistoryList } from '@/components/HistoryList'
 import { IntegrationIcon } from '@/components/IntegrationIcon'
+import { Meter } from '@/components/Meter'
 import { PageHeader } from '@/components/PageHeader'
+import { Segmented } from '@/components/Segmented'
+import { Sparkline } from '@/components/Sparkline'
 import { StatusBadge } from '@/components/StatusBadge'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import { ProblemLines, StatusDot, StatusTile, TileValue, type ProblemLine } from '@/components/StatusTile'
+import { UptimeBar } from '@/components/UptimeBar'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { DashboardTile, Integration, Overview, Problem } from '@/lib/api'
-import { absoluteTime, relativeTime, useNow } from '@/lib/format'
+import type { DashboardTile, Integration, Metric, Overview, Problem, UptimeRange } from '@/lib/api'
+import { absoluteTime, formatBytes, relativeTime, useNow } from '@/lib/format'
 import { formatMetric, isStateUnit, metricLabel } from '@/lib/metrics'
-import { rise, useFlash } from '@/lib/motion'
-import { useDashboardLayout, useHistory, useIntegrations, useIntegrationTypes, useOverview } from '@/lib/queries'
+import { rise } from '@/lib/motion'
+import { problemOwner, statusRank, worstStatus } from '@/lib/problems'
+import {
+  useBackups,
+  useDashboardLayout,
+  useHistory,
+  useIntegrations,
+  useIntegrationTypes,
+  useOverview,
+} from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
 /** Hinweis, solange keine Integration eingerichtet ist. */
@@ -41,82 +61,74 @@ function NoIntegrations() {
   )
 }
 
-function problemLink(p: Problem): string {
-  switch (p.kind) {
-    case 'integration':
-      return '/einstellungen'
-    case 'backup':
-      return '/backups'
-    case 'checks':
-      return '/checks'
-  }
-  return `/dienste#integration-${p.integration_id}`
-}
-
 const backupStates = ['failed', 'overdue', 'due_soon'] as const
 
-/** Eine Zeile der Problemliste: was, wo, seit wann. */
-function ProblemRow({ p, now, index }: { p: Problem; now: number; index: number }) {
+/**
+ * Problem als kurze Zeile für die Kachel: was, wo (grau) und Zustand bzw.
+ * Wert rechts; Quelle und Zeitpunkt im Tooltip. Checks-Probleme werden zu
+ * einer Zeile je ausgefallenem Check.
+ */
+function useProblemLines(now: number) {
   const { t } = useTranslation()
-  const flash = useFlash([p.status, p.state, p.count, p.value])
-  const motion = rise(index)
-  let label: string
-  let detail: ReactNode
-  let name = p.name
-  if (p.kind === 'integration') {
-    label = t('dashboard.problem.integration')
-    detail = p.detail
-  } else if (p.kind === 'metric') {
-    label = t(`status.${p.status}`)
-    name = metricLabel(p.integration_type, { key: p.item_id ?? '', name: p.name })
-    detail = `${p.integration_name} · ${t('dashboard.problem.value', { value: formatMetric(p.value ?? 0, p.unit) })}`
-  } else if (p.kind === 'checks') {
-    // Healthchecks als Ampel: eine Zeile je Projekt mit den ausgefallenen Checks
-    label = t('dashboard.checksDownBadge', { count: p.count ?? 0 })
-    const items = p.items ?? []
-    detail = items.slice(0, 3).join(', ') + (items.length > 3 ? ` +${items.length - 3}` : '')
-  } else {
-    const b = backupStates.find((s) => s === p.state)
-    label = b ? t(`backups.state.${b}`) : t(`status.${p.status}`)
-    detail = p.integration_name
-  }
-  const at =
-    p.at &&
-    t(`dashboard.problem.at.${p.kind}`, {
-      time: relativeTime(p.at, now),
+  return (problems: Problem[], withSource = false): ProblemLine[] =>
+    problems.flatMap((p): ProblemLine[] => {
+      const key = `${p.kind}/${p.integration_id}/${p.item_id ?? ''}`
+      const at = p.at ? t(`dashboard.problem.at.${p.kind}`, { time: relativeTime(p.at, now) }) : ''
+      const title = [p.integration_name, at, p.at && absoluteTime(p.at)].filter(Boolean).join(' · ')
+      const source = withSource ? `${p.integration_name}: ` : ''
+      if (p.kind === 'checks') {
+        return (p.items ?? []).map((name) => ({
+          key: `${key}/${name}`,
+          status: p.status,
+          id: name,
+          name: source + name,
+          state: t('dashboard.down'),
+          title,
+        }))
+      }
+      if (p.kind === 'integration') {
+        return [
+          {
+            key,
+            status: p.status,
+            id: p.name,
+            name: source + t('dashboard.problem.integration'),
+            detail: p.detail,
+            wrap: true,
+            title,
+          },
+        ]
+      }
+      if (p.kind === 'metric') {
+        const name = metricLabel(p.integration_type, {
+          key: p.item_id ?? '',
+          name: p.name,
+        })
+        return [
+          {
+            key,
+            status: p.status,
+            id: p.name,
+            name: <span className="inline-block first-letter:uppercase">{source + name}</span>,
+            detail: p.group,
+            state: formatMetric(p.value ?? 0, p.unit),
+            title,
+          },
+        ]
+      }
+      const b = backupStates.find((s) => s === p.state)
+      return [
+        {
+          key,
+          status: p.status,
+          id: p.name,
+          name: source + p.name,
+          detail: p.group,
+          state: b ? t(`backups.state.${b}`) : t(`status.${p.status}`),
+          title,
+        },
+      ]
     })
-
-  return (
-    <li className={motion.className} style={motion.style}>
-      <Link
-        to={problemLink(p)}
-        className={cn('hover:bg-accent/40 flex items-center gap-3 px-3 py-2.5 transition-colors', flash && 'animate-flash')}
-        data-problem={p.name}
-      >
-        {p.kind === 'checks' ? (
-          <IntegrationIcon type="healthchecks" className="size-4 shrink-0" />
-        ) : null}
-        <StatusBadge status={p.status} label={label} />
-        <span className="min-w-0 flex-1">
-          <span className="block font-medium [overflow-wrap:anywhere]">
-            <span className={cn('inline-block', p.kind === 'metric' && 'first-letter:uppercase')}>{name}</span>
-            {p.group && <span className="text-muted-foreground font-normal"> · {p.group}</span>}
-            <span className="text-muted-foreground ml-2 text-xs font-normal">{t(`dashboard.kind.${p.kind}`)}</span>
-          </span>
-          <span className="text-muted-foreground block text-xs break-words">
-            {detail}
-            {at && (
-              <span title={absoluteTime(p.at!)}>
-                {detail ? ' · ' : ''}
-                {at}
-              </span>
-            )}
-          </span>
-        </span>
-        <ChevronRight className="text-muted-foreground size-4 shrink-0" />
-      </Link>
-    </li>
-  )
 }
 
 /**
@@ -134,7 +146,10 @@ function StatusMark({ tone }: { tone: 'idle' | 'ok' | 'warning' | 'error' }) {
     <span className={cn('relative grid size-10 shrink-0 place-items-center rounded-lg', box)} data-tone={tone}>
       {(tone === 'error' || tone === 'warning') && (
         <span
-          className={cn('animate-ring absolute inset-0 rounded-lg', tone === 'error' ? 'bg-destructive/30' : 'bg-warning/30')}
+          className={cn(
+            'animate-ring absolute inset-0 rounded-lg',
+            tone === 'error' ? 'bg-destructive/30' : 'bg-warning/30',
+          )}
           aria-hidden
         />
       )}
@@ -149,237 +164,432 @@ function StatusMark({ tone }: { tone: 'idle' | 'ok' | 'warning' | 'error' }) {
   )
 }
 
-/** Gesamtstatus: alles in Ordnung oder Liste der Probleme (ganz oben). */
-function OverallStatus({ overview }: { overview: Overview }) {
+/**
+ * Gesamtstatus als schlanke Zeile: Ampel, „11 Probleme in 4 Bereichen“,
+ * Zähler für Fehler und Warnungen. Die Probleme selbst stehen in den Kacheln;
+ * nur solche ohne sichtbare Kachel (orphans) folgen hier als flache Liste.
+ */
+function OverallStatus({ overview, orphans }: { overview: Overview; orphans: Problem[] }) {
   const { t } = useTranslation()
   const now = useNow()
+  const toLines = useProblemLines(now)
   const problems = overview.problems
   const errors = problems.filter((p) => p.status === 'error').length
+  const warnings = problems.filter((p) => p.status === 'warning').length
+  const areas = new Set(problems.map(problemOwner)).size
   const ok = problems.length === 0
   const idle = overview.integrations.active === 0 // alle deaktiviert
   const tone = idle ? 'idle' : ok ? 'ok' : errors > 0 ? 'error' : 'warning'
 
   return (
-    <Card className={cn(errors > 0 && 'border-destructive/40', !ok && errors === 0 && 'border-warning/40')}>
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex items-center gap-4">
-          <StatusMark tone={tone} />
-          <div className="min-w-0">
-            <p className="text-lg font-semibold">
-              {idle ? t('dashboard.noneActive') : ok ? t('dashboard.allGood') : t('dashboard.problems', { count: problems.length })}
-            </p>
-            <p className="text-muted-foreground text-sm">
-              {t('dashboard.activeIntegrations', { count: overview.integrations.active })}
-            </p>
-          </div>
+    <section className="flex flex-col gap-3" aria-label={t('dashboard.overall')}>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <StatusMark tone={tone} />
+        <div className="min-w-48 flex-1">
+          <p className="text-lg font-semibold">
+            {idle
+              ? t('dashboard.noneActive')
+              : ok
+                ? t('dashboard.allGood')
+                : `${t('dashboard.problems', { count: problems.length })}${areas > 1 ? ` ${t('dashboard.inAreas', { count: areas })}` : ''}`}
+          </p>
+          <p className="text-muted-foreground text-sm">
+            {t('dashboard.activeIntegrations', {
+              count: overview.integrations.active,
+            })}
+          </p>
         </div>
-        {problems.length > 0 && (
-          <ul className="divide-y rounded-md border" aria-label={t('dashboard.problemList')}>
-            {problems.map((p, n) => (
-              <ProblemRow key={`${p.kind}/${p.integration_id}/${p.item_id ?? ''}`} p={p} now={now} index={n} />
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-/** Übersichtskachel wie in dnsdeck: Icon-Box links, Titel, Zahl + Badges, Chevron → Detailseite. */
-const tileClass =
-  'group bg-card hover:bg-accent/40 flex items-center gap-4 rounded-xl border p-5 transition-[background-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md'
-
-function Tile({ to, icon, title, children, tile }: { to: string; icon: ReactNode; title: string; children: ReactNode; tile?: string }) {
-  return (
-    <Link to={to} className={tileClass} data-tile={tile}>
-      <span className="bg-muted grid size-10 shrink-0 place-items-center rounded-lg transition-transform duration-200 group-hover:scale-105">
-        {icon}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="text-muted-foreground text-sm">{title}</div>
-        {children}
-      </div>
-      <ChevronRight className="text-muted-foreground size-4 transition-transform group-hover:translate-x-0.5" />
-    </Link>
-  )
-}
-
-function BackupsTile({ overview }: { overview: Overview }) {
-  const { t } = useTranslation()
-  const s = overview.backups
-  const n = (k: keyof typeof s.states) => s.states[k] ?? 0
-  const bad = n('overdue') + n('failed')
-  return (
-    <Tile to="/backups" icon={<DatabaseBackup className="size-5" />} title={t('nav.backups')} tile="backups">
-      {s.total === 0 ? (
-        <div className="text-muted-foreground font-medium">{t('dashboard.noBackups')}</div>
-      ) : (
-        <div className="flex flex-wrap items-center gap-2 font-medium">
-          <span className="tabular-nums">
-            <AnimatedNumber value={s.total} format={(v) => t('dashboard.monitored', { count: v })} />
-          </span>
-          {n('ok') > 0 && <Badge variant="success">{t('dashboard.backupsOk', { count: n('ok') })}</Badge>}
-          {n('due_soon') > 0 && <Badge variant="warning">{t('dashboard.backupsDueSoon', { count: n('due_soon') })}</Badge>}
-          {bad > 0 && <Badge variant="destructive">{t('dashboard.backupsBad', { count: bad })}</Badge>}
-          {n('unknown') + n('paused') > 0 && (
-            <Badge variant="secondary">{t('dashboard.other', { count: n('unknown') + n('paused') })}</Badge>
-          )}
-        </div>
-      )}
-    </Tile>
-  )
-}
-
-/** Healthchecks.io als Ampel: grün, wenn alle Checks laufen, rot mit den ausgefallenen. */
-function ChecksTile({ overview }: { overview: Overview }) {
-  const { t } = useTranslation()
-  const c = overview.checks
-  const down = c.statuses.error ?? 0
-  const active = c.total - (c.statuses.paused ?? 0)
-  const names = overview.problems.filter((p) => p.kind === 'checks').flatMap((p) => p.items ?? [])
-  const flash = useFlash(down)
-  return (
-    <Tile to="/checks" icon={<IntegrationIcon type="healthchecks" className="size-5" />} title={t('nav.checks')} tile="checks">
-      {c.total === 0 ? (
-        <div className="text-muted-foreground font-medium">{t('dashboard.noChecks')}</div>
-      ) : (
-        <div className={cn('flex flex-col gap-0.5 rounded-md', flash && 'animate-flash')}>
-          <span className="flex items-center gap-2 font-medium">
-            <span className="relative flex size-2.5" aria-hidden>
-              {down > 0 && <span className="bg-destructive/60 animate-ring absolute inset-0 rounded-full" />}
-              <span className={cn('relative size-2.5 rounded-full', down > 0 ? 'bg-destructive' : 'bg-success')} />
-            </span>
-            {down > 0 ? t('dashboard.checksFailed', { count: down }) : t('dashboard.checksAllOk', { count: active })}
-          </span>
-          {down > 0 && names.length > 0 && (
-            <span className="text-muted-foreground truncate text-xs">{names.join(', ')}</span>
-          )}
-        </div>
-      )}
-    </Tile>
-  )
-}
-
-/** Kachel je Dienst mit Kennzahlen, z. B. „Immich – 48.213 Fotos · 1.204 Videos · 412 GB“. */
-function ServiceTile({ integration: i, icon }: { integration: Integration; icon?: string }) {
-  const { t } = useTranslation()
-  const main = (i.snapshot?.metrics ?? []).filter((m) => !m.group).slice(0, 3)
-  const bad = (i.snapshot?.metrics ?? []).filter((m) => m.status === 'error' || m.status === 'warning')
-  return (
-    <Link to={`/dienste#integration-${i.id}`} className={tileClass} data-tile={i.name}>
-      <span className="bg-muted grid size-10 shrink-0 place-items-center rounded-lg transition-transform duration-200 group-hover:scale-105">
-        <IntegrationIcon name={icon} type={i.type} className="size-5" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
-          {i.name}
-          {i.status === 'error' && <StatusBadge status="error" label={t('dashboard.problem.integration')} />}
-        </div>
-        {main.length === 0 ? (
-          <div className="text-muted-foreground font-medium">{t('services.noMetrics')}</div>
-        ) : (
-          <div className="flex flex-wrap items-baseline gap-x-1.5 font-medium tabular-nums">
-            {main.map((m, n) => (
-              <span key={m.key} className="whitespace-nowrap">
-                {n > 0 && <span className="text-muted-foreground mr-1.5">·</span>}
-                {isStateUnit(m.unit) ? (
-                  formatMetric(m.value, m.unit)
-                ) : (
-                  <AnimatedNumber value={m.value} format={(v) => formatMetric(v, m.unit)} />
-                )}
-                {!isStateUnit(m.unit) && (
-                  <>
-                    {' '}
-                    <span className="text-muted-foreground text-sm font-normal">{metricLabel(i.type, m)}</span>
-                  </>
-                )}
+        {!ok && (
+          // mobil in eigener Zeile unter dem Text
+          <div className="flex w-full flex-wrap gap-2 pl-14 sm:w-auto sm:pl-0">
+            {errors > 0 && (
+              <span className="bg-destructive/10 text-destructive inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium tabular-nums">
+                <StatusDot status="error" />
+                {t('dashboard.errorsCount', { count: errors })}
               </span>
-            ))}
-            {bad.length > 0 && (
-              <Badge variant={bad.some((m) => m.status === 'error') ? 'destructive' : 'warning'} className="ml-1">
-                {t('dashboard.thresholds', { count: bad.length })}
-              </Badge>
+            )}
+            {warnings > 0 && (
+              <span className="bg-warning/15 text-warning inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium tabular-nums">
+                <StatusDot status="warning" />
+                {t('dashboard.warningsCount', { count: warnings })}
+              </span>
             )}
           </div>
         )}
       </div>
-      <ChevronRight className="text-muted-foreground size-4 transition-transform group-hover:translate-x-0.5" />
-    </Link>
+      {orphans.length > 0 && (
+        <div className="pl-14">
+          <ProblemLines lines={toLines(orphans, true)} max={5} label={t('dashboard.problemList')} />
+        </div>
+      )}
+    </section>
   )
 }
 
-/** Letzte Statuswechsel aller Integrationen (unten auf dem Dashboard). */
+function BackupsTile({ overview, problems }: { overview: Overview; problems: Problem[] }) {
+  const { t } = useTranslation()
+  const toLines = useProblemLines(useNow())
+  const s = overview.backups
+  const n = (k: keyof typeof s.states) => s.states[k] ?? 0
+  const sub = [
+    n('ok') > 0 && t('dashboard.backupsOk', { count: n('ok') }),
+    n('due_soon') > 0 && t('dashboard.backupsDueSoon', { count: n('due_soon') }),
+    n('overdue') + n('failed') > 0 && t('dashboard.problems', { count: n('overdue') + n('failed') }),
+    n('unknown') + n('paused') > 0 && t('dashboard.other', { count: n('unknown') + n('paused') }),
+  ].filter(Boolean)
+  return (
+    <StatusTile
+      to="/backups"
+      icon={<DatabaseBackup className="size-4" />}
+      title={t('nav.backups')}
+      tile="backups"
+      status={worstStatus(problems.map((p) => p.status)) ?? (s.total > 0 ? 'ok' : 'unknown')}
+      value={
+        s.total === 0 ? (
+          <span className="text-muted-foreground font-medium">{t('dashboard.noBackups')}</span>
+        ) : (
+          <TileValue label={t('dashboard.monitoredLabel', { count: s.total })}>
+            <AnimatedNumber value={s.total} format={(v) => String(Math.round(v))} />
+          </TileValue>
+        )
+      }
+      sub={sub.join(' · ')}
+    >
+      <ProblemLines lines={toLines(problems)} />
+    </StatusTile>
+  )
+}
+
+/** Healthchecks.io als Ampel: grün, wenn alle Checks laufen, rot mit den ausgefallenen. */
+function ChecksTile({ overview, problems }: { overview: Overview; problems: Problem[] }) {
+  const { t } = useTranslation()
+  const toLines = useProblemLines(useNow())
+  const c = overview.checks
+  const down = c.statuses.error ?? 0
+  const active = c.total - (c.statuses.paused ?? 0)
+  return (
+    <StatusTile
+      to="/checks"
+      icon={<IntegrationIcon type="healthchecks" className="size-4" />}
+      title={t('nav.checks')}
+      tile="checks"
+      status={
+        worstStatus([...problems.map((p) => p.status), down > 0 ? 'error' : undefined]) ?? (c.total > 0 ? 'ok' : 'unknown')
+      }
+      value={
+        c.total === 0 ? (
+          <span className="text-muted-foreground font-medium">{t('dashboard.noChecks')}</span>
+        ) : (
+          <TileValue label={t('dashboard.checksLabel', { count: active })}>
+            <AnimatedNumber value={active} format={(v) => String(Math.round(v))} />
+          </TileValue>
+        )
+      }
+      sub={
+        c.total > 0 && (
+          <span className={cn('font-medium', down > 0 ? 'text-destructive' : 'text-success')}>
+            {down > 0 ? t('dashboard.checksFailed', { count: down }) : t('dashboard.checksAllOk', { count: active })}
+          </span>
+        )
+      }
+    >
+      <ProblemLines lines={toLines(problems)} />
+    </StatusTile>
+  )
+}
+
+/** Kennzahl für den Mini-Verlauf: zuerst eine Prozent-Kennzahl (24 h), sonst die erste Zahl (30 Tage). */
+function sparkMetric(main: Metric[]): { key: string; range: '24h' | '30d' } | undefined {
+  const pct = main.find((m) => m.unit === '%')
+  if (pct) return { key: pct.key, range: '24h' }
+  const first = main.find((m) => !isStateUnit(m.unit))
+  return first && { key: first.key, range: '30d' }
+}
+
+function metricText(type: string, m: Metric) {
+  return isStateUnit(m.unit)
+    ? formatMetric(m.value, m.unit)
+    : `${formatMetric(m.value, m.unit)} ${metricLabel(type, m)}`
+}
+
+/** Kachel je Dienst: erste Kennzahl groß, zwei weitere als Nebenzeile, Probleme, Mini-Verlauf. */
+function ServiceTile({
+  integration: i,
+  icon,
+  problems,
+}: {
+  integration: Integration
+  icon?: string
+  problems: Problem[]
+}) {
+  const { t } = useTranslation()
+  const toLines = useProblemLines(useNow())
+  const main = (i.snapshot?.metrics ?? []).filter((m) => !m.group && !m.resource)
+  const [first, ...rest] = main
+  const spark = sparkMetric(main)
+  return (
+    <StatusTile
+      to={`/dienste#integration-${i.id}`}
+      icon={<IntegrationIcon name={icon} type={i.type} className="size-4" />}
+      title={i.name}
+      tile={i.name}
+      status={
+        worstStatus([...problems.map((p) => p.status), i.status === 'error' ? 'error' : undefined]) ??
+        (first ? 'ok' : 'unknown')
+      }
+      value={
+        !first ? (
+          <span className="text-muted-foreground font-medium">{t('services.noMetrics')}</span>
+        ) : isStateUnit(first.unit) ? (
+          <TileValue>{formatMetric(first.value, first.unit)}</TileValue>
+        ) : (
+          <TileValue label={metricLabel(i.type, first)}>
+            <AnimatedNumber value={first.value} format={(v) => formatMetric(v, first.unit)} />
+          </TileValue>
+        )
+      }
+      sub={rest
+        .slice(0, 2)
+        .map((m) => metricText(i.type, m))
+        .join(' · ')}
+    >
+      <ProblemLines lines={toLines(problems)} />
+      {spark && <Sparkline integrationId={i.id} metricKey={spark.key} range={spark.range} />}
+    </StatusTile>
+  )
+}
+
+const pct = (used?: number, total?: number) => (used !== undefined && total ? (used / total) * 100 : undefined)
+
+/** Alle Hosts/Nodes (Proxmox VE, Dockhand) mit kleinen CPU- und RAM-Balken. */
+function HostsTile({
+  integrations,
+  icons,
+}: {
+  integrations: Integration[]
+  icons: Record<string, string | undefined>
+}) {
+  const { t } = useTranslation()
+  const hosts = integrations.flatMap((i) =>
+    (i.snapshot?.resources ?? []).filter((r) => r.kind === 'node').map((r) => ({ i, r })),
+  )
+  if (hosts.length === 0) return null
+  hosts.sort((a, b) => statusRank(a.r.status) - statusRank(b.r.status) || a.r.name.localeCompare(b.r.name))
+  const online = hosts.filter((h) => h.r.status !== 'error').length
+  return (
+    <StatusTile
+      to="/ressourcen"
+      icon={<Server className="size-4" />}
+      title={t('dashboard.tile.hosts')}
+      tile="hosts"
+      status={worstStatus(hosts.map((h) => h.r.status)) ?? 'unknown'}
+      sub={t('dashboard.hostsOnline', { count: online, total: hosts.length })}
+    >
+      <ul className="mt-2 flex flex-col gap-2.5">
+        {hosts.map(({ i, r }) => (
+          <li
+            key={`${i.id}/${r.id}`}
+            className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-x-4"
+            data-host={r.name}
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <IntegrationIcon name={icons[i.type]} type={i.type} className="size-4 shrink-0" />
+              <span className="truncate text-sm font-medium">{r.name}</span>
+              <StatusDot status={r.status} pulse />
+            </span>
+            <Meter
+              size="sm"
+              value={r.cpu}
+              label={t('resources.cpu')}
+              detail={r.cpu !== undefined ? formatMetric(r.cpu, '%') : '—'}
+            />
+            <Meter
+              size="sm"
+              value={pct(r.mem_used, r.mem_total)}
+              label={t('resources.mem')}
+              detail={
+                r.mem_used !== undefined && r.mem_total
+                  ? `${formatBytes(r.mem_used)} / ${formatBytes(r.mem_total)}`
+                  : '—'
+              }
+            />
+          </li>
+        ))}
+      </ul>
+    </StatusTile>
+  )
+}
+
+const timelineRanges: UptimeRange[] = ['24h', '7d']
+
+/** Zeitleiste: je Backup ein Verlaufsbalken, Probleme zuerst. */
+function BackupTimelineTile() {
+  const { t } = useTranslation()
+  const backups = useBackups()
+  const [range, setRange] = useState<UptimeRange>('24h')
+  const list = [...(backups.data?.backups ?? [])].sort(
+    (a, b) => statusRank(a.status) - statusRank(b.status) || a.name.localeCompare(b.name),
+  )
+  const max = 8
+  return (
+    <StatusTile
+      to="/backups"
+      icon={<GanttChart className="size-4" />}
+      title={t('dashboard.tile.backupTimeline')}
+      tile="backup-timeline"
+      status={worstStatus(list.map((b) => b.status)) ?? 'unknown'}
+      stretch={false}
+      action={
+        <Segmented
+          label={t('uptime.period')}
+          value={range}
+          onChange={setRange}
+          options={timelineRanges.map((r) => ({
+            value: r,
+            label: t(`uptime.range.${r}`),
+          }))}
+        />
+      }
+    >
+      {backups.isPending ? (
+        <Skeleton className="mt-2 h-24" />
+      ) : list.length === 0 ? (
+        <p className="text-muted-foreground mt-2 text-sm">{t('dashboard.noBackups')}</p>
+      ) : (
+        <ul className="mt-3 flex flex-col gap-2">
+          {list.slice(0, max).map((b) => (
+            <li
+              key={`${b.integration_id}/${b.id}`}
+              className="grid grid-cols-[minmax(0,12rem)_minmax(0,1fr)] items-center gap-x-4"
+              data-backup={b.name}
+            >
+              <span className="flex min-w-0 items-center gap-2 text-sm">
+                <StatusDot status={b.status} />
+                <span className="truncate font-medium">{b.name}</span>
+                {b.group && <span className="text-muted-foreground truncate text-xs">{b.group}</span>}
+              </span>
+              {b.uptime ? (
+                <UptimeBar uptime={b.uptime[range]} range={range} compact />
+              ) : (
+                <span className="text-muted-foreground text-sm">—</span>
+              )}
+            </li>
+          ))}
+          {list.length > max && (
+            <li>
+              <Link to="/backups" className="text-muted-foreground hover:text-foreground text-xs">
+                {t('dashboard.moreBackups', { count: list.length - max })}
+              </Link>
+            </li>
+          )}
+        </ul>
+      )}
+    </StatusTile>
+  )
+}
+
+/** Letzte Statuswechsel aller Integrationen: Überschrift außen, Liste flach. */
 function EventsTile() {
   const { t } = useTranslation()
   const history = useHistory({}, 8)
   const entries = history.data?.pages[0]?.entries ?? []
   return (
-    <Card className="gap-2" data-tile="events">
-      <CardContent className="flex flex-col gap-1">
-        <div className="flex items-center justify-between gap-2">
-          <span className="flex items-center gap-2 font-medium">
-            <HistoryIcon className="size-4" />
-            {t('dashboard.events')}
-          </span>
-          <Link to="/verlauf" className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm">
-            {t('dashboard.allEvents')}
-            <ChevronRight className="size-4" />
-          </Link>
-        </div>
+    <section className="flex flex-col gap-2" data-tile="events">
+      <div className="flex items-center justify-between gap-2 px-1">
+        <h2 className="flex items-center gap-2 font-medium">
+          <HistoryIcon className="size-4" />
+          {t('dashboard.events')}
+        </h2>
+        <Link to="/verlauf" className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm">
+          {t('dashboard.allEvents')}
+          <ChevronRight className="size-4" />
+        </Link>
+      </div>
+      <div className="bg-card rounded-xl border px-5">
         {history.isPending ? (
-          <Skeleton className="h-24" />
+          <Skeleton className="my-4 h-24" />
         ) : entries.length === 0 ? (
           <p className="text-muted-foreground py-4 text-sm">{t('history.empty')}</p>
         ) : (
           <HistoryList entries={entries} compact />
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   )
 }
 
-const span: Record<number, string> = { 1: '', 2: 'sm:col-span-2', 3: 'sm:col-span-2 lg:col-span-3' }
+const span: Record<number, string> = {
+  1: '',
+  2: 'sm:col-span-2',
+  3: 'sm:col-span-2 lg:col-span-3',
+}
 const defaultTiles: DashboardTile[] = [
   { id: 'backups', visible: true, size: 1 },
   { id: 'checks', visible: true, size: 1 },
   { id: 'events', visible: true, size: 3 },
 ]
 
-/** Kacheln in der Anordnung aus Einstellungen → Dashboard. */
-function Tiles({ overview }: { overview: Overview }) {
+/**
+ * Gesamtstatus und Kacheln in der Anordnung aus Einstellungen → Dashboard;
+ * Kacheln mit Problemen auf Wunsch zuerst (Fehler vor Warnungen).
+ */
+function Board({ overview }: { overview: Overview }) {
   const layout = useDashboardLayout()
   const integrations = useIntegrations()
   const types = useIntegrationTypes()
-  const tiles = layout.data?.tiles ?? defaultTiles
+  const tiles = (layout.data?.tiles ?? defaultTiles).filter((x) => x.visible)
+  const problemsFirst = layout.data?.problems_first ?? true
+  const list = integrations.data ?? []
+  const icons = Object.fromEntries((types.data?.types ?? []).map((x) => [x.type, x.icon]))
 
-  function tile(id: string) {
+  const byOwner = new Map<string, Problem[]>()
+  for (const p of overview.problems) {
+    const o = problemOwner(p)
+    byOwner.set(o, [...(byOwner.get(o) ?? []), p])
+  }
+  const mine = (id: string) => byOwner.get(id) ?? []
+
+  function render(id: string) {
     switch (id) {
       case 'backups':
-        return <BackupsTile overview={overview} />
+        return <BackupsTile overview={overview} problems={mine(id)} />
       case 'checks':
-        return <ChecksTile overview={overview} />
+        return <ChecksTile overview={overview} problems={mine(id)} />
+      case 'hosts':
+        return <HostsTile integrations={list.filter((i) => i.enabled)} icons={icons} />
+      case 'backup-timeline':
+        return <BackupTimelineTile />
       case 'events':
         return <EventsTile />
     }
-    const i = integrations.data?.find((x) => `integration:${x.id}` === id)
+    const i = list.find((x) => `integration:${x.id}` === id)
     if (!i || !i.enabled) return null
-    return <ServiceTile integration={i} icon={types.data?.types.find((x) => x.type === i.type)?.icon} />
+    return <ServiceTile integration={i} icon={icons[i.type]} problems={mine(id)} />
+  }
+
+  const shown = tiles.map((x) => ({ ...x, content: render(x.id) })).filter((x) => x.content)
+  // Probleme ohne sichtbare Kachel stehen direkt unter dem Gesamtstatus
+  const visible = new Set(shown.map((x) => x.id))
+  const orphans = overview.problems.filter((p) => !visible.has(problemOwner(p)))
+  if (problemsFirst) {
+    const rank = (id: string) => statusRank(worstStatus(mine(id).map((p) => p.status)) ?? 'ok')
+    shown.sort((a, b) => Math.min(rank(a.id), 2) - Math.min(rank(b.id), 2))
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {tiles
-        .filter((x) => x.visible)
-        .map((x, n) => {
-          const content = tile(x.id)
+    <>
+      <OverallStatus overview={overview} orphans={orphans} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {shown.map((x, n) => {
           const motion = rise(n)
-          return content ? (
+          return (
             <div key={x.id} className={cn('min-w-0 [&>*]:h-full', span[x.size], motion.className)} style={motion.style}>
-              {content}
+              {x.content}
             </div>
-          ) : null
+          )
         })}
-    </div>
+      </div>
+    </>
   )
 }
 
@@ -393,10 +603,11 @@ export function Dashboard() {
       <PageHeader title={t('nav.dashboard')} subtitle={t('dashboard.subtitle')} />
       {overview.isPending ? (
         <>
-          <Skeleton className="h-24 rounded-xl" />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Skeleton className="h-20 rounded-xl" />
-            <Skeleton className="h-20 rounded-xl" />
+          <Skeleton className="h-12 rounded-xl" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Skeleton className="h-32 rounded-xl" />
+            <Skeleton className="h-32 rounded-xl" />
+            <Skeleton className="h-32 rounded-xl" />
           </div>
         </>
       ) : overview.isError ? (
@@ -404,10 +615,7 @@ export function Dashboard() {
       ) : o!.integrations.total === 0 ? (
         <NoIntegrations />
       ) : (
-        <>
-          <OverallStatus overview={o!} />
-          <Tiles overview={o!} />
-        </>
+        <Board overview={o!} />
       )}
     </div>
   )
