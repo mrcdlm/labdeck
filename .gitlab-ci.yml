@@ -76,16 +76,14 @@ publish-image:
       else
         VERSION="$CI_COMMIT_SHORT_SHA"
       fi
-    - docker build --build-arg VERSION="$VERSION" -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
-    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
+    - TAGS="-t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
     - |
       if [ -n "$CI_COMMIT_TAG" ]; then
-        MINOR="${VERSION%.*}"
-        for T in "$VERSION" "$MINOR" latest; do
-          docker tag "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" "$CI_REGISTRY_IMAGE:$T"
-          docker push "$CI_REGISTRY_IMAGE:$T"
-        done
+        TAGS="$TAGS -t $CI_REGISTRY_IMAGE:$VERSION -t $CI_REGISTRY_IMAGE:${VERSION%.*} -t $CI_REGISTRY_IMAGE:latest"
       fi
+    # Direkt mit BuildKit pushen, ohne Attestations – sonst lehnt die GitLab-Registry das Manifest ab ("blob unknown")
+    - docker buildx create --use --driver docker-container
+    - docker buildx build --provenance=false --sbom=false --build-arg VERSION="$VERSION" $TAGS --push .
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
