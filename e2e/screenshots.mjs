@@ -62,21 +62,21 @@ if (mode === 'setup') {
     ['history', '/verlauf'],
     ['settings', '/einstellungen'],
   ]
-  for (const [scheme, suffix] of [['light', ''], ['dark', '-dark']]) {
-    const page = await session({ colorScheme: scheme })
-    for (const [name, path] of shots) {
-      await page.goto(base + path)
-      await page.waitForLoadState('networkidle')
-      await page.waitForTimeout(600)
-      await page.screenshot({ path: `${out}/${name}${suffix}.png`, fullPage: name !== 'settings' })
-    }
+  const shoot = async (page, name, path, file, full = true) => {
+    await page.goto(base + path)
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(600)
+    await page.screenshot({ path: `${out}/${file}.png`, fullPage: full })
   }
-  const mobile = await session({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
-  for (const [name, path] of [['dashboard', '/'], ['backups', '/backups']]) {
-    await mobile.goto(base + path)
-    await mobile.waitForLoadState('networkidle')
-    await mobile.waitForTimeout(600)
-    await mobile.screenshot({ path: `${out}/${name}-mobile.png` })
+  // je Sprache alle Seiten hell, Dashboard zusätzlich dunkel und mobil
+  for (const lang of ['de', 'en']) {
+    const locale = lang === 'de' ? 'de-DE' : 'en-US'
+    const page = await session({ locale })
+    for (const [name, path] of shots) await shoot(page, name, path, `${name}.${lang}`, name !== 'settings')
+    const dark = await session({ locale, colorScheme: 'dark' })
+    await shoot(dark, 'dashboard', '/', `dashboard-dark.${lang}`)
+    const mobile = await session({ locale, viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
+    await shoot(mobile, 'dashboard', '/', `dashboard-mobile.${lang}`, false)
   }
 }
 await browser.close()

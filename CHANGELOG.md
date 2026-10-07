@@ -35,6 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   problems only, load older entries.
 - Dashboard editor (Settings → Dashboard): show/hide tiles, order by drag and drop or arrows,
   width 1–3 columns; stored in the database. New tile "Recent events".
+- GitHub Actions (as in dnsdeck): CI with Go, frontend and browser tests; multi-arch image
+  (amd64, arm64) on ghcr.io for `main` and version tags, GitHub release with notes from this
+  changelog.
+- README in English and German with screenshots, SECURITY.md.
 
 ### Changed
 - Addresses of integrations are stored as entered (a trailing slash is kept, some APIs need it).

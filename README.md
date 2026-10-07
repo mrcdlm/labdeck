@@ -1,93 +1,215 @@
+<div align="center">
+
 # labdeck
 
+**Self-hosted home lab dashboard – backups, health checks and service metrics at a glance.**
 
+[![CI](https://github.com/mrcdlm/labdeck/actions/workflows/ci.yml/badge.svg)](https://github.com/mrcdlm/labdeck/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/mrcdlm/labdeck?sort=semver)](https://github.com/mrcdlm/labdeck/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## Getting started
+English · [Deutsch](README.de.md)
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+![Dashboard](docs/screenshots/dashboard.en.png)
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+</div>
 
-## Add your files
+labdeck shows whether everything in your home lab is fine: when did which backup last run, is
+it overdue, are your cron jobs reporting, how full are your datastores, how many photos are in
+Immich. Problems are listed at the top, everything else is one click away. It ships as a
+single small container (amd64 and arm64) with an embedded web interface and an SQLite
+database – and **everything is configured in the web interface**, including the credentials
+of your services (stored encrypted).
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+Sister project of [dnsdeck](https://github.com/mrcdlm/dnsdeck) – same look, same stack.
 
+## Features
+
+- **Overall status** – one traffic light for the whole home lab; overdue or failed backups,
+  checks that are down, unreachable services and exceeded thresholds are listed first.
+- **Backups** – every backup from all sources in one table: last run, result, size, when it
+  is due, history bar. A backup is *due soon* from 80 % of its maximum age and *overdue*
+  after it (default 26 hours, adjustable per backup).
+- **Healthchecks.io** (cloud or self-hosted) – all checks with 24 h / 7 day / 30 day uptime
+  bars from the status history, grouped by project or tag, tag filter. Checks with a tag
+  (default `backup`) also appear as backups.
+- **Proxmox Backup Server** – last snapshot, size and verify state per VM, container and host
+  (all namespaces), datastore usage with thresholds.
+- **Immich** – photos, videos and storage in total and per user (with quota), history chart.
+- **Any JSON API** (HTTP JSON) – read values with GJSON paths, with unit and thresholds. A
+  timestamp can be shown as its age and treated as a backup, so any backup tool with a status
+  file can be monitored (Uptime Kuma, Paperless, Nextcloud, Home Assistant … without code).
+- **Prometheus** – any PromQL queries with unit and thresholds, one row per label value;
+  everything exporters provide (node_exporter, restic/borg exporters, SMART …).
+- **Services page and charts** – one card per integration with its metrics and a chart
+  (24 hours to 1 year; raw values 30 days, daily values 1 year, configurable).
+- **History** – status changes and errors of all integrations, filterable.
+- **Notifications via webhooks** – presets for ntfy, Gotify, Discord, Slack, Telegram and
+  Home Assistant; check down/up, backup overdue/failed/OK again, integration
+  unreachable/reachable, threshold exceeded.
+- **Dashboard editor** – show, hide, reorder (drag and drop) and resize tiles.
+- **Live** – updates instantly via Server-Sent Events; works on mobile; light/dark/system
+  theme; English and German; installable as an app (PWA).
+- **Secure by default** – runs as non-root on a distroless image; credentials encrypted with
+  AES-256-GCM and never returned by the API; single-password login with rate limiting.
+
+| Backups | Checks | Services | History |
+|---|---|---|---|
+| ![Backups](docs/screenshots/backups.en.png) | ![Checks](docs/screenshots/checks.en.png) | ![Services](docs/screenshots/services.en.png) | ![History](docs/screenshots/history.en.png) |
+
+## Quick start
+
+Requirements: Docker with the Compose plugin.
+
+```sh
+mkdir labdeck && cd labdeck
+curl -fsSLO https://raw.githubusercontent.com/mrcdlm/labdeck/main/deploy/docker-compose.yml
+curl -fsSL  https://raw.githubusercontent.com/mrcdlm/labdeck/main/deploy/.env.example -o .env
+chmod 600 .env
+openssl rand -base64 32                     # → LABDECK_SECRET_KEY
+nano .env                                   # set APP_PASSWORD and LABDECK_SECRET_KEY
+
+mkdir -p data && sudo chown 65532:65532 data   # the container runs as UID 65532
+docker compose pull && docker compose up -d
+docker compose ps                           # "healthy" after about 30 seconds
 ```
-cd existing_repo
-git remote add origin https://gitlab.netvrkit.de/mrcdlm/labdeck.git
-git branch -M main
-git push -uf origin main
+
+Open `http://<host>:8080`, sign in with `APP_PASSWORD` and add your services under
+**Settings → Integrations**. Keep `LABDECK_SECRET_KEY` safe – without it the stored
+credentials cannot be decrypted.
+
+## Configuration
+
+Only the essentials are environment variables in `.env`
+(template: [`deploy/.env.example`](deploy/.env.example)). Integrations, credentials,
+thresholds, dashboard and notifications are managed in the web interface.
+
+| Variable | Required | Description |
+|---|---|---|
+| `APP_PASSWORD` | yes | Password for the web interface (plain text or bcrypt hash, max. 72 bytes) |
+| `LABDECK_SECRET_KEY` | yes | 32 bytes, Base64 (`openssl rand -base64 32`) – encrypts credentials of integrations and webhook tokens |
+| `LABDECK_VERSION` | yes (Compose) | Image version to run, e.g. `0.3.0` – pinned on purpose, no `latest` |
+| `LABDECK_PORT` | no | Host port for the web interface (default `8080`) |
+| `TZ` | no | Time zone for log timestamps (default `UTC`); the display time zone is set in the web interface |
+| `SECRET_*` | no | Credentials referenced as `${SECRET_NAME}` in integrations (instead of entering them) |
+| `WEBHOOK_*` | no | Secrets referenced as `${WEBHOOK_NAME}` in webhooks |
+| `TRUSTED_PROXIES` | no | IPs or networks (CIDR) of your reverse proxy / `cloudflared`, e.g. `172.16.0.0/12`, see [Security](#security) |
+| `LOG_LEVEL` | no | `debug`, `info`, `warn` or `error` (default `info`) |
+
+## Integrations
+
+Add them under **Settings → Integrations**; the form explains each field. "Test connection"
+checks address and credentials before saving. Each integration has its own polling interval
+(default 60 s), timeout and TLS verification (turn it off for self-signed certificates in your
+LAN). Several instances per type are possible.
+
+| Integration | Credentials | What you get |
+|---|---|---|
+| Healthchecks.io | API key per project (read-only is enough) | checks, uptime bars, checks tagged `backup` as backups |
+| Proxmox Backup Server | API token `user@realm!name`, role **DatastoreAudit** on `/datastore` for the token | backups per VM/CT/host, verify state, datastore usage |
+| Immich | API key of an **admin** with the permission `server.statistics` | photos, videos, storage, per user |
+| HTTP JSON | optional header with credentials (stored encrypted) | any values, timestamps as backups |
+| Prometheus | none, basic auth or bearer token | any PromQL query |
+
+**Monitoring Proxmox VE backups (vzdump) with Healthchecks.io:** create a check with the tag
+`backup` and a schedule matching your backup job, then let vzdump ping it via a hook script:
+
+```sh
+#!/bin/sh
+# /usr/local/bin/vzdump-hc.sh – enable in /etc/vzdump.conf: script: /usr/local/bin/vzdump-hc.sh
+URL="https://hc-ping.com/YOUR-CHECK-UUID"
+MARK=/run/vzdump-hc-failed
+ping() { curl -fsS -m 10 --retry 3 "$URL$1" >/dev/null 2>&1; }
+case "$1" in
+  job-start)    rm -f "$MARK"; ping /start ;;
+  backup-abort) touch "$MARK" ;;
+  job-abort)    ping /fail ;;
+  job-end)      if [ -e "$MARK" ]; then ping /fail; else ping ""; fi ;;
+esac
+exit 0
 ```
 
-## Integrate with your tools
+Together with the Proxmox Backup Server integration you see both: did the job run on time
+(Healthchecks.io), and what is actually stored per VM (PBS).
 
-* [Set up project integrations](https://gitlab.netvrkit.de/mrcdlm/labdeck/-/settings/integrations)
+## Notifications
 
-## Collaborate with your team
+Under **Settings → Webhooks** add any number of webhooks (method, URL, headers, body template
+with live preview). Presets exist for ntfy, Gotify, Discord, Slack, Telegram and Home
+Assistant. Secrets never go into URL or headers directly: put them into the **token** field
+(stored encrypted) and use `${TOKEN}` (or `{{token}}` in the body); plain-text secrets are
+rejected. Alternatively reference environment variables `${WEBHOOK_NAME}`.
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+Events: check down / up again, backup overdue / failed / OK again, integration unreachable /
+reachable again, threshold exceeded. The language of the messages is set under
+**Settings → Notifications**.
 
-## Test and Deploy
+## Updating
 
-Use the built-in continuous integration in GitLab.
+labdeck follows [semantic versioning](https://semver.org). Read the
+[release notes](https://github.com/mrcdlm/labdeck/releases), set `LABDECK_VERSION` in `.env`
+to the new version and run:
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+```sh
+docker compose pull && docker compose up -d
+```
 
-***
+To roll back, set the previous version and run the same command. Database migrations are
+applied automatically on start; back up the data directory before major updates.
 
-# Editing this README
+## Security
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+- The web interface uses plain HTTP. **Do not expose port 8080 to the internet.** Publish it
+  through a reverse proxy with TLS or a Cloudflare Tunnel, ideally protected by Cloudflare
+  Access.
+- Behind a TLS-terminating proxy the session cookie is marked `Secure` automatically
+  (`X-Forwarded-Proto: https`). Set `TRUSTED_PROXIES` so labdeck sees the real client address
+  (login rate limit, logs).
+- Credentials of integrations and webhook tokens are encrypted with AES-256-GCM
+  (`LABDECK_SECRET_KEY`) and never returned by the API, written to logs or error messages.
+- Outgoing requests only go to configured integrations and webhooks; the API is not a proxy.
+- Write requests from other sites are rejected (CSRF protection).
 
-## Suggestions for a good README
+Please report vulnerabilities as described in [SECURITY.md](SECURITY.md).
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+## Development
 
-## Name
-Choose a self-explaining name for your project.
+Requirements: Go 1.27, Node.js 24.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+```sh
+# Mock APIs of all supported services (Healthchecks, Immich, PBS, Prometheus, JSON, webhook receiver)
+go run ./cmd/mock -addr :8790
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+# Backend
+APP_PASSWORD=test LABDECK_SECRET_KEY=$(openssl rand -base64 32) DATA_DIR=./data go run ./cmd/server
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+# Frontend with hot reload (proxies API requests to :8080)
+cd web && npm install && npm run dev
+```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+The addresses and keys of the mock services are listed at the top of
+[`cmd/mock/main.go`](cmd/mock/main.go) (e.g. Healthchecks: `http://localhost:8790/healthchecks`,
+key `hc-readonly`). `go run ./cmd/devseed -db ./data/app.db` invents a year of history for the
+charts.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+Checks (all run in CI):
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+```sh
+go vet ./... && go test ./...
+cd web && npm run lint && npm run build
+cd e2e && npm ci && npx playwright install chromium && npx playwright test
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+The screenshots in `docs/screenshots` are generated with `cd e2e && npm run screenshots`.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+## Releases
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+Pushing a tag `vX.Y.Z` builds multi-arch images (`linux/amd64`, `linux/arm64`) and publishes
+them to `ghcr.io/mrcdlm/labdeck` as `X.Y.Z`, `X.Y` and `latest` (plus `X` from 1.0 on),
+together with a GitHub release; every push to `main` publishes `main`. The GitLab pipeline
+builds the same image for version tags into the GitLab registry. Changes are listed in the
+[changelog](CHANGELOG.md).
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+[MIT](LICENSE)

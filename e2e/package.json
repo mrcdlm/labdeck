@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "playwright test"
+    "test": "playwright test",
+    "screenshots": "sh ../scripts/screenshots.sh ../docs/screenshots"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0"
