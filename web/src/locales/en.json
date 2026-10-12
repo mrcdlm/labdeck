@@ -453,6 +453,33 @@
       "out": "Out",
       "errors": "Errors",
       "link": "Link"
+    },
+    "redfish": {
+      "power": "Power",
+      "inlet": "Inlet",
+      "health": "Health",
+      "power_state": "Powered on",
+      "temp": "Temperature",
+      "fan": "Fan",
+      "supply": "Power supply",
+      "output": "Output",
+      "drive": "Drive",
+      "life": "Remaining life",
+      "volume": "Logical drive",
+      "controller": "Controller",
+      "power_supplies": "Power supplies",
+      "psu_redundancy": "PSU redundancy",
+      "fans": "Fans",
+      "fan_redundancy": "Fan redundancy",
+      "temperatures": "Temperatures",
+      "processors": "Processors",
+      "memory": "Memory",
+      "storage": "Storage",
+      "smart_storage_battery": "Controller battery",
+      "network": "Network",
+      "bios_hardware": "BIOS/hardware",
+      "liquid_cooling": "Liquid cooling",
+      "liquid_cooling_redundancy": "Cooling redundancy"
     }
   },
   "webhooks": {
@@ -583,7 +610,8 @@
       "ct": "CT",
       "container": "Docker",
       "switch": "Switch",
-      "port": "Port"
+      "port": "Port",
+      "server": "Server"
     },
     "state": {
       "running": "Running",
@@ -603,7 +631,8 @@
       "disk_pct": "Disk"
     },
     "hint": "Click a row for its history. Network: data since the VM or container started.",
-    "network": "Network"
+    "network": "Network",
+    "hardware": "Hardware"
   },
   "units": {
     "mainsOn": "On mains",
@@ -646,5 +675,19 @@
       "down": "no link",
       "fill": "Fill = utilisation · LED blinks on traffic"
     }
+  },
+  "server": {
+    "health": "Component health",
+    "on": "Powered on",
+    "off": "Powered off",
+    "serial": "S/N",
+    "cpus": "Processors",
+    "memory": "Memory",
+    "temperatures": "Temperatures",
+    "fans": "Fans",
+    "psus": "Power supplies",
+    "storage": "Drives",
+    "lifeLeft": "{{value}} % left",
+    "componentsOk": "{{count}} of {{total}} components OK"
   }
 }

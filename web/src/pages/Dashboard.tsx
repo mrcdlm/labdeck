@@ -20,6 +20,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { Segmented } from '@/components/Segmented'
 import { Sparkline } from '@/components/Sparkline'
 import { StatusBadge } from '@/components/StatusBadge'
+import { ServerHealth } from '@/components/ServerView'
 import { SwitchFront } from '@/components/SwitchView'
 import { ProblemLines, StatusDot, StatusTile, TileValue, type ProblemLine } from '@/components/StatusTile'
 import { UptimeBar } from '@/components/UptimeBar'
@@ -112,7 +113,8 @@ function useProblemLines(now: number) {
             id: p.name,
             name: <span className="inline-block first-letter:uppercase">{source + name}</span>,
             detail: p.group,
-            state: formatMetric(p.value ?? 0, p.unit),
+            // OK/Fehler-Werte kennen nur zwei Texte – Warnungen heißen so
+            state: p.unit === 'okfail' ? t(`status.${p.status}`) : formatMetric(p.value ?? 0, p.unit),
             title,
           },
         ]
@@ -329,6 +331,7 @@ function ServiceTile({
   const [first, ...rest] = main
   const spark = sparkMetric(main)
   const ports = (i.snapshot?.resources ?? []).filter((r) => r.kind === 'port')
+  const server = i.snapshot?.resources?.find((r) => r.kind === 'server')
   return (
     <StatusTile
       to={`/dienste#integration-${i.id}`}
@@ -361,7 +364,14 @@ function ServiceTile({
           <SwitchFront ports={ports} compact />
         </div>
       ) : (
-        spark && <Sparkline integrationId={i.id} metricKey={spark.key} range={spark.range} />
+        <>
+          {server && (
+            <div className="mt-3">
+              <ServerHealth metrics={(i.snapshot?.metrics ?? []).filter((m) => m.resource === server.id)} compact />
+            </div>
+          )}
+          {spark && <Sparkline integrationId={i.id} metricKey={spark.key} range={spark.range} />}
+        </>
       )}
     </StatusTile>
   )

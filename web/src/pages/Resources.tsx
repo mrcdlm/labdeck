@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ChevronDown, Container, Cpu, Network, Plug, Search, Server } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronDown, Container, Cpu, Network, Plug, Search, Server, ServerCog } from 'lucide-react'
 import { Fragment, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
@@ -10,6 +10,7 @@ import { LiveItem, LiveTableRow } from '@/components/LiveRow'
 import { PageHeader } from '@/components/PageHeader'
 import { Segmented } from '@/components/Segmented'
 import { StatusBadge } from '@/components/StatusBadge'
+import { ServerCard } from '@/components/ServerView'
 import { SwitchCard } from '@/components/SwitchView'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -273,6 +274,26 @@ function GuestTable({ integration, list }: { integration: Integration; list: Res
   )
 }
 
+/** Server-Hardware über den BMC (Redfish). */
+function HardwareSection({ sources }: { sources: Integration[] }) {
+  const { t } = useTranslation()
+  const servers = sources.flatMap((i) =>
+    (i.snapshot?.resources ?? []).filter((r) => r.kind === 'server').map((server) => ({ i, server })),
+  )
+  if (servers.length === 0) return null
+  return (
+    <section className="flex flex-col gap-3" aria-labelledby="hardware-heading">
+      <h2 id="hardware-heading" className="flex items-center gap-2 font-medium">
+        <ServerCog className="size-4" aria-hidden />
+        {t('resources.hardware')}
+      </h2>
+      {servers.map(({ i, server }) => (
+        <ServerCard key={`${i.id}/${server.id}`} integration={i} server={server} />
+      ))}
+    </section>
+  )
+}
+
 /** Switches (SNMP) mit schematischer Front. */
 function NetworkSection({ sources }: { sources: Integration[] }) {
   const { t } = useTranslation()
@@ -390,6 +411,7 @@ export function Resources() {
                 )
               })
           })}
+          <HardwareSection sources={sources} />
           <NetworkSection sources={sources} />
           {hasHosts && (
             <p className="text-muted-foreground flex items-center gap-2 text-sm">

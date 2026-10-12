@@ -56,6 +56,7 @@ const (
 	KindContainer = "container" // Docker-Container
 	KindSwitch    = "switch"    // Netzwerk-Switch (Ports als KindPort darunter)
 	KindPort      = "port"      // Switch-Port; Info: media, unit, pos, speed …
+	KindServer    = "server"    // Server-Hardware über den BMC (Redfish, z. B. iLO)
 )
 
 // Resource ist ein Host, eine VM oder ein Container mit Auslastung.

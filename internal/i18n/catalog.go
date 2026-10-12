@@ -166,6 +166,8 @@ var catalog = map[string]entry{
 	"snmp.v3_auth":          {"SNMPv3-Anmeldung abgelehnt – Benutzer, Protokolle und Passwörter prüfen", "SNMPv3 login rejected – check user, protocols and passwords"},
 	"snmp.protocol":         {"Antwort ist kein gültiges SNMP", "The response is not valid SNMP"},
 	"snmp.agent_error":      {"Der Switch meldet einen SNMP-Fehler: {code}", "The switch reports an SNMP error: {code}"},
+	"redfish.no_system":     {"Der BMC meldet kein System unter /redfish/v1/Systems", "The BMC reports no system at /redfish/v1/Systems"},
+	"redfish.bad_link":      {"Der BMC verweist auf eine ungültige Adresse", "The BMC links to an invalid address"},
 	"snmp.passphrase_short": {"{field}-Passwort muss mindestens 8 Zeichen haben", "{field} password needs at least 8 characters"},
 
 	// Einstellungen

@@ -8,6 +8,7 @@ import { IntegrationIcon } from '@/components/IntegrationIcon'
 import { MetricChart, MetricRangeToggle } from '@/components/MetricChart'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
+import { ServerHealth } from '@/components/ServerView'
 import { SwitchFront } from '@/components/SwitchView'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -127,6 +128,7 @@ function ServiceCard({ integration: i, type }: { integration: Integration; type?
   const main = metrics.filter((m) => !m.group)
   const grouped = metrics.filter((m) => m.group)
   const switchPorts = (i.snapshot?.resources ?? []).filter((r) => r.kind === 'port')
+  const server = i.snapshot?.resources?.find((r) => r.kind === 'server')
   const [selected, setSelected] = useState<string>()
   const [range, setRange] = useState<MetricRange>('30d')
   // Zustandswerte (Netz/Batterie, OK/Fehler) haben kein Diagramm
@@ -200,6 +202,7 @@ function ServiceCard({ integration: i, type }: { integration: Integration; type?
                 <SwitchFront ports={switchPorts} compact />
               </Link>
             )}
+            {server && <ServerHealth metrics={(i.snapshot?.metrics ?? []).filter((m) => m.resource === server.id)} />}
             {chartable && current && (
               <div className="flex flex-col gap-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">

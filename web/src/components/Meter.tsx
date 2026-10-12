@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react'
 
+import type { Status } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 /** Farbe nach Füllstand: blau, ab 80 % gelb, ab 90 % rot. */
-function meterColor(pct: number): string {
+function meterColor(pct: number, status?: Status): string {
+  // Status der Quelle (z. B. Temperatur gegen ihre Schwelle) geht vor
+  if (status === 'error') return 'bg-destructive'
+  if (status === 'warning') return 'bg-warning'
+  if (status) return 'bg-chart-1'
   if (pct >= 90) return 'bg-destructive'
   if (pct >= 80) return 'bg-warning'
   return 'bg-chart-1'
@@ -18,12 +23,15 @@ export function Meter({
   label,
   detail,
   size = 'md',
+  status,
   className,
 }: {
   value: number | undefined
   label?: string
   detail?: string
   size?: 'sm' | 'md' | 'lg'
+  /** Farbe nach Status statt nach Füllstand */
+  status?: Status
   className?: string
 }) {
   const pct = value === undefined ? undefined : Math.max(0, Math.min(100, value))
@@ -52,7 +60,7 @@ export function Meter({
       >
         {pct !== undefined && (
           <div
-            className={cn('h-full rounded-full transition-[width] duration-700 ease-out', meterColor(pct))}
+            className={cn('h-full rounded-full transition-[width] duration-700 ease-out', meterColor(pct, status))}
             style={{ width: `${shown}%` }}
           />
         )}

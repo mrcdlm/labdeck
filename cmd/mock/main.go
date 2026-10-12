@@ -16,8 +16,10 @@
 //	Dockhand          http://localhost:8790/dockhand       API-Token: dh_mock
 //	USV (NUT)         Host localhost, Port 8793 (-nut-addr), USV „ups“, ohne Anmeldung
 //	Switch (SNMP)     Host localhost, Port 8794 (-snmp-addr, Cisco C1300), 8795 (8-Port-Switch), v2c, Community: labdeck-ro
+//	Redfish (iLO 5)   http://localhost:8790/ilo              Benutzer: labdeck, Passwort: ilo-pass
+//	Redfish (BMC)     http://localhost:8790/bmc              Benutzer: labdeck, Passwort: ilo-pass (ohne HPE-Erweiterungen)
 //
-// Steuerung (ohne Key), {svc} = healthchecks | immich | prometheus | json | pbs | pve | dockhand:
+// Steuerung (ohne Key), {svc} = healthchecks | immich | prometheus | json | pbs | pve | dockhand | ilo | bmc:
 //
 //	POST /_{svc}/fail?status=500                    Ausfälle simulieren (status=0 beendet)
 //	POST /_{svc}/broken?on=1                        kaputtes JSON liefern (on=0 beendet)
@@ -29,6 +31,8 @@
 //	POST /_nut/status?value=OB+DISCHRG              Status der USV setzen (OL = Netz)
 //	POST /_snmp/link?name=gi1/0/12&up=1             Link eines Ports schalten (C1300)
 //	POST /_snmp/silent?on=1                         Switch antwortet nicht mehr (on=0 beendet)
+//	POST /_ilo/psu?n=1&health=Critical              Netzteil-Zustand setzen (iLO 5, n ab 0)
+//	POST /_ilo/power?on=0                           Server aus- bzw. einschalten (iLO 5)
 //
 // Webhook-Empfänger: beliebige Anfragen an /hook/… werden aufgezeichnet,
 // GET /_hooks liefert sie, DELETE /_hooks leert die Liste.
@@ -49,6 +53,7 @@ import (
 	"github.com/mrcdlm/labdeck/internal/integrations/pbs/pbstest"
 	"github.com/mrcdlm/labdeck/internal/integrations/prometheus/promtest"
 	"github.com/mrcdlm/labdeck/internal/integrations/pve/pvetest"
+	"github.com/mrcdlm/labdeck/internal/integrations/redfish/redfishtest"
 )
 
 // controllable sind die gemeinsamen Steuerfunktionen der Fakes.
@@ -125,6 +130,23 @@ func main() {
 	mount(mux, "dockhand", dh)
 	mux.HandleFunc("POST /_dockhand/health", func(w http.ResponseWriter, r *http.Request) {
 		dh.SetHealth(r.URL.Query().Get("name"), r.URL.Query().Get("value"))
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	ilo := redfishtest.New("labdeck", "ilo-pass", redfishtest.ILO5())
+	mount(mux, "ilo", ilo)
+	mount(mux, "bmc", redfishtest.New("labdeck", "ilo-pass", redfishtest.Generic()))
+	mux.HandleFunc("POST /_ilo/psu", func(w http.ResponseWriter, r *http.Request) {
+		n := intParam(r, "n")
+		ilo.Update(func(p *redfishtest.Profile) {
+			if n >= 0 && n < len(p.PSUs) {
+				p.PSUs[n].Health = r.URL.Query().Get("health")
+			}
+		})
+		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("POST /_ilo/power", func(w http.ResponseWriter, r *http.Request) {
+		ilo.Update(func(p *redfishtest.Profile) { p.PowerOn = r.URL.Query().Get("on") != "0" })
 		w.WriteHeader(http.StatusNoContent)
 	})
 

@@ -27,6 +27,7 @@ import (
 	"github.com/mrcdlm/labdeck/internal/integrations/pbs"
 	"github.com/mrcdlm/labdeck/internal/integrations/prometheus"
 	"github.com/mrcdlm/labdeck/internal/integrations/pve"
+	"github.com/mrcdlm/labdeck/internal/integrations/redfish"
 	"github.com/mrcdlm/labdeck/internal/integrations/snmp"
 	"github.com/mrcdlm/labdeck/internal/notify"
 	"github.com/mrcdlm/labdeck/internal/scheduler"
@@ -107,7 +108,7 @@ func run() error {
 		return err
 	}
 	cfg.SecretKey = nil // steckt ab hier nur noch in box
-	registry := integrations.NewRegistry(dockhand.New(), healthchecks.New(), httpjson.New(), immich.New(), nut.New(), pbs.New(), prometheus.New(), pve.New(), snmp.New())
+	registry := integrations.NewRegistry(dockhand.New(), healthchecks.New(), httpjson.New(), immich.New(), nut.New(), pbs.New(), prometheus.New(), pve.New(), redfish.New(), snmp.New())
 	manager := integrations.NewManager(registry, st, box, os.LookupEnv, log)
 	manager.Pub = broker
 	poller := scheduler.NewPoller(log, manager.Poll)

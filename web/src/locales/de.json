@@ -453,6 +453,33 @@
       "out": "Raus",
       "errors": "Fehler",
       "link": "Link"
+    },
+    "redfish": {
+      "power": "Leistung",
+      "inlet": "Einlass",
+      "health": "Zustand",
+      "power_state": "Eingeschaltet",
+      "temp": "Temperatur",
+      "fan": "Lüfter",
+      "supply": "Netzteil",
+      "output": "Ausgangsleistung",
+      "drive": "Laufwerk",
+      "life": "Restlebensdauer",
+      "volume": "Logisches Laufwerk",
+      "controller": "Controller",
+      "power_supplies": "Netzteile",
+      "psu_redundancy": "Netzteil-Redundanz",
+      "fans": "Lüfter",
+      "fan_redundancy": "Lüfter-Redundanz",
+      "temperatures": "Temperaturen",
+      "processors": "Prozessoren",
+      "memory": "Arbeitsspeicher",
+      "storage": "Speicher",
+      "smart_storage_battery": "Controller-Akku",
+      "network": "Netzwerk",
+      "bios_hardware": "BIOS/Hardware",
+      "liquid_cooling": "Flüssigkühlung",
+      "liquid_cooling_redundancy": "Kühlungs-Redundanz"
     }
   },
   "webhooks": {
@@ -583,7 +610,8 @@
       "ct": "CT",
       "container": "Docker",
       "switch": "Switch",
-      "port": "Port"
+      "port": "Port",
+      "server": "Server"
     },
     "state": {
       "running": "Läuft",
@@ -603,7 +631,8 @@
       "disk_pct": "Platte"
     },
     "hint": "Zeile anklicken für den Verlauf. Netzwerk: Daten seit dem Start der VM bzw. des Containers.",
-    "network": "Netzwerk"
+    "network": "Netzwerk",
+    "hardware": "Hardware"
   },
   "units": {
     "mainsOn": "Netzbetrieb",
@@ -646,5 +675,19 @@
       "down": "kein Link",
       "fill": "Füllung = Auslastung · LED blinkt bei Traffic"
     }
+  },
+  "server": {
+    "health": "Zustand der Komponenten",
+    "on": "Eingeschaltet",
+    "off": "Ausgeschaltet",
+    "serial": "S/N",
+    "cpus": "Prozessoren",
+    "memory": "Arbeitsspeicher",
+    "temperatures": "Temperaturen",
+    "fans": "Lüfter",
+    "psus": "Netzteile",
+    "storage": "Laufwerke",
+    "lifeLeft": "{{value}} % Rest",
+    "componentsOk": "{{count}} von {{total}} Komponenten OK"
   }
 }
