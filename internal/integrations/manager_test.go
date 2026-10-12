@@ -163,7 +163,7 @@ func TestValidation(t *testing.T) {
 	}{
 		"Typ":            {func(i *integrations.Input) { i.Type = "gibtsnicht" }, "integration.type_unknown"},
 		"Name":           {func(i *integrations.Input) { i.Name = " " }, "integration.name_invalid"},
-		"Intervall":      {func(i *integrations.Input) { i.IntervalSeconds = 5 }, "integration.interval_range"},
+		"Intervall":      {func(i *integrations.Input) { i.IntervalSeconds = 4 }, "integration.interval_range"},
 		"Timeout":        {func(i *integrations.Input) { i.TimeoutSeconds = 60 }, "integration.timeout_range"},
 		"Secret fehlt":   {func(i *integrations.Input) { i.Secrets = nil }, "integration.field_required"},
 		"Feld unbekannt": {func(i *integrations.Input) { i.Secrets["x"] = "y" }, "integration.field_unknown"},

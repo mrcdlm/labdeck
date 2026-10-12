@@ -8,6 +8,7 @@ import (
 
 	"github.com/mrcdlm/labdeck/internal/i18n"
 	"github.com/mrcdlm/labdeck/internal/integrations"
+	"github.com/mrcdlm/labdeck/internal/live"
 	"github.com/mrcdlm/labdeck/internal/store"
 )
 
@@ -17,18 +18,25 @@ type metricStore interface {
 	MetricDaily(ctx context.Context, integrationID int64, key, from string) ([]store.DailyValue, error)
 }
 
-// metricRange: kurze Zeiträume aus den Rohdaten (letzter Wert je Abschnitt),
-// lange aus den Tageswerten.
+// metricRange: 1 h mit jedem Wert (Live-Kacheln), kurze Zeiträume aus den
+// Rohdaten (letzter Wert je Abschnitt), lange aus den Tageswerten.
 type metricRange struct {
 	length time.Duration
 	bucket time.Duration // 0 = Tageswerte
+	raw    bool          // jeder Wert, ohne Abschnitte
+}
+
+// livePoints liefert die Werte der letzten Stunde aus dem Speicher.
+type livePoints interface {
+	Points(id int64, key string, from time.Time) []live.Point
 }
 
 var metricRanges = map[string]metricRange{
-	"24h": {24 * time.Hour, 15 * time.Minute},
-	"7d":  {7 * 24 * time.Hour, time.Hour},
-	"30d": {30 * 24 * time.Hour, 0},
-	"1y":  {365 * 24 * time.Hour, 0},
+	"1h":  {length: time.Hour, raw: true},
+	"24h": {length: 24 * time.Hour, bucket: 15 * time.Minute},
+	"7d":  {length: 7 * 24 * time.Hour, bucket: time.Hour},
+	"30d": {length: 30 * 24 * time.Hour},
+	"1y":  {length: 365 * 24 * time.Hour},
 }
 
 type pointDTO struct {
@@ -93,13 +101,20 @@ func (s *Server) handleMetricHistory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	from := time.Now().Add(-rg.length)
-	if rg.bucket > 0 {
+	if rg.bucket > 0 || rg.raw {
 		samples, err := s.metrics.MetricSamples(r.Context(), id, key, from)
 		if err != nil {
 			s.internalError(w, r, "Verlauf laden", err)
 			return
 		}
-		out.Points = bucketLast(samples, rg.bucket)
+		samples = s.withLive(id, key, from, samples)
+		if rg.raw {
+			for _, x := range samples {
+				out.Points = append(out.Points, pointDTO{T: x.At, V: x.Value})
+			}
+		} else {
+			out.Points = bucketLast(samples, rg.bucket)
+		}
 	} else {
 		days, err := s.metrics.MetricDaily(r.Context(), id, key, from.UTC().Format(time.DateOnly))
 		if err != nil {
@@ -119,4 +134,22 @@ func (s *Server) handleMetricHistory(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeJSON(w, http.StatusOK, out)
+}
+
+// withLive ergänzt die Rohwerte der DB (höchstens einer je Minute) um die
+// neueren Werte aus dem Speicher – so endet jedes Diagramm beim aktuellen Wert.
+func (s *Server) withLive(id int64, key string, from time.Time, samples []store.Sample) []store.Sample {
+	if s.live == nil {
+		return samples
+	}
+	last := from
+	if n := len(samples); n > 0 {
+		last = samples[n-1].At
+	}
+	for _, p := range s.live.Points(id, key, from) {
+		if p.At.After(last) {
+			samples = append(samples, store.Sample{At: p.At, Value: p.Value})
+		}
+	}
+	return samples
 }

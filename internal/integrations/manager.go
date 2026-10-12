@@ -15,6 +15,7 @@ import (
 
 	"github.com/mrcdlm/labdeck/internal/events"
 	"github.com/mrcdlm/labdeck/internal/i18n"
+	"github.com/mrcdlm/labdeck/internal/live"
 	"github.com/mrcdlm/labdeck/internal/secrets"
 	"github.com/mrcdlm/labdeck/internal/store"
 )
@@ -22,7 +23,7 @@ import (
 // Grenzen je Instanz.
 const (
 	DefaultInterval = 60 * time.Second
-	MinInterval     = 15 * time.Second
+	MinInterval     = 5 * time.Second
 	MaxInterval     = 24 * time.Hour
 	DefaultTimeout  = 10 * time.Second
 	MinTimeout      = time.Second
@@ -121,11 +122,14 @@ type Manager struct {
 	// OnPolled wird nach jeder gespeicherten Abfrage mit den Statuswechseln
 	// aufgerufen (Benachrichtigungen, Backup-Auswertung).
 	OnPolled func(it PolledIntegration, changes []store.StatusChange)
-	now      func() time.Time
+	// Live erhält die Kennzahlen jeder Abfrage (letzte Stunde, nil = aus).
+	Live *live.Buffer
+	now  func() time.Time
 
 	mu      sync.Mutex
-	polling map[int64]*sync.Mutex // eine Abfrage je Integration gleichzeitig
-	clients map[int64]clientEntry // HTTP-Client je Integration (Verbindungen wiederverwenden)
+	polling map[int64]*sync.Mutex          // eine Abfrage je Integration gleichzeitig
+	clients map[int64]clientEntry          // HTTP-Client je Integration (Verbindungen wiederverwenden)
+	sampled map[int64]map[string]time.Time // letzter gespeicherter Rohwert je Kennzahl
 }
 
 type clientEntry struct {
@@ -136,7 +140,7 @@ type clientEntry struct {
 
 func NewManager(reg *Registry, st Store, box *secrets.Box, env secrets.Env, log *slog.Logger) *Manager {
 	return &Manager{reg: reg, store: st, box: box, env: env, log: log, now: time.Now,
-		polling: map[int64]*sync.Mutex{}, clients: map[int64]clientEntry{}}
+		polling: map[int64]*sync.Mutex{}, clients: map[int64]clientEntry{}, sampled: map[int64]map[string]time.Time{}}
 }
 
 // Registry liefert die verfügbaren Typen.
@@ -382,6 +386,12 @@ func (m *Manager) Delete(ctx context.Context, id int64) error {
 		return err
 	}
 	m.dropClient(id)
+	m.mu.Lock()
+	delete(m.sampled, id)
+	m.mu.Unlock()
+	if m.Live != nil {
+		m.Live.Drop(id)
+	}
 	m.log.Info("Integration gelöscht", "id", id)
 	m.changed(id)
 	return nil
@@ -609,9 +619,7 @@ func (m *Manager) Poll(ctx context.Context, id int64) error {
 			_ = json.Unmarshal([]byte(it.Snapshot), &prev)
 		}
 		res.Changes = itemChanges(prev, snap, at)
-		for _, mt := range snap.Metrics {
-			res.Samples = append(res.Samples, store.MetricSample{Key: mt.Key, Value: mt.Value, Short: mt.Resource != ""})
-		}
+		res.Samples = m.samples(id, snap.Metrics, at)
 		if prevStatus == StatusError {
 			m.log.Info("Integration wieder erreichbar", "id", id, "name", it.Name)
 		}
@@ -629,6 +637,13 @@ func (m *Manager) Poll(ctx context.Context, id int64) error {
 		return fmt.Errorf("save poll result: %w", err)
 	}
 	m.log.Debug("Integration abgefragt", "id", id, "status", res.Status, "duration", res.Duration)
+	if m.Live != nil && collectErr == nil {
+		values := make(map[string]float64, len(snap.Metrics))
+		for _, mt := range snap.Metrics {
+			values[mt.Key] = mt.Value
+		}
+		m.Live.Add(id, at, values)
+	}
 	events.Publish(m.Pub, events.TopicIntegrations)
 	if m.OnPolled != nil {
 		m.OnPolled(PolledIntegration{ID: id, Name: it.Name, Type: it.Type}, res.Changes)
@@ -693,5 +708,32 @@ func itemChanges(prev, cur Snapshot, at time.Time) []store.StatusChange {
 		add("metric", mt.Key, mt.Name, mt.Group, metrics[mt.Key], mt.Status)
 	}
 	slices.SortStableFunc(out, func(a, b store.StatusChange) int { return strings.Compare(a.Kind, b.Kind) })
+	return out
+}
+
+// sampleEvery: Rohwerte je Kennzahl höchstens so oft speichern. Bei kurzen
+// Intervallen (ab 5 s) wüchse die Datenbank sonst um ein Vielfaches; die
+// Live-Werte dazwischen hält der Ringpuffer, Tageswerte (Min/Max) sehen
+// trotzdem jeden Wert.
+const sampleEvery = 55 * time.Second // knapp unter 60 s: Takt-Schwankungen
+
+func (m *Manager) samples(id int64, metrics []Metric, at time.Time) []store.MetricSample {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	last := m.sampled[id]
+	if last == nil {
+		last = map[string]time.Time{}
+		m.sampled[id] = last
+	}
+	out := make([]store.MetricSample, 0, len(metrics))
+	for _, mt := range metrics {
+		s := store.MetricSample{Key: mt.Key, Value: mt.Value, Short: mt.Resource != ""}
+		if prev, ok := last[mt.Key]; ok && at.Sub(prev) < sampleEvery && !at.Before(prev) {
+			s.NoRaw = true
+		} else {
+			last[mt.Key] = at
+		}
+		out = append(out, s)
+	}
 	return out
 }

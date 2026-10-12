@@ -30,6 +30,7 @@ import (
 	"github.com/mrcdlm/labdeck/internal/integrations/pve"
 	"github.com/mrcdlm/labdeck/internal/integrations/redfish"
 	"github.com/mrcdlm/labdeck/internal/integrations/snmp"
+	"github.com/mrcdlm/labdeck/internal/live"
 	"github.com/mrcdlm/labdeck/internal/notify"
 	"github.com/mrcdlm/labdeck/internal/scheduler"
 	"github.com/mrcdlm/labdeck/internal/secrets"
@@ -111,6 +112,8 @@ func run() error {
 	cfg.SecretKey = nil // steckt ab hier nur noch in box
 	registry := integrations.NewRegistry(dockhand.New(), healthchecks.New(), httpjson.New(), immich.New(), nut.New(), pbs.New(), pihole.New(), prometheus.New(), pve.New(), redfish.New(), snmp.New())
 	manager := integrations.NewManager(registry, st, box, os.LookupEnv, log)
+	liveBuf := live.New()
+	manager.Live = liveBuf
 	manager.Pub = broker
 	poller := scheduler.NewPoller(log, manager.Poll)
 
@@ -226,7 +229,7 @@ func run() error {
 	srv := &http.Server{
 		Addr: fmt.Sprintf(":%d", cfg.Port),
 		Handler: api.NewServer(api.Deps{
-			Store: st, Events: broker, Settings: settings, Integrations: manager, Backups: st, Metrics: st,
+			Store: st, Events: broker, Settings: settings, Integrations: manager, Backups: st, Metrics: st, Live: liveBuf,
 			History: st, Prefs: st, WebhookStore: st, Webhooks: dispatcher, WebhookEnv: os.LookupEnv, Box: box,
 			TrustedProxies: cfg.TrustedProxies,
 			Info:           api.Info{Version: version, DataDir: cfg.DataDir, SecretKeySet: box != nil},

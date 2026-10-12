@@ -30,6 +30,7 @@ import (
 	"github.com/mrcdlm/labdeck/internal/integrations/pve"
 	"github.com/mrcdlm/labdeck/internal/integrations/redfish"
 	"github.com/mrcdlm/labdeck/internal/integrations/snmp"
+	"github.com/mrcdlm/labdeck/internal/live"
 	"github.com/mrcdlm/labdeck/internal/notify"
 	"github.com/mrcdlm/labdeck/internal/secrets"
 	"github.com/mrcdlm/labdeck/internal/store"
@@ -84,10 +85,12 @@ func newTestEnv(t *testing.T, static fstest.MapFS) *testEnv {
 	mgr := integrations.NewManager(integrations.NewRegistry(dockhand.New(), healthchecks.New(), httpjson.New(), immich.New(), nut.New(), pbs.New(), pihole.New(), prometheus.New(), pve.New(), redfish.New(), snmp.New()), st, box,
 		func(string) (string, bool) { return "", false }, log)
 	mgr.Pub = broker
+	liveBuf := live.New()
+	mgr.Live = liveBuf
 	dispatcher := notify.NewDispatcher(st, func(string) (string, bool) { return "", false }, log)
 	dispatcher.Token = OpenWebhookToken(box)
 
-	s := NewServer(Deps{Store: st, Events: broker, Settings: settings, Integrations: mgr, Backups: st, Metrics: st,
+	s := NewServer(Deps{Store: st, Events: broker, Settings: settings, Integrations: mgr, Backups: st, Metrics: st, Live: liveBuf,
 		History: st, Prefs: st, WebhookStore: st, Box: box, WebhookEnv: func(string) (string, bool) { return "", false },
 		Webhooks: dispatcher,
 		Info:     Info{Version: "v1.2.3", SecretKeySet: true}, Auth: auth, Log: log, Static: static})

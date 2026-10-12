@@ -53,6 +53,10 @@ func TestImmichAndHistory(t *testing.T) {
 	if st := get("key=photos&range=24h"); st != 200 || len(h.Points) != 1 || h.Points[0].V != 48_313 || h.Range != "24h" {
 		t.Fatalf("24h: %d %+v", st, h)
 	}
+	// 1 h: jeder Wert aus dem Speicher (auch der, den die Drossel nicht in die DB schreibt)
+	if st := get("key=photos&range=1h"); st != 200 || len(h.Points) != 2 || h.Points[1].V != 48_313 {
+		t.Fatalf("1h: %d %+v", st, h)
+	}
 	if st := get("key=usage&range=1y"); st != 200 || len(h.Points) != 1 || h.Unit != "bytes" {
 		t.Fatalf("1y: %d %+v", st, h)
 	}

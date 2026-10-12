@@ -182,6 +182,8 @@ type MetricSample struct {
 	Value float64
 	// Short: Rohwert einer einzelnen Ressource (kürzer aufbewahrt)
 	Short bool
+	// NoRaw: nur den Tageswert aktualisieren (Rohwerte höchstens je Minute)
+	NoRaw bool
 }
 
 type StatusChange struct {
@@ -227,9 +229,11 @@ func (s *Store) SavePollResult(ctx context.Context, id int64, r PollResult) erro
 
 	day := r.At.UTC().Format(time.DateOnly)
 	for _, m := range r.Samples {
-		if _, err := tx.ExecContext(ctx, `INSERT INTO metric_samples (integration_id, key, at, value, short) VALUES (?, ?, ?, ?, ?)`,
-			id, m.Key, at, m.Value, m.Short); err != nil {
-			return fmt.Errorf("metric sample: %w", err)
+		if !m.NoRaw {
+			if _, err := tx.ExecContext(ctx, `INSERT INTO metric_samples (integration_id, key, at, value, short) VALUES (?, ?, ?, ?, ?)`,
+				id, m.Key, at, m.Value, m.Short); err != nil {
+				return fmt.Errorf("metric sample: %w", err)
+			}
 		}
 		if _, err := tx.ExecContext(ctx, `INSERT INTO metric_daily (integration_id, key, day, last, min, max)
 			VALUES (?, ?, ?, ?, ?, ?)

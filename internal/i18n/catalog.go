@@ -142,7 +142,12 @@ var catalog = map[string]entry{
 	"status.error":                         {"Fehler", "error"},
 
 	// Dashboard
-	"dashboard.tile_invalid": {"unbekannte oder doppelte Kachel {id} bzw. Größe nicht 1–3", "unknown or duplicate tile {id} or size not 1–3"},
+	"dashboard.tile_invalid":   {"unbekannte oder doppelte Kachel {id} bzw. Position oder Größe außerhalb des Rasters", "unknown or duplicate tile {id} or position or size outside the grid"},
+	"dashboard.metric_invalid": {"Kennzahl-Kachel unvollständig: Integration, 1–3 Kennzahlen, Darstellung und Zeitraum angeben", "Metric tile incomplete: specify integration, 1–3 metrics, view and range"},
+	"dashboard.invalid":        {"Name (bis 60 Zeichen) fehlt oder Symbol ungültig", "Name (up to 60 characters) missing or icon invalid"},
+	"dashboard.too_many":       {"Höchstens {max} Dashboards", "At most {max} dashboards"},
+	"dashboard.too_many_tiles": {"Höchstens {max} Kacheln je Dashboard", "At most {max} tiles per dashboard"},
+	"dashboard.last":           {"Das letzte Dashboard lässt sich nicht löschen", "The last dashboard can't be deleted"},
 
 	// Proxmox VE
 	"pve.unexpected":   {"Antwort ist keine PVE-API – Adresse mit Port 8006 prüfen", "The response is not the PVE API – check the address with port 8006"},

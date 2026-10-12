@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/netip"
+	"sync"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -36,6 +37,8 @@ type Deps struct {
 	Backups backupStore
 	// Metrics: Verlauf der Kennzahlen
 	Metrics metricStore
+	// Live: Kennzahlen der letzten Stunde in Abfrageauflösung (nil = nur DB)
+	Live livePoints
 	// History: Statuswechsel aller Integrationen (Verlauf-Seite)
 	History historyStore
 	// Prefs: weitere gespeicherte Einstellungen (Dashboard-Anordnung)
@@ -61,6 +64,8 @@ type Server struct {
 	integrations   integrationService
 	backups        backupStore
 	metrics        metricStore
+	live           livePoints
+	dashMu         sync.Mutex // Dashboards lesen–ändern–speichern
 	history        historyStore
 	prefs          prefsStore
 	webhookStore   webhookStore
@@ -75,7 +80,7 @@ type Server struct {
 }
 
 func NewServer(d Deps) *Server {
-	return &Server{store: d.Store, events: d.Events, settings: d.Settings, integrations: d.Integrations, backups: d.Backups, metrics: d.Metrics,
+	return &Server{store: d.Store, events: d.Events, settings: d.Settings, integrations: d.Integrations, backups: d.Backups, metrics: d.Metrics, live: d.Live,
 		history: d.History, prefs: d.Prefs, webhookStore: d.WebhookStore, webhooks: d.Webhooks, webhookEnv: d.WebhookEnv,
 		box: d.Box, trustedProxies: d.TrustedProxies,
 		info: d.Info, auth: d.Auth, log: d.Log, static: d.Static}
@@ -121,6 +126,11 @@ func (s *Server) Routes() http.Handler {
 			r.Get("/history", s.handleHistory)
 			r.Get("/dashboard", s.handleGetDashboard)
 			r.Put("/dashboard", s.handlePutDashboard)
+			r.Get("/dashboards", s.handleListDashboards)
+			r.Post("/dashboards", s.handleCreateDashboard)
+			r.Put("/dashboards/order", s.handleOrderDashboards)
+			r.Put("/dashboards/{id}", s.handlePutDashboardByID)
+			r.Delete("/dashboards/{id}", s.handleDeleteDashboard)
 
 			r.Get("/webhooks", s.handleListWebhooks)
 			r.Post("/webhooks", s.handleCreateWebhook)
@@ -249,7 +259,12 @@ func writeMsgs(w http.ResponseWriter, r *http.Request, status int, msgs []i18n.M
 
 // decodeJSON liest den Body streng (unbekannte Felder sind ein Fehler).
 func decodeJSON(w http.ResponseWriter, r *http.Request, v any) bool {
-	r.Body = http.MaxBytesReader(w, r.Body, 16<<10)
+	return decodeJSONMax(w, r, v, 16<<10)
+}
+
+// decodeJSONMax wie decodeJSON, mit eigener Größengrenze (z. B. Dashboards).
+func decodeJSONMax(w http.ResponseWriter, r *http.Request, v any, maxBytes int64) bool {
+	r.Body = http.MaxBytesReader(w, r.Body, maxBytes)
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(v); err != nil {
