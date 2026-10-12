@@ -162,13 +162,16 @@ var catalog = map[string]entry{
 	"nut.driver":        {"Der USV-Treiber liefert keine Daten ({code}) – Kabel und Treiber prüfen", "The UPS driver delivers no data ({code}) – check cable and driver"},
 	"nut.error":         {"upsd meldet einen Fehler: {code}", "upsd reports an error: {code}"},
 
-	"snmp.timeout":          {"Keine Antwort per SNMP – Host, Port, Community bzw. v3-Zugangsdaten und die Freigabe für labdeck auf dem Switch prüfen", "No SNMP response – check host, port, community or v3 credentials and whether the switch allows labdeck"},
-	"snmp.v3_auth":          {"SNMPv3-Anmeldung abgelehnt – Benutzer, Protokolle und Passwörter prüfen", "SNMPv3 login rejected – check user, protocols and passwords"},
-	"snmp.protocol":         {"Antwort ist kein gültiges SNMP", "The response is not valid SNMP"},
-	"snmp.agent_error":      {"Der Switch meldet einen SNMP-Fehler: {code}", "The switch reports an SNMP error: {code}"},
-	"redfish.no_system":     {"Der BMC meldet kein System unter /redfish/v1/Systems", "The BMC reports no system at /redfish/v1/Systems"},
-	"redfish.bad_link":      {"Der BMC verweist auf eine ungültige Adresse", "The BMC links to an invalid address"},
-	"snmp.passphrase_short": {"{field}-Passwort muss mindestens 8 Zeichen haben", "{field} password needs at least 8 characters"},
+	"snmp.timeout":             {"Keine Antwort per SNMP – Host, Port, Community bzw. v3-Zugangsdaten und die Freigabe für labdeck auf dem Switch prüfen", "No SNMP response – check host, port, community or v3 credentials and whether the switch allows labdeck"},
+	"snmp.v3_auth":             {"SNMPv3-Anmeldung abgelehnt – Benutzer, Protokolle und Passwörter prüfen", "SNMPv3 login rejected – check user, protocols and passwords"},
+	"snmp.protocol":            {"Antwort ist kein gültiges SNMP", "The response is not valid SNMP"},
+	"snmp.agent_error":         {"Der Switch meldet einen SNMP-Fehler: {code}", "The switch reports an SNMP error: {code}"},
+	"pihole.login_failed":      {"Pi-hole lehnt das Passwort ab – ein App-Passwort aus Einstellungen → Web-Oberfläche / API verwenden", "Pi-hole rejects the password – use an app password from Settings → Web interface / API"},
+	"pihole.totp":              {"Pi-hole verlangt Zwei-Faktor-Anmeldung – ein App-Passwort verwenden, das gilt ohne zweiten Faktor", "Pi-hole requires two-factor login – use an app password, it works without a second factor"},
+	"pihole.password_required": {"Pi-hole verlangt ein Passwort – App-Passwort eintragen", "Pi-hole requires a password – enter an app password"},
+	"redfish.no_system":        {"Der BMC meldet kein System unter /redfish/v1/Systems", "The BMC reports no system at /redfish/v1/Systems"},
+	"redfish.bad_link":         {"Der BMC verweist auf eine ungültige Adresse", "The BMC links to an invalid address"},
+	"snmp.passphrase_short":    {"{field}-Passwort muss mindestens 8 Zeichen haben", "{field} password needs at least 8 characters"},
 
 	// Einstellungen
 	"settings.resource_retention_range": {"Aufbewahrung der Rohdaten je Ressource muss zwischen {min} und {max} Tagen liegen", "Raw data retention per resource must be between {min} and {max} days"},

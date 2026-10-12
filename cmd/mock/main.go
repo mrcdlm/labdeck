@@ -18,8 +18,9 @@
 //	Switch (SNMP)     Host localhost, Port 8794 (-snmp-addr, Cisco C1300), 8795 (8-Port-Switch), v2c, Community: labdeck-ro
 //	Redfish (iLO 5)   http://localhost:8790/ilo              Benutzer: labdeck, Passwort: ilo-pass
 //	Redfish (BMC)     http://localhost:8790/bmc              Benutzer: labdeck, Passwort: ilo-pass (ohne HPE-Erweiterungen)
+//	Pi-hole (v6)      http://localhost:8790/pihole           App-Passwort: pihole-app
 //
-// Steuerung (ohne Key), {svc} = healthchecks | immich | prometheus | json | pbs | pve | dockhand | ilo | bmc:
+// Steuerung (ohne Key), {svc} = healthchecks | immich | prometheus | json | pbs | pve | dockhand | ilo | bmc | pihole:
 //
 //	POST /_{svc}/fail?status=500                    Ausfälle simulieren (status=0 beendet)
 //	POST /_{svc}/broken?on=1                        kaputtes JSON liefern (on=0 beendet)
@@ -33,6 +34,7 @@
 //	POST /_snmp/silent?on=1                         Switch antwortet nicht mehr (on=0 beendet)
 //	POST /_ilo/psu?n=1&health=Critical              Netzteil-Zustand setzen (iLO 5, n ab 0)
 //	POST /_ilo/power?on=0                           Server aus- bzw. einschalten (iLO 5)
+//	POST /_pihole/blocking?value=disabled           Blocken aus- bzw. einschalten (enabled)
 //
 // Webhook-Empfänger: beliebige Anfragen an /hook/… werden aufgezeichnet,
 // GET /_hooks liefert sie, DELETE /_hooks leert die Liste.
@@ -51,6 +53,7 @@ import (
 	"github.com/mrcdlm/labdeck/internal/integrations/immich/immichtest"
 	"github.com/mrcdlm/labdeck/internal/integrations/nut/nuttest"
 	"github.com/mrcdlm/labdeck/internal/integrations/pbs/pbstest"
+	"github.com/mrcdlm/labdeck/internal/integrations/pihole/piholetest"
 	"github.com/mrcdlm/labdeck/internal/integrations/prometheus/promtest"
 	"github.com/mrcdlm/labdeck/internal/integrations/pve/pvetest"
 	"github.com/mrcdlm/labdeck/internal/integrations/redfish/redfishtest"
@@ -147,6 +150,13 @@ func main() {
 	})
 	mux.HandleFunc("POST /_ilo/power", func(w http.ResponseWriter, r *http.Request) {
 		ilo.Update(func(p *redfishtest.Profile) { p.PowerOn = r.URL.Query().Get("on") != "0" })
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	ph := piholetest.New("pihole-app")
+	mount(mux, "pihole", ph)
+	mux.HandleFunc("POST /_pihole/blocking", func(w http.ResponseWriter, r *http.Request) {
+		ph.Update(func(f *piholetest.Fake) { f.Blocking = r.URL.Query().Get("value") })
 		w.WriteHeader(http.StatusNoContent)
 	})
 

@@ -480,6 +480,17 @@
       "bios_hardware": "BIOS/Hardware",
       "liquid_cooling": "Flüssigkühlung",
       "liquid_cooling_redundancy": "Kühlungs-Redundanz"
+    },
+    "pihole": {
+      "blocked_pct": "Geblockt",
+      "queries": "Anfragen (24 h)",
+      "blocked": "Geblockt (24 h)",
+      "clients": "Aktive Clients",
+      "domains": "Domains (24 h)",
+      "gravity_domains": "Blockliste",
+      "blocking": "Blocken",
+      "gravity_age": "Alter der Blockliste",
+      "updates": "Updates verfügbar"
     }
   },
   "webhooks": {
@@ -638,7 +649,9 @@
     "mainsOn": "Netzbetrieb",
     "mainsOff": "Batterie",
     "ok": "OK",
-    "fail": "Fehler"
+    "fail": "Fehler",
+    "on": "An",
+    "off": "Aus"
   },
   "switch": {
     "front": "Front des Switches",

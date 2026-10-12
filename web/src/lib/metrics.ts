@@ -34,6 +34,8 @@ export function formatMetric(value: number, unit?: string): string {
       return i18n.t(value ? 'units.mainsOn' : 'units.mainsOff')
     case 'okfail':
       return i18n.t(value ? 'units.ok' : 'units.fail')
+    case 'onoff':
+      return i18n.t(value ? 'units.on' : 'units.off')
     case 'bytes':
       return formatBytes(value)
     case 'bit/s':
@@ -51,7 +53,7 @@ export function formatMetric(value: number, unit?: string): string {
 
 /** Zustandswerte (Netz/Batterie, OK/Fehler) stehen ohne Bezeichnung für sich. */
 export function isStateUnit(unit?: string): boolean {
-  return unit === 'mains' || unit === 'okfail'
+  return unit === 'mains' || unit === 'okfail' || unit === 'onoff'
 }
 
 /** Kurzform für Achsenbeschriftungen. */

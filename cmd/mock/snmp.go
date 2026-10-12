@@ -29,7 +29,7 @@ func mountSNMP(mux *http.ServeMux, addr string) error {
 	}
 	go func() {
 		// je Port eigener Grundpegel (Bytes/s), darauf Schwankungen
-		base := map[string]float64{"gi1/0/1": 40e6, "gi1/0/2": 12e6, "gi1/0/3": 90e6, "gi1/0/24": 25e6, "Port 1": 5e6}
+		base := map[string]float64{"gi1/0/1": 40e6, "gi1/0/2": 12e6, "gi1/0/3": 55e6, "gi1/0/24": 25e6, "Port 1": 5e6}
 		for range time.Tick(time.Second) {
 			for _, a := range []*snmptest.Agent{c1300, small} {
 				for _, name := range a.Ports() {

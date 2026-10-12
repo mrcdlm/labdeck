@@ -25,6 +25,7 @@ import (
 	"github.com/mrcdlm/labdeck/internal/integrations/immich/immichtest"
 	"github.com/mrcdlm/labdeck/internal/integrations/nut"
 	"github.com/mrcdlm/labdeck/internal/integrations/pbs"
+	"github.com/mrcdlm/labdeck/internal/integrations/pihole"
 	"github.com/mrcdlm/labdeck/internal/integrations/prometheus"
 	"github.com/mrcdlm/labdeck/internal/integrations/pve"
 	"github.com/mrcdlm/labdeck/internal/integrations/redfish"
@@ -80,7 +81,7 @@ func newTestEnv(t *testing.T, static fstest.MapFS) *testEnv {
 	imSrv := httptest.NewServer(im)
 	t.Cleanup(imSrv.Close)
 	box, _ := secrets.New(bytes.Repeat([]byte{1}, 32))
-	mgr := integrations.NewManager(integrations.NewRegistry(dockhand.New(), healthchecks.New(), httpjson.New(), immich.New(), nut.New(), pbs.New(), prometheus.New(), pve.New(), redfish.New(), snmp.New()), st, box,
+	mgr := integrations.NewManager(integrations.NewRegistry(dockhand.New(), healthchecks.New(), httpjson.New(), immich.New(), nut.New(), pbs.New(), pihole.New(), prometheus.New(), pve.New(), redfish.New(), snmp.New()), st, box,
 		func(string) (string, bool) { return "", false }, log)
 	mgr.Pub = broker
 	dispatcher := notify.NewDispatcher(st, func(string) (string, bool) { return "", false }, log)
