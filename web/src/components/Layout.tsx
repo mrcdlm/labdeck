@@ -10,7 +10,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { NavLink, Outlet } from 'react-router'
+import { NavLink, Outlet, useLocation } from 'react-router'
 
 import { LiveProvider } from '@/components/LiveProvider'
 import { Logo } from '@/components/Logo'
@@ -36,6 +36,8 @@ const nav: { to: string; key: NavKey; icon: LucideIcon }[] = [
 function NavEntry({ item, compact }: { item: (typeof nav)[number]; compact?: boolean }) {
   const { t } = useTranslation()
   const Icon = item.icon
+  // weitere Dashboards (/d/…) gehören zum Dashboard
+  const onDashboard = useLocation().pathname.startsWith('/d/') && item.to === '/'
   return (
     <NavLink
       to={item.to}
@@ -44,7 +46,7 @@ function NavEntry({ item, compact }: { item: (typeof nav)[number]; compact?: boo
         cn(
           'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
           compact && 'shrink-0 px-2.5 py-1.5',
-          isActive
+          isActive || onDashboard
             ? 'bg-accent text-accent-foreground'
             : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
         )

@@ -41,6 +41,7 @@ export default function App() {
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="d/:id" element={<Dashboard />} />
         <Route path="backups" element={<Lazy><Backups /></Lazy>} />
         <Route path="checks" element={<Lazy><Checks /></Lazy>} />
         <Route path="dienste" element={<Lazy><Services /></Lazy>} />

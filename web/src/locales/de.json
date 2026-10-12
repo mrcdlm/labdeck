@@ -115,8 +115,20 @@
       "hosts": "Hosts",
       "backupTimeline": "Backup-Zeitleiste"
     },
-    "problemsFirst": "Kacheln mit Problemen nach vorne",
-    "problemsFirstHint": "Kacheln mit Fehlern stehen zuerst, dann Warnungen, danach die Reihenfolge unten."
+    "problemsFirst": "Auf dem Handy Kacheln mit Problemen zuerst",
+    "tabs": "Dashboards",
+    "newDashboard": "Neues Dashboard",
+    "mainName": "Übersicht",
+    "name": "Name",
+    "icon": "Symbol",
+    "delete": "Dashboard löschen",
+    "done": "Fertig",
+    "edit": "Bearbeiten",
+    "editHint": "Kacheln ziehen und an der Ecke in der Größe ändern. Auf dem Handy stehen sie untereinander.",
+    "deleteTitle": "„{{name}}“ löschen?",
+    "deleteHint": "Das Dashboard und seine Kachel-Anordnung werden entfernt. Integrationen und Daten bleiben erhalten.",
+    "newName": "Dashboard {{n}}",
+    "empty": "Noch keine Kacheln – hier klicken und welche hinzufügen"
   },
   "backups": {
     "subtitle": "Letzte Läufe, Ergebnisse und überfällige Backups",
@@ -209,7 +221,8 @@
       "24h": "24 h",
       "7d": "7 Tage",
       "30d": "30 Tage",
-      "1y": "1 Jahr"
+      "1y": "1 Jahr",
+      "1h": "1 h"
     },
     "groupTitle": {
       "user": "Benutzer",
@@ -269,20 +282,22 @@
     "backupTagHint": "Checks mit diesem Tag erscheinen auf der Backups-Seite. Der Tag wird je Integration eingestellt (Integrationen → Bearbeiten).",
     "backupTagNone": "kein Tag – keine Backups",
     "dashboard": "Dashboard",
-    "dashboardHint": "Kacheln unter dem Gesamtstatus: Reihenfolge per Ziehen oder Pfeilen, ein- und ausblenden, Breite in Spalten. Wird sofort gespeichert.",
+    "dashboardHint": "Mehrere Dashboards anlegen und sortieren. Kacheln ordnest du direkt auf dem Dashboard an (Bearbeiten); hier lassen sie sich auch per Schalter ein- und ausblenden.",
     "dashboardTiles": "Kacheln",
     "tileVisible": "{{name}} anzeigen",
-    "tileSize": "Breite von {{name}}",
-    "tileUp": "{{name}} nach oben",
-    "tileDown": "{{name}} nach unten",
-    "columns_one": "{{count}} Spalte",
-    "columns_other": "{{count}} Spalten",
     "notifications": "Benachrichtigungen",
     "notificationsHint": "Gilt für alle Webhooks.",
     "notifyLanguage": "Sprache der Benachrichtigungen",
     "notifyLanguageHint": "Titel und Text der Nachrichten.",
     "resourceRetention": "Rohdaten je VM/Container aufbewahren",
-    "resourceRetentionHint": "CPU, RAM und Platte einzelner Gäste und Container – bei vielen Gästen kürzer halten; Tageswerte bleiben."
+    "resourceRetentionHint": "CPU, RAM und Platte einzelner Gäste und Container – bei vielen Gästen kürzer halten; Tageswerte bleiben.",
+    "noTiles": "Keine Kacheln",
+    "tileCount_one": "{{count}} Kachel",
+    "tileCount_other": "{{count}} Kacheln",
+    "arrange": "Anordnen",
+    "dashboardUp": "{{name}} nach oben",
+    "dashboardDown": "{{name}} nach unten",
+    "dashboardDelete": "{{name}} löschen"
   },
   "system": {
     "title": "System",
@@ -329,7 +344,7 @@
     "secretHint": "Statt des Werts geht auch ein Verweis wie <code>{{example}}</code> auf eine Env-Variable mit Präfix SECRET_.",
     "advanced": "Erweitert",
     "interval": "Abfrageintervall",
-    "intervalHint": "So oft fragt labdeck die Quelle ab.",
+    "intervalHint": "So oft fragt labdeck die Quelle ab. Kurze Intervalle (ab 5 s) lohnen sich für Live-Kacheln; der Timeout muss kürzer sein.",
     "timeout": "Timeout (Sekunden)",
     "timeoutHint": "{{min}}–{{max}} Sekunden, kürzer als das Intervall.",
     "tlsVerify": "TLS-Zertifikat prüfen",
@@ -702,5 +717,59 @@
     "storage": "Laufwerke",
     "lifeLeft": "{{value}} % Rest",
     "componentsOk": "{{count}} von {{total}} Komponenten OK"
+  },
+  "tile": {
+    "settings": "{{name}} einstellen",
+    "remove": "{{name}} entfernen",
+    "liveHint": "Aktualisiert sich bei jeder Abfrage",
+    "noData": "Keine Daten",
+    "since": {
+      "1h": "seit 1 h",
+      "24h": "seit 24 h",
+      "7d": "seit 7 Tagen",
+      "30d": "seit 30 Tagen"
+    },
+    "range": {
+      "1h": "letzte Stunde",
+      "24h": "letzte 24 h",
+      "7d": "letzte 7 Tage",
+      "30d": "letzte 30 Tage"
+    },
+    "legend": "Legende",
+    "metric": "Kennzahl",
+    "integration": "Integration",
+    "chooseIntegration": "Integration wählen",
+    "metrics": "Kennzahlen",
+    "search": "Kennzahl, Port, Sensor … suchen",
+    "noMatch": "Keine passende Kennzahl",
+    "metricsHint": "Bis zu drei Kennzahlen mit gleicher Einheit – sie erscheinen als Reihen in einem Diagramm.",
+    "view": "Darstellung",
+    "views": {
+      "number": "Zahl",
+      "sparkline": "Sparkline",
+      "area": "Diagramm",
+      "gauge": "Tacho"
+    },
+    "rangeLabel": "Zeitraum",
+    "ranges": {
+      "1h": "1 h live",
+      "24h": "24 h",
+      "7d": "7 Tage",
+      "30d": "30 Tage"
+    },
+    "min": "Skala von",
+    "max": "Skala bis",
+    "auto": "automatisch",
+    "label": "Überschrift (optional)",
+    "preview": "Vorschau",
+    "stateHint": "Zustandswerte (z. B. An/Aus) zeigen keinen Verlauf – am besten als Zahl.",
+    "addTitle": "Kachel hinzufügen",
+    "editTitle": "Kennzahl-Kachel einstellen",
+    "addHint": "Eine fertige Kachel oder eine eigene Kennzahl aus einer Integration.",
+    "editHint": "Kennzahlen, Darstellung und Zeitraum dieser Kachel.",
+    "tabTiles": "Kacheln",
+    "tabMetric": "Eigene Kennzahl",
+    "allShown": "Alle Kacheln sind schon auf diesem Dashboard.",
+    "addMetric": "Kennzahl hinzufügen"
   }
 }

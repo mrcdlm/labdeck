@@ -61,3 +61,9 @@ export function formatMetricShort(value: number, unit?: string): string {
   if (unit === 'bytes' || unit === 'bit/s' || unit === 's' || unit === '%' || isStateUnit(unit)) return formatMetric(value, unit)
   return new Intl.NumberFormat(i18n.language, { notation: 'compact', maximumFractionDigits: 1 }).format(value)
 }
+
+/** Bezeichnung einer Kennzahl samt Gruppe, z. B. „Rein · gi1/0/3“. */
+export function metricTitle(type: string, m: Pick<Metric, 'key' | 'name' | 'group'>): string {
+  const name = metricLabel(type, m)
+  return m.group ? `${name} · ${m.group}` : name
+}

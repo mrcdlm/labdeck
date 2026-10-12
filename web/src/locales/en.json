@@ -115,8 +115,20 @@
       "hosts": "Hosts",
       "backupTimeline": "Backup timeline"
     },
-    "problemsFirst": "Tiles with problems first",
-    "problemsFirstHint": "Tiles with errors come first, then warnings, then the order below."
+    "problemsFirst": "On phones, tiles with problems first",
+    "tabs": "Dashboards",
+    "newDashboard": "New dashboard",
+    "mainName": "Overview",
+    "name": "Name",
+    "icon": "Icon",
+    "delete": "Delete dashboard",
+    "done": "Done",
+    "edit": "Edit",
+    "editHint": "Drag tiles and resize them at the corner. On phones they are stacked.",
+    "deleteTitle": "Delete \"{{name}}\"?",
+    "deleteHint": "The dashboard and its tile arrangement are removed. Integrations and data stay.",
+    "newName": "Dashboard {{n}}",
+    "empty": "No tiles yet – click here to add some"
   },
   "backups": {
     "subtitle": "Last runs, results and overdue backups",
@@ -209,7 +221,8 @@
       "24h": "24 h",
       "7d": "7 days",
       "30d": "30 days",
-      "1y": "1 year"
+      "1y": "1 year",
+      "1h": "1 h"
     },
     "groupTitle": {
       "user": "User",
@@ -269,20 +282,22 @@
     "backupTagHint": "Checks with this tag appear on the Backups page. The tag is set per integration (Integrations → Edit).",
     "backupTagNone": "no tag – no backups",
     "dashboard": "Dashboard",
-    "dashboardHint": "Tiles below the overall status: order by dragging or arrows, show and hide, width in columns. Saved immediately.",
+    "dashboardHint": "Create and sort several dashboards. Arrange tiles right on the dashboard (Edit); here you can also show and hide them with switches.",
     "dashboardTiles": "Tiles",
     "tileVisible": "Show {{name}}",
-    "tileSize": "Width of {{name}}",
-    "tileUp": "Move {{name}} up",
-    "tileDown": "Move {{name}} down",
-    "columns_one": "{{count}} column",
-    "columns_other": "{{count}} columns",
     "notifications": "Notifications",
     "notificationsHint": "Applies to all webhooks.",
     "notifyLanguage": "Notification language",
     "notifyLanguageHint": "Title and text of the messages.",
     "resourceRetention": "Keep raw data per VM/container",
-    "resourceRetentionHint": "CPU, RAM and disk of single guests and containers – keep it shorter with many guests; daily values stay."
+    "resourceRetentionHint": "CPU, RAM and disk of single guests and containers – keep it shorter with many guests; daily values stay.",
+    "noTiles": "No tiles",
+    "tileCount_one": "{{count}} tile",
+    "tileCount_other": "{{count}} tiles",
+    "arrange": "Arrange",
+    "dashboardUp": "Move {{name}} up",
+    "dashboardDown": "Move {{name}} down",
+    "dashboardDelete": "Delete {{name}}"
   },
   "system": {
     "title": "System",
@@ -329,7 +344,7 @@
     "secretHint": "Instead of the value, you can also use a reference such as <code>{{example}}</code> to an environment variable with the prefix SECRET_.",
     "advanced": "Advanced",
     "interval": "Polling interval",
-    "intervalHint": "How often labdeck queries the source.",
+    "intervalHint": "How often labdeck polls the source. Short intervals (from 5 s) pay off for live tiles; the timeout has to be shorter.",
     "timeout": "Timeout (seconds)",
     "timeoutHint": "{{min}}–{{max}} seconds, shorter than the interval.",
     "tlsVerify": "Verify TLS certificate",
@@ -702,5 +717,59 @@
     "storage": "Drives",
     "lifeLeft": "{{value}} % left",
     "componentsOk": "{{count}} of {{total}} components OK"
+  },
+  "tile": {
+    "settings": "Configure {{name}}",
+    "remove": "Remove {{name}}",
+    "liveHint": "Updates on every poll",
+    "noData": "No data",
+    "since": {
+      "1h": "in 1 h",
+      "24h": "in 24 h",
+      "7d": "in 7 days",
+      "30d": "in 30 days"
+    },
+    "range": {
+      "1h": "last hour",
+      "24h": "last 24 h",
+      "7d": "last 7 days",
+      "30d": "last 30 days"
+    },
+    "legend": "Legend",
+    "metric": "Metric",
+    "integration": "Integration",
+    "chooseIntegration": "Choose integration",
+    "metrics": "Metrics",
+    "search": "Search metric, port, sensor …",
+    "noMatch": "No matching metric",
+    "metricsHint": "Up to three metrics with the same unit – they appear as series in one chart.",
+    "view": "View",
+    "views": {
+      "number": "Number",
+      "sparkline": "Sparkline",
+      "area": "Chart",
+      "gauge": "Gauge"
+    },
+    "rangeLabel": "Range",
+    "ranges": {
+      "1h": "1 h live",
+      "24h": "24 h",
+      "7d": "7 days",
+      "30d": "30 days"
+    },
+    "min": "Scale from",
+    "max": "Scale to",
+    "auto": "automatic",
+    "label": "Title (optional)",
+    "preview": "Preview",
+    "stateHint": "State values (e.g. on/off) have no history – best shown as a number.",
+    "addTitle": "Add tile",
+    "editTitle": "Configure metric tile",
+    "addHint": "A ready-made tile or your own metric from an integration.",
+    "editHint": "Metrics, view and range of this tile.",
+    "tabTiles": "Tiles",
+    "tabMetric": "Own metric",
+    "allShown": "All tiles are already on this dashboard.",
+    "addMetric": "Add metric"
   }
 }

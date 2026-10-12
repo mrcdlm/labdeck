@@ -78,45 +78,31 @@ test('Webhook mit Token: anlegen, testen, Benachrichtigung bei Check down', asyn
   await api(page, 'DELETE', `/api/integrations/${hc.json.id}`)
 })
 
-test('Dashboard-Editor: Kacheln ausblenden, verschieben, Breite; letzte Ereignisse', async ({ page }) => {
+test('Einstellungen → Dashboard: Kacheln ein- und ausblenden; letzte Ereignisse', async ({ page }) => {
   await login(page)
   const hc = await api<{ id: number }>(page, 'POST', '/api/integrations', {
     type: 'healthchecks', name: 'Homelab', enabled: true, interval_seconds: 3600, timeout_seconds: 5, tls_verify: true,
     config: { base_url: `${MOCK}/healthchecks` }, secrets: { api_key: 'hc-readonly' }, clear_secrets: [],
   })
   await api(page, 'POST', `/api/integrations/${hc.json.id}/poll`)
-  const before = await api<{ tiles: unknown[] }>(page, 'GET', '/api/dashboard')
+  type D = { id: string; tiles: { id: string; visible: boolean }[] }
+  const main = async () => (await api<{ dashboards: D[] }>(page, 'GET', '/api/dashboards')).json.dashboards.find((d) => d.id === 'main')!
+  const before = await main()
 
   await page.goto('/')
   await expect(page.locator('[data-tile="events"]')).toContainText('Letzte Ereignisse')
 
   await page.goto('/einstellungen')
-  const editor = page.locator('[data-slot=card]').filter({ hasText: 'Kacheln unter dem Gesamtstatus' })
-  await editor.getByRole('switch', { name: 'Kacheln mit Problemen nach vorne' }).click()
-  await expect.poll(async () => (await api<{ problems_first: boolean }>(page, 'GET', '/api/dashboard')).json.problems_first).toBe(false)
-  await editor.getByRole('switch', { name: 'Checks anzeigen' }).click()
-  await editor.getByRole('button', { name: 'Letzte Ereignisse nach oben' }).click()
-  await editor
-    .getByRole('group', { name: 'Breite von Backups' })
-    .getByRole('button', { name: '2 Spalten' })
-    .click()
-  await expect
-    .poll(async () => (await api<{ tiles: { id: string; visible: boolean; size: number }[] }>(page, 'GET', '/api/dashboard')).json.tiles)
-    .toEqual([
-      { id: 'backups', visible: true, size: 2 },
-      { id: 'checks', visible: false, size: 1 },
-      { id: 'events', visible: true, size: 3 },
-      { id: 'backup-timeline', visible: true, size: 3 },
-    ])
+  const row = page.locator('[data-dashboard-setting="main"]')
+  await row.locator('button[aria-expanded]').click()
+  await row.getByRole('switch', { name: 'Checks anzeigen' }).click()
+  await expect.poll(async () => (await main()).tiles.find((t) => t.id === 'checks')?.visible).toBe(false)
 
   await page.goto('/')
   await expect(page.locator('[data-tile="events"]')).toBeVisible()
   await expect(page.locator('[data-tile="checks"]')).toHaveCount(0)
   await expect(page.locator('[data-tile="backups"]')).toContainText('3 Backups überwacht')
-  // ohne „Probleme nach vorne“ gilt die eigene Reihenfolge, obwohl Backups rot sind
-  const order = await page.locator('[data-tile]').evaluateAll((els) => els.map((e) => e.getAttribute('data-tile')))
-  expect(order).toEqual(['backups', 'events', 'backup-timeline'])
 
-  await api(page, 'PUT', '/api/dashboard', before.json)
+  await api(page, 'PUT', '/api/dashboards/main', before)
   await api(page, 'DELETE', `/api/integrations/${hc.json.id}`)
 })

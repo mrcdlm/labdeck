@@ -2,11 +2,12 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 
 import {
   api,
+  dashboardApi,
   historyApi,
   integrationApi,
   monitoringApi,
   webhookApi,
-  type DashboardLayout,
+  type Dashboard,
   type HistoryFilter,
   type IntegrationInput,
   type MetricRange,
@@ -188,14 +189,21 @@ export function useHistory(filter: HistoryFilter, limit = 50) {
   })
 }
 
-export function useDashboardLayout() {
-  return useQuery({ queryKey: keys.dashboard, queryFn: historyApi.dashboard })
+export function useDashboards() {
+  return useQuery({ queryKey: keys.dashboard, queryFn: dashboardApi.list, select: (r) => r.dashboards })
 }
 
-export function useSaveDashboardLayout() {
+/** Ändert Dashboards; die Antwort ist immer die vollständige Liste. */
+function useDashboardMutation<T>(fn: (arg: T) => Promise<{ dashboards: Dashboard[] }>) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (l: DashboardLayout) => historyApi.saveDashboard(l),
-    onSuccess: (l) => qc.setQueryData(keys.dashboard, l),
+    mutationFn: fn,
+    onSuccess: (r) => qc.setQueryData(keys.dashboard, r),
   })
 }
+
+export const useSaveDashboard = () => useDashboardMutation((d: Dashboard) => dashboardApi.save(d))
+export const useCreateDashboard = () =>
+  useDashboardMutation((d: { name: string; icon: string }) => dashboardApi.create(d.name, d.icon))
+export const useDeleteDashboard = () => useDashboardMutation((id: string) => dashboardApi.remove(id))
+export const useOrderDashboards = () => useDashboardMutation((ids: string[]) => dashboardApi.order(ids))

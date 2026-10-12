@@ -368,8 +368,8 @@ export const monitoringApi = {
 
 // --- Verlauf von Kennzahlen --------------------------------------------------
 
-export type MetricRange = '24h' | '7d' | '30d' | '1y'
-export const metricRanges: MetricRange[] = ['24h', '7d', '30d', '1y']
+export type MetricRange = '1h' | '24h' | '7d' | '30d' | '1y'
+export const metricRanges: MetricRange[] = ['1h', '24h', '7d', '30d', '1y']
 
 export interface MetricHistory {
   key: string
@@ -476,18 +476,54 @@ export interface HistoryPage {
   more: boolean
 }
 
-export interface DashboardTile {
-  /** backups, checks, hosts, backup-timeline, events, integration:<id> */
-  id: string
-  visible: boolean
-  /** Spalten 1–3 */
-  size: number
+export type TileView = 'number' | 'sparkline' | 'area' | 'gauge'
+export const tileViews: TileView[] = ['number', 'sparkline', 'area', 'gauge']
+export type TileRange = '1h' | '24h' | '7d' | '30d'
+export const tileRanges: TileRange[] = ['1h', '24h', '7d', '30d']
+
+/** Einstellungen einer Kennzahl-Kachel (metric:<id>). */
+export interface TileOptions {
+  integration_id: number
+  /** 1–3 Kennzahlen; mehrere = ein Diagramm mit Reihen */
+  keys: string[]
+  view: TileView
+  /** 1h = live */
+  range: TileRange
+  /** Skala (Tacho) */
+  min?: number
+  max?: number
+  label?: string
 }
 
-export interface DashboardLayout {
+export interface DashboardTile {
+  /** backups, checks, hosts, backup-timeline, events, integration:<id>, metric:<id> */
+  id: string
+  visible: boolean
+  /** Position im Raster aus 12 Spalten */
+  x: number
+  y: number
+  w: number
+  h: number
+  options?: TileOptions
+}
+
+export interface Dashboard {
+  id: string
+  /** leer beim Haupt-Dashboard = Standardname */
+  name: string
+  icon?: string
   tiles: DashboardTile[]
-  /** Kacheln mit Problemen nach vorne (Standard: ja) */
+  /** gestapelte Ansicht (Handy): Kacheln mit Problemen nach vorne */
   problems_first: boolean
+}
+
+export const dashboardApi = {
+  list: () => request<{ dashboards: Dashboard[] }>('GET', '/api/dashboards'),
+  create: (name: string, icon: string) =>
+    request<{ dashboards: Dashboard[] }>('POST', '/api/dashboards', { name, icon }),
+  save: (d: Dashboard) => request<{ dashboards: Dashboard[] }>('PUT', `/api/dashboards/${d.id}`, d),
+  remove: (id: string) => request<{ dashboards: Dashboard[] }>('DELETE', `/api/dashboards/${id}`),
+  order: (ids: string[]) => request<{ dashboards: Dashboard[] }>('PUT', '/api/dashboards/order', { ids }),
 }
 
 export const historyApi = {
@@ -499,6 +535,4 @@ export const historyApi = {
     if (before) q.set('before', String(before))
     return request<HistoryPage>('GET', `/api/history?${q}`)
   },
-  dashboard: () => request<DashboardLayout>('GET', '/api/dashboard'),
-  saveDashboard: (l: DashboardLayout) => request<DashboardLayout>('PUT', '/api/dashboard', l),
 }

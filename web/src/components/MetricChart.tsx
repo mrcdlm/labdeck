@@ -16,24 +16,11 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { metricRanges, type MetricRange } from '@/lib/api'
 import { currentLang } from '@/i18n'
 import { absoluteTime } from '@/lib/format'
+import { axisTick, tickFormatter } from '@/lib/chart'
 import { formatMetric, formatMetricShort } from '@/lib/metrics'
 import { reducedMotion } from '@/lib/motion'
 import { useMetricHistory } from '@/lib/queries'
 
-const axisTick = { fill: 'var(--muted-foreground)', fontSize: 12 }
-
-function tickFormatter(range: MetricRange) {
-  const lang = currentLang() === 'de' ? 'de-DE' : 'en-US'
-  const fmt = new Intl.DateTimeFormat(
-    lang,
-    range === '24h'
-      ? { hour: '2-digit', minute: '2-digit' }
-      : range === '7d'
-        ? { weekday: 'short', day: 'numeric' }
-        : { day: 'numeric', month: 'short' },
-  )
-  return (v: number) => fmt.format(new Date(v))
-}
 
 /** Auswahl des Zeitraums der Kennzahl-Diagramme. */
 export function MetricRangeToggle({ value, onChange }: { value: MetricRange; onChange: (r: MetricRange) => void }) {

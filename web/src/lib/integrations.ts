@@ -1,7 +1,7 @@
 import type { ConfigValue, Integration, IntegrationInput, IntegrationType, ScalarValue, SchemaField } from './api'
 
 /** Vorschläge für das Abfrageintervall (Sekunden). */
-export const intervalPresets = [15, 30, 60, 120, 300, 600, 900, 1800, 3600, 6 * 3600, 12 * 3600, 86400]
+export const intervalPresets = [5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 6 * 3600, 12 * 3600, 86400]
 
 /** Formularzustand: Zahlen als Text, damit leere Felder möglich sind; Listen als Einträge. */
 export type DraftValue = string | boolean
