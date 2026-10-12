@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ChevronDown, Container, Cpu, Plug, Search, Server } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronDown, Container, Cpu, Network, Plug, Search, Server } from 'lucide-react'
 import { Fragment, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
@@ -10,6 +10,7 @@ import { LiveItem, LiveTableRow } from '@/components/LiveRow'
 import { PageHeader } from '@/components/PageHeader'
 import { Segmented } from '@/components/Segmented'
 import { StatusBadge } from '@/components/StatusBadge'
+import { SwitchCard } from '@/components/SwitchView'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -272,6 +273,26 @@ function GuestTable({ integration, list }: { integration: Integration; list: Res
   )
 }
 
+/** Switches (SNMP) mit schematischer Front. */
+function NetworkSection({ sources }: { sources: Integration[] }) {
+  const { t } = useTranslation()
+  const switches = sources.flatMap((i) =>
+    (i.snapshot?.resources ?? []).filter((r) => r.kind === 'switch').map((sw) => ({ i, sw })),
+  )
+  if (switches.length === 0) return null
+  return (
+    <section className="flex flex-col gap-3" aria-labelledby="network-heading">
+      <h2 id="network-heading" className="flex items-center gap-2 font-medium">
+        <Network className="size-4" aria-hidden />
+        {t('resources.network')}
+      </h2>
+      {switches.map(({ i, sw }) => (
+        <SwitchCard key={`${i.id}/${sw.id}`} integration={i} sw={sw} />
+      ))}
+    </section>
+  )
+}
+
 function Empty() {
   const { t } = useTranslation()
   return (
@@ -302,6 +323,7 @@ export function Resources() {
     () => (integrations.data ?? []).filter((i) => i.enabled && (i.snapshot?.resources?.length ?? 0) > 0),
     [integrations.data],
   )
+  const hasHosts = sources.some((i) => i.snapshot!.resources!.some((r) => r.kind === 'node'))
 
   function children(list: Resource[], host: Resource) {
     const q = query.trim().toLowerCase()
@@ -327,30 +349,32 @@ export function Resources() {
         <Empty />
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative w-full sm:w-64">
-              <Search className="text-muted-foreground absolute top-2.5 left-2.5 size-4" aria-hidden />
-              <Input
-                className="pl-8"
-                placeholder={t('resources.search')}
-                aria-label={t('resources.search')}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
+          {hasHosts && (
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative w-full sm:w-64">
+                <Search className="text-muted-foreground absolute top-2.5 left-2.5 size-4" aria-hidden />
+                <Input
+                  className="pl-8"
+                  placeholder={t('resources.search')}
+                  aria-label={t('resources.search')}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </div>
+              <Segmented
+                label={t('resources.filter')}
+                value={state}
+                onChange={setState}
+                options={(['all', 'running', 'stopped'] as const).map((v) => ({ value: v, label: t(`resources.filters.${v}`) }))}
+              />
+              <Segmented
+                label={t('resources.sort')}
+                value={sort}
+                onChange={setSort}
+                options={(['name', 'cpu', 'mem'] as const).map((v) => ({ value: v, label: t(`resources.sorts.${v}`) }))}
               />
             </div>
-            <Segmented
-              label={t('resources.filter')}
-              value={state}
-              onChange={setState}
-              options={(['all', 'running', 'stopped'] as const).map((v) => ({ value: v, label: t(`resources.filters.${v}`) }))}
-            />
-            <Segmented
-              label={t('resources.sort')}
-              value={sort}
-              onChange={setSort}
-              options={(['name', 'cpu', 'mem'] as const).map((v) => ({ value: v, label: t(`resources.sorts.${v}`) }))}
-            />
-          </div>
+          )}
           {sources.map((i) => {
             const list = i.snapshot!.resources!
             const icon = types.data?.types.find((x) => x.type === i.type)?.icon
@@ -366,11 +390,14 @@ export function Resources() {
                 )
               })
           })}
-          <p className="text-muted-foreground flex items-center gap-2 text-sm">
-            <Server className="size-4 shrink-0" aria-hidden />
-            <Container className="size-4 shrink-0" aria-hidden />
-            {t('resources.hint')}
-          </p>
+          <NetworkSection sources={sources} />
+          {hasHosts && (
+            <p className="text-muted-foreground flex items-center gap-2 text-sm">
+              <Server className="size-4 shrink-0" aria-hidden />
+              <Container className="size-4 shrink-0" aria-hidden />
+              {t('resources.hint')}
+            </p>
+          )}
         </>
       )}
     </div>

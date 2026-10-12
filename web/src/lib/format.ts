@@ -112,3 +112,15 @@ export function formatUptime(seconds: number): string {
   if (h > 0) return `${h} h ${m} min`
   return `${m} min`
 }
+
+const bitUnits = ['bit/s', 'kbit/s', 'Mbit/s', 'Gbit/s', 'Tbit/s']
+
+/** Datenrate lesbar (Basis 1000), z. B. "940 Mbit/s", "1,2 Gbit/s". */
+export function formatBits(n: number): string {
+  let i = 0
+  while (Math.abs(n) >= 1000 && i < bitUnits.length - 1) {
+    n /= 1000
+    i++
+  }
+  return `${formatNumber(i === 0 || Math.abs(n) >= 100 ? Math.round(n) : Math.round(n * 10) / 10)} ${bitUnits[i]}`
+}

@@ -162,6 +162,12 @@ var catalog = map[string]entry{
 	"nut.driver":        {"Der USV-Treiber liefert keine Daten ({code}) – Kabel und Treiber prüfen", "The UPS driver delivers no data ({code}) – check cable and driver"},
 	"nut.error":         {"upsd meldet einen Fehler: {code}", "upsd reports an error: {code}"},
 
+	"snmp.timeout":          {"Keine Antwort per SNMP – Host, Port, Community bzw. v3-Zugangsdaten und die Freigabe für labdeck auf dem Switch prüfen", "No SNMP response – check host, port, community or v3 credentials and whether the switch allows labdeck"},
+	"snmp.v3_auth":          {"SNMPv3-Anmeldung abgelehnt – Benutzer, Protokolle und Passwörter prüfen", "SNMPv3 login rejected – check user, protocols and passwords"},
+	"snmp.protocol":         {"Antwort ist kein gültiges SNMP", "The response is not valid SNMP"},
+	"snmp.agent_error":      {"Der Switch meldet einen SNMP-Fehler: {code}", "The switch reports an SNMP error: {code}"},
+	"snmp.passphrase_short": {"{field}-Passwort muss mindestens 8 Zeichen haben", "{field} password needs at least 8 characters"},
+
 	// Einstellungen
 	"settings.resource_retention_range": {"Aufbewahrung der Rohdaten je Ressource muss zwischen {min} und {max} Tagen liegen", "Raw data retention per resource must be between {min} and {max} days"},
 	"settings.notify_language_invalid":  {"Sprache der Benachrichtigungen muss de oder en sein", "The notification language must be de or en"},

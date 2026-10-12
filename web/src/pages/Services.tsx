@@ -8,6 +8,7 @@ import { IntegrationIcon } from '@/components/IntegrationIcon'
 import { MetricChart, MetricRangeToggle } from '@/components/MetricChart'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
+import { SwitchFront } from '@/components/SwitchView'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -121,9 +122,11 @@ function ServiceCard({ integration: i, type }: { integration: Integration; type?
   const now = useNow()
   // Werte einzelner VMs/Container stehen auf der Ressourcen-Seite
   const metrics = (i.snapshot?.metrics ?? []).filter((m) => !m.resource)
-  const resources = i.snapshot?.resources?.length ?? 0
+  // Ports zählen nicht einzeln (sie stehen in der Front des Switches)
+  const resources = (i.snapshot?.resources ?? []).filter((r) => r.kind !== 'port').length
   const main = metrics.filter((m) => !m.group)
   const grouped = metrics.filter((m) => m.group)
+  const switchPorts = (i.snapshot?.resources ?? []).filter((r) => r.kind === 'port')
   const [selected, setSelected] = useState<string>()
   const [range, setRange] = useState<MetricRange>('30d')
   // Zustandswerte (Netz/Batterie, OK/Fehler) haben kein Diagramm
@@ -192,6 +195,11 @@ function ServiceCard({ integration: i, type }: { integration: Integration; type?
                 />
               ))}
             </div>
+            {switchPorts.length > 0 && (
+              <Link to="/ressourcen" className="block rounded-lg" aria-label={t('services.toResources', { count: resources })}>
+                <SwitchFront ports={switchPorts} compact />
+              </Link>
+            )}
             {chartable && current && (
               <div className="flex flex-col gap-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">

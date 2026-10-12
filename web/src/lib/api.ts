@@ -100,6 +100,8 @@ export interface IntegrationType {
   /** lucide-Icon, z. B. "heart-pulse" */
   icon: string
   docs?: string
+  /** spricht kein HTTP(S): „TLS prüfen“ ausblenden */
+  no_tls?: boolean
   fields: SchemaField[]
 }
 
@@ -127,7 +129,7 @@ export interface Metric {
   resource?: string
 }
 
-export type ResourceKind = 'node' | 'vm' | 'ct' | 'container'
+export type ResourceKind = 'node' | 'vm' | 'ct' | 'container' | 'switch' | 'port'
 
 /** Host, VM oder Container mit Auslastung. */
 export interface Resource {

@@ -8,8 +8,11 @@ import {
   Gauge,
   HeartPulse,
   Image,
+  Network,
   Plug,
   Server,
+  ServerCog,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -37,6 +40,9 @@ const icons: Record<string, LucideIcon> = {
   'battery-charging': BatteryCharging,
   container: Container,
   bell: Bell,
+  network: Network,
+  'server-cog': ServerCog,
+  'shield-check': ShieldCheck,
 }
 
 // Echte Logos (homarr-labs/dashboard-icons, siehe assets/brands/LICENSE.md).

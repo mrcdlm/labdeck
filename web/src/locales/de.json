@@ -3,7 +3,8 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "delete": "Löschen",
-    "add": "Hinzufügen"
+    "add": "Hinzufügen",
+    "close": "Schließen"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -443,6 +444,15 @@
       "container_health": "Container unhealthy",
       "online": "Online",
       "mem": "RAM"
+    },
+    "snmp": {
+      "ports_up": "Ports aktiv",
+      "traffic_in": "Traffic rein",
+      "traffic_out": "Traffic raus",
+      "in": "Rein",
+      "out": "Raus",
+      "errors": "Fehler",
+      "link": "Link"
     }
   },
   "webhooks": {
@@ -535,9 +545,9 @@
     }
   },
   "resources": {
-    "subtitle": "CPU, RAM und Platten der Hosts, VMs und Container",
+    "subtitle": "CPU, RAM und Platten der Hosts, VMs und Container – und deine Switches",
     "emptyTitle": "Noch keine Ressourcen",
-    "empty": "Hier erscheinen Nodes, VMs und Container, sobald eine Integration für Proxmox VE oder Dockhand eingerichtet ist.",
+    "empty": "Hier erscheinen Nodes, VMs, Container und Switches, sobald eine Integration für Proxmox VE, Dockhand oder einen Switch (SNMP) eingerichtet ist.",
     "search": "Name, ID, Tag oder Image suchen",
     "filter": "Zustand",
     "filters": {
@@ -571,7 +581,9 @@
       "node": "Host",
       "vm": "VM",
       "ct": "CT",
-      "container": "Docker"
+      "container": "Docker",
+      "switch": "Switch",
+      "port": "Port"
     },
     "state": {
       "running": "Läuft",
@@ -590,12 +602,49 @@
       "mem": "RAM",
       "disk_pct": "Platte"
     },
-    "hint": "Zeile anklicken für den Verlauf. Netzwerk: Daten seit dem Start der VM bzw. des Containers."
+    "hint": "Zeile anklicken für den Verlauf. Netzwerk: Daten seit dem Start der VM bzw. des Containers.",
+    "network": "Netzwerk"
   },
   "units": {
     "mainsOn": "Netzbetrieb",
     "mainsOff": "Batterie",
     "ok": "OK",
     "fail": "Fehler"
+  },
+  "switch": {
+    "front": "Front des Switches",
+    "noPorts": "Der Switch meldet keine Ports.",
+    "lags": "Link-Aggregationen",
+    "problems": "Ports mit Problemen",
+    "monitored": "überwacht",
+    "firmware": "Firmware",
+    "portsUp": "Ports aktiv",
+    "traffic": "Traffic",
+    "noTraffic": "Noch keine Traffic-Daten – sie erscheinen ab der zweiten Abfrage.",
+    "util": "{{value}} % Auslastung",
+    "errors_one": "{{count}} Fehler",
+    "errors_other": "{{count}} Fehler",
+    "state": {
+      "up": "Up",
+      "down": "Down",
+      "disabled": "Abgeschaltet"
+    },
+    "media": {
+      "rj45": "RJ45",
+      "sfp": "SFP",
+      "lag": "LAG"
+    },
+    "metric": {
+      "in": "Rein",
+      "out": "Raus",
+      "errors": "Fehler"
+    },
+    "legend": {
+      "up": "Link",
+      "warning": "Warnung",
+      "monitoredDown": "überwacht, kein Link",
+      "down": "kein Link",
+      "fill": "Füllung = Auslastung · LED blinkt bei Traffic"
+    }
   }
 }

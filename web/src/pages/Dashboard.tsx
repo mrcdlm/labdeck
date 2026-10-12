@@ -20,6 +20,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { Segmented } from '@/components/Segmented'
 import { Sparkline } from '@/components/Sparkline'
 import { StatusBadge } from '@/components/StatusBadge'
+import { SwitchFront } from '@/components/SwitchView'
 import { ProblemLines, StatusDot, StatusTile, TileValue, type ProblemLine } from '@/components/StatusTile'
 import { UptimeBar } from '@/components/UptimeBar'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -327,6 +328,7 @@ function ServiceTile({
   const main = (i.snapshot?.metrics ?? []).filter((m) => !m.group && !m.resource)
   const [first, ...rest] = main
   const spark = sparkMetric(main)
+  const ports = (i.snapshot?.resources ?? []).filter((r) => r.kind === 'port')
   return (
     <StatusTile
       to={`/dienste#integration-${i.id}`}
@@ -354,7 +356,13 @@ function ServiceTile({
         .join(' · ')}
     >
       <ProblemLines lines={toLines(problems)} />
-      {spark && <Sparkline integrationId={i.id} metricKey={spark.key} range={spark.range} />}
+      {ports.length > 0 ? (
+        <div className="mt-3">
+          <SwitchFront ports={ports} compact />
+        </div>
+      ) : (
+        spark && <Sparkline integrationId={i.id} metricKey={spark.key} range={spark.range} />
+      )}
     </StatusTile>
   )
 }

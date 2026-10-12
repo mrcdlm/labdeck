@@ -3,7 +3,8 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
-    "add": "Add"
+    "add": "Add",
+    "close": "Close"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -443,6 +444,15 @@
       "container_health": "container unhealthy",
       "online": "online",
       "mem": "RAM"
+    },
+    "snmp": {
+      "ports_up": "Ports up",
+      "traffic_in": "Traffic in",
+      "traffic_out": "Traffic out",
+      "in": "In",
+      "out": "Out",
+      "errors": "Errors",
+      "link": "Link"
     }
   },
   "webhooks": {
@@ -535,9 +545,9 @@
     }
   },
   "resources": {
-    "subtitle": "CPU, RAM and disks of hosts, VMs and containers",
+    "subtitle": "CPU, RAM and disks of hosts, VMs and containers – and your switches",
     "emptyTitle": "No resources yet",
-    "empty": "Nodes, VMs and containers appear here once an integration for Proxmox VE or Dockhand is set up.",
+    "empty": "Nodes, VMs, containers and switches appear here once an integration for Proxmox VE, Dockhand or a switch (SNMP) is set up.",
     "search": "Search name, ID, tag or image",
     "filter": "State",
     "filters": {
@@ -571,7 +581,9 @@
       "node": "Host",
       "vm": "VM",
       "ct": "CT",
-      "container": "Docker"
+      "container": "Docker",
+      "switch": "Switch",
+      "port": "Port"
     },
     "state": {
       "running": "Running",
@@ -590,12 +602,49 @@
       "mem": "RAM",
       "disk_pct": "Disk"
     },
-    "hint": "Click a row for its history. Network: data since the VM or container started."
+    "hint": "Click a row for its history. Network: data since the VM or container started.",
+    "network": "Network"
   },
   "units": {
     "mainsOn": "On mains",
     "mainsOff": "On battery",
     "ok": "OK",
     "fail": "Failed"
+  },
+  "switch": {
+    "front": "Switch front panel",
+    "noPorts": "The switch reports no ports.",
+    "lags": "Link aggregations",
+    "problems": "Ports with problems",
+    "monitored": "monitored",
+    "firmware": "Firmware",
+    "portsUp": "Ports up",
+    "traffic": "Traffic",
+    "noTraffic": "No traffic data yet – it appears from the second poll on.",
+    "util": "{{value}} % utilisation",
+    "errors_one": "{{count}} error",
+    "errors_other": "{{count}} errors",
+    "state": {
+      "up": "Up",
+      "down": "Down",
+      "disabled": "Disabled"
+    },
+    "media": {
+      "rj45": "RJ45",
+      "sfp": "SFP",
+      "lag": "LAG"
+    },
+    "metric": {
+      "in": "In",
+      "out": "Out",
+      "errors": "Errors"
+    },
+    "legend": {
+      "up": "Link",
+      "warning": "Warning",
+      "monitoredDown": "monitored, no link",
+      "down": "no link",
+      "fill": "Fill = utilisation · LED blinks on traffic"
+    }
   }
 }

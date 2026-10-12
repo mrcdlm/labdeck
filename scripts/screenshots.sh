@@ -16,7 +16,7 @@ go build -o "$TMP/server" ./cmd/server
 go build -o "$TMP/mock" ./cmd/mock
 go build -o "$TMP/devseed" ./cmd/devseed
 
-"$TMP/mock" -addr :8791 -nut-addr :8794 >"$TMP/mock.log" 2>&1 & echo $! >"$TMP/mock.pid"
+"$TMP/mock" -addr :8791 -nut-addr :8794 -snmp-addr :8796 >"$TMP/mock.log" 2>&1 & echo $! >"$TMP/mock.pid"
 DATA_DIR="$TMP/data" APP_PASSWORD=demo PORT=18081 LOG_LEVEL=warn \
 	LABDECK_SECRET_KEY=AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE= \
 	"$TMP/server" >"$TMP/server.log" 2>&1 & echo $! >"$TMP/server.pid"

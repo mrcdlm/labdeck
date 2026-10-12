@@ -1,7 +1,7 @@
 import i18n from '@/i18n'
 
 import type { Metric } from './api'
-import { formatBytes, formatNumber } from './format'
+import { formatBits, formatBytes, formatNumber } from './format'
 
 /** Grundname einer Kennzahl: "user/<id>/photos" → "photos". */
 export function metricBase(key: string): string {
@@ -36,6 +36,8 @@ export function formatMetric(value: number, unit?: string): string {
       return i18n.t(value ? 'units.ok' : 'units.fail')
     case 'bytes':
       return formatBytes(value)
+    case 'bit/s':
+      return formatBits(value)
     case 's':
       return formatSeconds(value)
     case '%':
@@ -54,6 +56,6 @@ export function isStateUnit(unit?: string): boolean {
 
 /** Kurzform für Achsenbeschriftungen. */
 export function formatMetricShort(value: number, unit?: string): string {
-  if (unit === 'bytes' || unit === 's' || unit === '%' || isStateUnit(unit)) return formatMetric(value, unit)
+  if (unit === 'bytes' || unit === 'bit/s' || unit === 's' || unit === '%' || isStateUnit(unit)) return formatMetric(value, unit)
   return new Intl.NumberFormat(i18n.language, { notation: 'compact', maximumFractionDigits: 1 }).format(value)
 }

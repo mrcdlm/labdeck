@@ -85,6 +85,8 @@ type ConfigSchema struct {
 	// Docs: Link zur Dokumentation der Quelle
 	Docs   string  `json:"docs,omitempty"`
 	Fields []Field `json:"fields"`
+	// NoTLS: Quelle spricht kein HTTP(S) – „TLS prüfen“ ausblenden
+	NoTLS bool `json:"no_tls,omitempty"`
 }
 
 // Field liefert das Feld mit key.

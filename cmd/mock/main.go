@@ -15,6 +15,7 @@
 //	Proxmox VE        http://localhost:8790/pve            Token-ID: labdeck@pve!dashboard, Secret: pve-secret
 //	Dockhand          http://localhost:8790/dockhand       API-Token: dh_mock
 //	USV (NUT)         Host localhost, Port 8793 (-nut-addr), USV „ups“, ohne Anmeldung
+//	Switch (SNMP)     Host localhost, Port 8794 (-snmp-addr, Cisco C1300), 8795 (8-Port-Switch), v2c, Community: labdeck-ro
 //
 // Steuerung (ohne Key), {svc} = healthchecks | immich | prometheus | json | pbs | pve | dockhand:
 //
@@ -26,6 +27,8 @@
 //	POST /_immich/photos?n=100                      Fotos hinzufügen (Verlauf)
 //	POST /_dockhand/health?name=jellyfin&value=unhealthy   Health eines Containers setzen
 //	POST /_nut/status?value=OB+DISCHRG              Status der USV setzen (OL = Netz)
+//	POST /_snmp/link?name=gi1/0/12&up=1             Link eines Ports schalten (C1300)
+//	POST /_snmp/silent?on=1                         Switch antwortet nicht mehr (on=0 beendet)
 //
 // Webhook-Empfänger: beliebige Anfragen an /hook/… werden aufgezeichnet,
 // GET /_hooks liefert sie, DELETE /_hooks leert die Liste.
@@ -85,6 +88,7 @@ func mount(mux *http.ServeMux, name string, f controllable) {
 func main() {
 	addr := flag.String("addr", ":8790", "Listen-Adresse")
 	nutAddr := flag.String("nut-addr", ":8793", "Listen-Adresse des NUT-Servers (TCP)")
+	snmpAddr := flag.String("snmp-addr", ":8794", "Listen-Adresse des SNMP-Agenten (UDP, C1300); Port+1: 8-Port-Switch")
 	flag.Parse()
 
 	mux := http.NewServeMux()
@@ -134,6 +138,10 @@ func main() {
 		nutSrv.Set("ups", "ups.status", r.URL.Query().Get("value"))
 		w.WriteHeader(http.StatusNoContent)
 	})
+
+	if err := mountSNMP(mux, *snmpAddr); err != nil {
+		log.Fatal(err)
+	}
 
 	mux.HandleFunc("GET /_health", func(w http.ResponseWriter, _ *http.Request) { w.Write([]byte("ok")) })
 

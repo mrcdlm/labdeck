@@ -54,6 +54,8 @@ const (
 	KindVM        = "vm"        // virtuelle Maschine
 	KindCT        = "ct"        // LXC-Container
 	KindContainer = "container" // Docker-Container
+	KindSwitch    = "switch"    // Netzwerk-Switch (Ports als KindPort darunter)
+	KindPort      = "port"      // Switch-Port; Info: media, unit, pos, speed …
 )
 
 // Resource ist ein Host, eine VM oder ein Container mit Auslastung.

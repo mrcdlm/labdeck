@@ -516,20 +516,22 @@ function IntegrationForm({
                 }}
               />
             </FieldRow>
-            <div className="flex items-start justify-between gap-4">
-              <div className="grid gap-1">
-                <Label htmlFor="integration-tls">{t('integrations.tlsVerify')}</Label>
-                <p className="text-muted-foreground text-xs">{t('integrations.tlsVerifyHint')}</p>
+            {!type.no_tls && (
+              <div className="flex items-start justify-between gap-4">
+                <div className="grid gap-1">
+                  <Label htmlFor="integration-tls">{t('integrations.tlsVerify')}</Label>
+                  <p className="text-muted-foreground text-xs">{t('integrations.tlsVerifyHint')}</p>
+                </div>
+                <Switch
+                  id="integration-tls"
+                  checked={tlsVerify}
+                  onCheckedChange={(v) => {
+                    setTLSVerify(v)
+                    touch()
+                  }}
+                />
               </div>
-              <Switch
-                id="integration-tls"
-                checked={tlsVerify}
-                onCheckedChange={(v) => {
-                  setTLSVerify(v)
-                  touch()
-                }}
-              />
-            </div>
+            )}
             <div className="flex items-start justify-between gap-4">
               <div className="grid gap-1">
                 <Label htmlFor="integration-enabled">{t('integrations.enabled')}</Label>

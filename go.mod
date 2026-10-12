@@ -4,6 +4,7 @@ go 1.27.1
 
 require (
 	github.com/go-chi/chi/v5 v5.3.2
+	github.com/gosnmp/gosnmp v1.45.0
 	github.com/tidwall/gjson v1.18.0
 	golang.org/x/crypto v0.57.0
 	modernc.org/sqlite v1.60.1
