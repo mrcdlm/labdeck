@@ -1,13 +1,23 @@
+# VCS / Editor
 .git
 .github
 .vscode
 .idea
+
+# Secrets
 **/.env
 **/*.env
-data
-deploy
+
+# Lokale Caches & Build-Ausgaben
+.go
+.npm
+.cache
 web/node_modules
 web/dist
+
+# Nicht fürs Image benötigt
+data
+deploy
+e2e
 *.md
 !web/**/*.md
-e2e
