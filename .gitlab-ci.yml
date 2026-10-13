@@ -40,15 +40,15 @@ check-tag:
   script:
     - |
       if [ "$CI_COMMIT_REF_PROTECTED" != "true" ]; then
-        echo "Tag $CI_COMMIT_TAG ist nicht geschützt – Release abgebrochen."
-        echo "Settings → Repository → Protected tags: v* eintragen."
+        echo "Tag $CI_COMMIT_TAG ist nicht geschützt - Release abgebrochen."
+        echo "Settings > Repository > Protected tags: v* eintragen."
         exit 1
       fi
     # Tag-Pipelines holen nur den Tag, main muss explizit nachgeladen werden
     - git fetch --no-tags origin "$CI_DEFAULT_BRANCH"
     - |
       if ! git merge-base --is-ancestor "$CI_COMMIT_SHA" FETCH_HEAD; then
-        echo "Commit $CI_COMMIT_SHORT_SHA ist nicht in $CI_DEFAULT_BRANCH enthalten – Release abgebrochen."
+        echo "Commit $CI_COMMIT_SHORT_SHA ist nicht in $CI_DEFAULT_BRANCH enthalten - Release abgebrochen."
         exit 1
       fi
     - echo "Tag $CI_COMMIT_TAG ist geschützt und liegt auf $CI_DEFAULT_BRANCH."
