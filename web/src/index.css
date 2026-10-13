@@ -94,6 +94,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Platz für die Scrollbar immer freihalten: sonst ändert ihr Erscheinen die
+     Breite des Rasters, die Höhe kippt zurück, und die Seite flackert endlos */
+  html {
+    scrollbar-gutter: stable;
+  }
   body {
     @apply bg-background text-foreground antialiased;
   }

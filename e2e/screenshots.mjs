@@ -39,6 +39,12 @@ const integrations = (m) => [
   { type: 'dockhand', name: 'Dockhand', config: { base_url: `${m}/dockhand` }, secrets: { api_token: 'dh_mock' } },
   { type: 'nut', name: 'USV', config: { host: new URL(m).hostname, port: 8794 }, secrets: {} },
   {
+    type: 'snmp', name: 'Core-Switch', config: { host: new URL(m).hostname, port: 8796, lags: true },
+    secrets: { community: 'labdeck-ro' },
+  },
+  { type: 'redfish', name: 'iLO pve-01', config: { base_url: `${m}/ilo`, username: 'labdeck' }, secrets: { password: 'ilo-pass' } },
+  { type: 'pihole', name: 'Pi-hole', config: { base_url: `${m}/pihole` }, secrets: { password: 'pihole-app' } },
+  {
     type: 'prometheus', name: 'Prometheus', secrets: {},
     config: {
       base_url: `${m}/prometheus`,
@@ -58,7 +64,28 @@ if (mode === 'setup') {
       enabled: true, interval_seconds: 3600, timeout_seconds: 10, tls_verify: true, clear_secrets: [], ...i,
     })
     await api(page, 'POST', `/api/integrations/${created.id}/poll`)
+    // Switch: Raten erst ab der zweiten Abfrage
+    if (i.type === 'snmp') {
+      await page.waitForTimeout(3000)
+      await api(page, 'POST', `/api/integrations/${created.id}/poll`)
+    }
   }
+  // zweites Dashboard „Netzwerk & Hardware“ mit Kennzahl-Kacheln
+  const all = await api(page, 'GET', '/api/integrations')
+  const id = (type) => all.find((x) => x.type === type).id
+  const res = await api(page, 'POST', '/api/dashboards', { name: 'Netzwerk & Hardware', icon: 'network' })
+  const d = res.dashboards.at(-1)
+  const metric = (key, x, y, w, h, options) => ({ id: `metric:${key}`, visible: true, x, y, w, h, options })
+  await api(page, 'PUT', `/api/dashboards/${d.id}`, {
+    ...d,
+    tiles: [
+      { id: `integration:${id('snmp')}`, visible: true, x: 0, y: 0, w: 6, h: 5 },
+      metric('traffic', 6, 0, 6, 5, { integration_id: id('snmp'), keys: ['traffic_in', 'traffic_out'], view: 'area', range: '24h', label: 'Traffic' }),
+      { id: `integration:${id('redfish')}`, visible: true, x: 0, y: 5, w: 4, h: 5 },
+      metric('watt', 4, 5, 4, 5, { integration_id: id('redfish'), keys: ['power'], view: 'sparkline', range: '24h' }),
+      metric('blocked', 8, 5, 4, 5, { integration_id: id('pihole'), keys: ['blocked_pct'], view: 'gauge', range: '24h', max: 50, label: 'Pi-hole geblockt' }),
+    ],
+  })
 } else {
   const shots = [
     ['dashboard', '/'],
@@ -72,7 +99,7 @@ if (mode === 'setup') {
   const shoot = async (page, name, path, file, full = true) => {
     await page.goto(base + path)
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(800)
+    await page.waitForTimeout(2000) // Diagramme animieren per JS (animations: 'disabled' greift nicht)
     await page.screenshot({ path: `${out}/${file}.png`, fullPage: full, animations: 'disabled' })
   }
   // je Sprache alle Seiten hell, Dashboard zusätzlich dunkel und mobil
@@ -80,6 +107,8 @@ if (mode === 'setup') {
     const locale = lang === 'de' ? 'de-DE' : 'en-US'
     const page = await session({ locale })
     for (const [name, path] of shots) await shoot(page, name, path, `${name}.${lang}`, name !== 'settings')
+    const net = (await api(page, 'GET', '/api/dashboards')).dashboards.find((d) => d.id !== 'main')
+    await shoot(page, 'dashboard', `/d/${net.id}`, `dashboard-network.${lang}`)
     const dark = await session({ locale, colorScheme: 'dark' })
     await shoot(dark, 'dashboard', '/', `dashboard-dark.${lang}`)
     const mobile = await session({ locale, viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })

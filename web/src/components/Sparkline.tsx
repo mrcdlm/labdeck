@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, useMemo } from 'react'
 import { Area, AreaChart, ResponsiveContainer, YAxis } from 'recharts'
 
 import type { MetricRange } from '@/lib/api'
@@ -20,10 +20,12 @@ export function Sparkline({
 }) {
   const id = useId()
   const history = useMetricHistory(integrationId, metricKey, range)
-  const points = (history.data?.points ?? []).map((p) => ({
-    t: new Date(p.t).getTime(),
-    v: p.v,
-  }))
+  // gleiches Array, solange die Daten gleich sind – sonst startet Recharts die
+  // Animation bei jedem Neuzeichnen der Kachel (z. B. hochzählende Zahl) neu
+  const points = useMemo(
+    () => (history.data?.points ?? []).map((p) => ({ t: new Date(p.t).getTime(), v: p.v })),
+    [history.data],
+  )
   if (points.length < 2) return null
   const values = points.map((p) => p.v)
   const lo = Math.min(...values)

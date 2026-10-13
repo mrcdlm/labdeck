@@ -1,5 +1,5 @@
 import { ArrowDownRight, ArrowUpRight, Gauge as GaugeIcon } from 'lucide-react'
-import { useId } from 'react'
+import { useId, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Area,
@@ -87,7 +87,9 @@ function ChartTooltip({
 
 /** Flächendiagramm (mit Achsen) bzw. Sparkline (ohne) für 1–3 Reihen. */
 function Chart({
-  rows,
+  d0,
+  d1,
+  d2,
   count,
   names,
   unit,
@@ -95,7 +97,9 @@ function Chart({
   axes,
   live,
 }: {
-  rows: Row[]
+  d0?: MetricHistory
+  d1?: MetricHistory
+  d2?: MetricHistory
   count: number
   names: string[]
   unit?: string
@@ -104,6 +108,8 @@ function Chart({
   live: boolean
 }) {
   const id = useId().replace(/:/g, '')
+  // gleiches Array, solange die Daten gleich sind (sonst startet Recharts die Animation neu)
+  const rows = useMemo(() => mergeRows([d0, d1, d2].slice(0, count)), [d0, d1, d2, count])
   const animate = !live && !reducedMotion()
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -216,6 +222,7 @@ export function MetricTile({ tile, integration: i, icon }: { tile: DashboardTile
   const status: Status = !i ? 'unknown' : i.status === 'error' ? 'error' : (worstStatus(metrics.map((m) => m?.status)) ?? 'unknown')
   const title = o.label || (keys.length === 1 ? names[0] : (i?.name ?? ''))
   const live = o.range === '1h'
+  // nur für „genug Punkte?“ – das Diagramm bildet seine Zeilen selbst (stabil per useMemo)
   const rows = mergeRows(histories.map((h) => h.data))
 
   // Veränderung gegenüber dem Beginn des Zeitraums (nur eine Kennzahl)
@@ -263,7 +270,7 @@ export function MetricTile({ tile, integration: i, icon }: { tile: DashboardTile
     case 'area':
       body = chartable ? (
         <div className={cn('mt-2 min-h-0 flex-1', o.view === 'sparkline' && 'pointer-events-none -mx-1')} data-chart={o.view}>
-          <Chart rows={rows} count={keys.length} names={names} unit={unit} range={o.range} axes={o.view === 'area'} live={live} />
+          <Chart d0={h0.data} d1={h1.data} d2={h2.data} count={keys.length} names={names} unit={unit} range={o.range} axes={o.view === 'area'} live={live} />
         </div>
       ) : (
         <p className="text-muted-foreground mt-2 text-xs">{t('services.chartTooFew')}</p>

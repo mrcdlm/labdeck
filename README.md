@@ -44,13 +44,22 @@ Sister project of [dnsdeck](https://github.com/mrcdlm/dnsdeck) – same look, sa
 - **Proxmox VE, Dockhand and UPS** – CPU, RAM and disk of every node, VM, LXC and Docker
   container (all Docker hosts managed by Dockhand, incl. health and pending image updates) on a resources page with meters and history; storages, SMART, ZFS, vzdump backups;
   UPS on battery as a problem.
+- **Switches via SNMP** (v2c/v3) – any switch with standard MIBs (Cisco C1300, UniFi, MikroTik,
+  TP-Link, Netgear …): schematic front panel with RJ45/SFP ports, link, speed, traffic,
+  utilisation and errors per port; monitored ports (with a description or selected) as problems.
+- **Server hardware via Redfish** – HPE iLO, Dell iDRAC, Lenovo XCC, Supermicro: health per
+  component, power supplies, fans, temperatures, drives/RAID with SSD remaining life, power draw.
+- **Pi-hole** (v6) – queries, blocked %, clients, blocklist age, blocking on/off, updates.
 - **Services page and charts** – one card per integration with its metrics and a chart
   (24 hours to 1 year; raw values 30 days, daily values 1 year, configurable).
 - **History** – status changes and errors of all integrations, filterable.
 - **Notifications via webhooks** – presets for ntfy, Gotify, Discord, Slack, Telegram and
   Home Assistant; check down/up, backup overdue/failed/OK again, integration
   unreachable/reachable, threshold exceeded.
-- **Dashboard editor** – show, hide, reorder (drag and drop) and resize tiles.
+- **Dashboards your way** – several dashboards as tabs (e.g. Overview, Network, Hardware); drag
+  and resize tiles right on the dashboard; your own metric tiles from any integration as number,
+  sparkline, chart (up to three series) or gauge; live tiles with the last hour at full
+  resolution (polling from 5 s).
 - **Live** – updates instantly via Server-Sent Events; works on mobile; light/dark/system
   theme; English and German; installable as an app (PWA).
 - **Secure by default** – runs as non-root on a distroless image; credentials encrypted with
@@ -116,6 +125,18 @@ LAN). Several instances per type are possible.
 | Proxmox VE | API token `user@realm!name`, role **PVEAuditor** on `/` | load per node, VM and container, storages, SMART, ZFS, backups |
 | Dockhand | API token `dh_…` (only if authentication is enabled in Dockhand) | CPU/RAM per Docker host and container, health, pending updates |
 | UPS (NUT) | optional upsd user | mains/battery, charge, runtime, load |
+| Switch (SNMP) | SNMP v2c (read-only community) or v3 (user with a read view, SHA/AES) | ports with link, traffic, utilisation, errors; schematic front panel |
+| Server management (Redfish / iLO) | BMC user with only the **Login** (iLO) or **ReadOnly** (iDRAC) privilege | health per component, power supplies, fans, temperatures, drives, power draw |
+| Pi-hole | **app password** (Settings → Web interface / API), empty without a password | queries, blocked %, clients, blocklist, blocking on/off |
+
+**Enable SNMP on the Cisco C1300:** in the web UI under *Security → SNMP* enable SNMP, then
+either create a community with *Read Only* access (v2c) or a group with a read view and a user
+with *Authentication* and *Privacy* (v3, recommended); add labdeck's IP as management station.
+Other switches: same idea, read access only. If the drawn front panel doesn't match (e.g. combo
+ports), set it in the form with *Front layout*, e.g. `24 rj45, 4 sfp`.
+
+**iLO 5:** create a dedicated user with only the *Login* privilege; the certificate is usually
+self-signed – then turn off TLS verification under *Advanced*.
 
 **Monitoring Proxmox VE backups (vzdump) with Healthchecks.io:** create a check with the tag
 `backup` and a schedule matching your backup job, then let vzdump ping it via a hook script:

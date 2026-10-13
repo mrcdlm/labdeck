@@ -47,13 +47,22 @@ Schwesterprojekt von [dnsdeck](https://github.com/mrcdlm/dnsdeck) – gleiche Op
 - **Proxmox VE, Dockhand und USV** – CPU, RAM und Platte jedes Nodes, jeder VM, jedes LXC- und
   Docker-Containers (alle Docker-Hosts aus Dockhand, inkl. Health und ausstehender Image-Updates) auf einer Ressourcen-Seite mit Füllständen und Verlauf; Storages, SMART,
   ZFS, vzdump-Sicherungen; USV im Batteriebetrieb als Problem.
+- **Switches per SNMP** (v2c/v3) – jeder Switch mit Standard-MIBs (Cisco C1300, UniFi, MikroTik,
+  TP-Link, Netgear …): schematische Front mit RJ45/SFP-Ports, Link, Geschwindigkeit, Traffic,
+  Auslastung und Fehler je Port; überwachte Ports (mit Beschreibung oder ausgewählt) als Problem.
+- **Server-Hardware per Redfish** – HPE iLO, Dell iDRAC, Lenovo XCC, Supermicro: Zustand je
+  Komponente, Netzteile, Lüfter, Temperaturen, Laufwerke/RAID mit SSD-Restlebensdauer, Leistung.
+- **Pi-hole** (v6) – Anfragen, geblockt %, Clients, Alter der Blockliste, Blocken an/aus, Updates.
 - **Dienste-Seite und Diagramme** – eine Karte je Integration mit Kennzahlen und Diagramm
   (24 Stunden bis 1 Jahr; Rohwerte 30 Tage, Tageswerte 1 Jahr, einstellbar).
 - **Verlauf** – Statuswechsel und Fehler aller Integrationen, filterbar.
 - **Benachrichtigungen per Webhook** – Vorlagen für ntfy, Gotify, Discord, Slack, Telegram und
   Home Assistant; Check down/wieder up, Backup überfällig/fehlgeschlagen/wieder OK,
   Integration nicht/wieder erreichbar, Schwellwert überschritten.
-- **Dashboard-Editor** – Kacheln ein- und ausblenden, per Drag & Drop anordnen, Breite wählen.
+- **Dashboards nach Wunsch** – mehrere Dashboards als Reiter (z. B. Übersicht, Netzwerk,
+  Hardware); Kacheln direkt auf dem Dashboard ziehen und in der Größe ändern; eigene
+  Kennzahl-Kacheln aus jeder Integration als Zahl, Sparkline, Diagramm (bis zu drei Reihen) oder
+  Tacho; Live-Kacheln mit der letzten Stunde in voller Auflösung (Abfrage ab 5 s).
 - **Live** – Änderungen erscheinen sofort (Server-Sent Events); mobil nutzbar; Hell/Dunkel/
   System; Deutsch und Englisch; als App installierbar (PWA).
 - **Sicher voreingestellt** – läuft ohne Root auf einem Distroless-Image; Zugangsdaten mit
@@ -120,6 +129,19 @@ Zertifikate im LAN ausschaltbar). Mehrere Instanzen je Typ sind möglich.
 | Proxmox VE | API-Token `benutzer@realm!name`, Rolle **PVEAuditor** auf `/` | Auslastung je Node, VM und Container, Storages, SMART, ZFS, Sicherungen |
 | Dockhand | API-Token `dh_…` (nur bei aktiver Anmeldung in Dockhand) | CPU/RAM je Docker-Host und Container, Health, ausstehende Updates |
 | USV (NUT) | optional upsd-Benutzer | Netz/Batterie, Ladung, Restlaufzeit, Last |
+| Switch (SNMP) | SNMP v2c (Read-only-Community) oder v3 (Benutzer mit Lese-View, SHA/AES) | Ports mit Link, Traffic, Auslastung, Fehlern; schematische Front |
+| Server-Management (Redfish / iLO) | BMC-Benutzer nur mit Recht **Login** (iLO) bzw. **ReadOnly** (iDRAC) | Zustand je Komponente, Netzteile, Lüfter, Temperaturen, Laufwerke, Leistung |
+| Pi-hole | **App-Passwort** (Einstellungen → Web-Oberfläche / API), leer ohne Passwort | Anfragen, geblockt %, Clients, Blockliste, Blocken an/aus |
+
+**SNMP auf dem Cisco C1300 einschalten:** in der Weboberfläche unter *Security → SNMP* SNMP
+aktivieren, dann entweder eine Community mit Zugriff *Read Only* anlegen (v2c) oder eine Gruppe
+mit Lese-View und einen Benutzer mit *Authentication* und *Privacy* (v3, empfohlen); die IP von
+labdeck als Management-Station eintragen. Andere Switches: gleiche Idee, nur Lesezugriff.
+Passt die gezeichnete Front nicht (z. B. Kombi-Ports), lässt sie sich im Formular mit
+*Frontlayout* festlegen, etwa `24 rj45, 4 sfp`.
+
+**iLO 5:** einen eigenen Benutzer nur mit dem Recht *Login* anlegen; das Zertifikat ist meist
+selbst signiert – dann unter *Erweitert* die TLS-Prüfung ausschalten.
 
 **Backups von Proxmox VE (vzdump) mit Healthchecks.io überwachen:** einen Check mit dem Tag
 `backup` und einem Zeitplan passend zum Backup-Job anlegen und vzdump per Hook-Skript pingen

@@ -4,10 +4,14 @@
 #
 #	sh scripts/screenshots.sh [Zielverzeichnis]
 set -eu
+# Ziel relativ zum Aufrufort auflösen (npm run screenshots ruft aus e2e/ auf)
+if [ $# -gt 0 ]; then
+	mkdir -p "$1"
+	OUT="$(cd "$1" && pwd)"
+fi
 cd "$(dirname "$0")/.."
-OUT="${1:-docs/screenshots}"
+OUT="${OUT:-$(pwd)/docs/screenshots}"
 mkdir -p "$OUT"
-OUT="$(cd "$OUT" && pwd)"
 TMP="$(mktemp -d)"
 trap 'kill $(cat "$TMP"/*.pid 2>/dev/null) 2>/dev/null || true; rm -rf "$TMP"' EXIT
 

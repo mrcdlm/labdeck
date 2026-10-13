@@ -50,6 +50,10 @@ Wo diese Datei nichts anderes sagt, gilt: so machen wie in dnsdeck.
 /internal/integrations/pbs          Proxmox Backup Server
 /internal/integrations/httpjson     generische JSON-Quelle
 /internal/integrations/prometheus   generische PromQL-Quelle
+/internal/integrations/snmp         Switches per SNMP (IF-MIB, ENTITY-MIB), Frontbild
+/internal/integrations/redfish      Server-Hardware per DMTF Redfish (iLO, iDRAC …)
+/internal/integrations/pihole       Pi-hole v6 (REST-API mit Session)
+/internal/live           Ringpuffer: Kennzahlen der letzten Stunde in Abfrageauflösung
 /internal/backups        Backup-Auswertung (Frische, Erfolg, Überfälligkeit) über alle Quellen
 /internal/secrets        Verschlüsselte Ablage von Zugangsdaten
 /internal/notify         generische Webhooks (aus dnsdeck übernehmen)
@@ -77,7 +81,7 @@ type Integration interface {
 - `Snapshot` enthält normierte Daten: `Metrics` (Schlüssel, Wert, Einheit, Status), `Checks` (Name, Status, letzter/nächster Zeitpunkt),
   `Backups` (Quelle, Ziel/Gruppe, letzter Lauf, Ergebnis, Größe, Dauer). Darauf bauen Dashboard, Backups-Seite und Benachrichtigungen auf.
 - Mehrere Instanzen pro Typ möglich (z. B. zwei Healthchecks-Projekte, zwei PBS).
-- Pro Instanz: Polling-Intervall (Default 60 s, min. 15 s), Timeout, TLS prüfen ja/nein (für selbst signierte Zertifikate im LAN), aktiv/inaktiv.
+- Pro Instanz: Polling-Intervall (Default 60 s, min. 5 s – Rohwerte landen trotzdem höchstens je Minute in der DB, die letzte Stunde hält `internal/live`), Timeout, TLS prüfen ja/nein (für selbst signierte Zertifikate im LAN), aktiv/inaktiv.
 - Ergebnisse und Statuswechsel landen in der DB → Verlauf und Uptime. Rohdaten 30 Tage, Tageswerte 1 Jahr (für Diagramme wie „Fotos pro Monat“).
 - Externe APIs in Tests immer gegen `/cmd/mock` bzw. `httptest` – nie echte Dienste.
 
@@ -109,6 +113,16 @@ type Integration interface {
 - Basis-URL, optional Basic Auth / Bearer, beliebige PromQL-Abfragen (`/api/v1/query`), je Abfrage Anzeigename, Einheit, Schwellwerte
 - Deckt alles ab, was Exporter liefert (node_exporter, restic-/borg-Exporter, SMART, …)
 
+### Grundsatz: Standard-Schnittstellen statt Geräte-Code
+Neue Quellen sprechen offene Protokolle; Herstellerspezifisches nur als optionale Ergänzung.
+- **SNMP** (`snmp`): v2c/v3, nur RFC-MIBs (SNMPv2-MIB, IF-MIB, ENTITY-MIB). Referenz Cisco C1300, jeder Switch passt.
+  Frontbild (RJ45/SFP, Einheit, Position) aus ENTITY-MIB, sonst aus Portnamen/Modellname; Feld *Frontlayout* überschreibt.
+  Ports: Ressourcen `kind=port` unter `kind=switch`; Raten aus 64-Bit-Zählern (Zustand im Speicher).
+- **Redfish** (`redfish`): DMTF-Felder, Pfade nur aus `@odata.id` (keine festen IDs). Referenz HPE iLO 5 mit
+  `Oem.Hpe.AggregateHealthStatus` und SmartStorage; iDRAC, XCC, Supermicro über dieselben DMTF-Felder.
+  Ressource `kind=server` (iLO liefert keine CPU-/RAM-Auslastung → kein „Host“).
+- **Pi-hole** hat keine Standard-API → eigene Integration für v6; Session wiederverwenden (Pi-hole begrenzt Sessions).
+
 ## Backups-Auswertung
 - Quellen: Healthchecks-Checks mit Backup-Tag, PBS-Gruppen, HTTP-JSON-Zeitstempel
 - Je Backup im UI einstellbar: **maximales Alter** (Default 26 h), ab dem es als überfällig gilt; Warnung ab 80 % davon
@@ -117,14 +131,18 @@ type Integration interface {
 
 ## UI-Seiten
 - **Dashboard:** oben Gesamtstatus („Alles in Ordnung“ / „2 Probleme“ mit Liste), darunter frei anordenbare Kacheln
-  (Backups, Healthchecks, Immich, eigene Kennzahlen), unten letzte Ereignisse
+  (Backups, Healthchecks, Immich, eigene Kennzahlen), unten letzte Ereignisse.
+  Mehrere Dashboards (Reiter, `/d/:id`), Raster aus 12 Spalten (x, y, w, h; react-grid-layout), Bearbeiten direkt auf
+  dem Dashboard. Neue Kacheln kommen nur aufs Haupt-Dashboard (`main`). Kennzahl-Kacheln (`metric:<id>`) mit
+  1–3 Kennzahlen als Zahl/Sparkline/Diagramm/Tacho, Zeitraum 1 h (live) bis 30 Tage. Reihenfarben `--chart-1…3`
+  (validiert, siehe index.css). SSE trägt weiterhin nur Themen – Live-Werte kommen über die API.
 - **Backups:** siehe oben
 - **Checks:** alle Healthchecks-Checks, gruppiert nach Projekt/Tag, Uptime-Balken
 - **Dienste:** eine Karte je Integration mit ihren Kennzahlen und Diagrammen
 - **Verlauf:** Statuswechsel und Fehler aller Integrationen, filterbar
 - **Einstellungen:**
   - *Integrationen:* hinzufügen (Typ wählen → Formular aus Schema), bearbeiten, „Verbindung testen“, aktivieren/deaktivieren, löschen
-  - *Dashboard:* Kacheln ein-/ausblenden, Reihenfolge per Drag & Drop, Größe (1/2/3 Spalten); gespeichert in der DB
+  - *Dashboard:* Dashboards anlegen, sortieren, löschen; Kacheln ein-/ausblenden (Anordnen und Größe auf dem Dashboard); gespeichert in der DB
   - *Backups:* Tag-Name für Healthchecks, Standard-Höchstalter
   - *Benachrichtigungen:* Webhooks wie in dnsdeck (Vorlagen für ntfy, Gotify, Discord, Telegram, Home Assistant),
     Ereignisse: Check down/wieder up, Backup überfällig/fehlgeschlagen, Integration nicht erreichbar, Schwellwert überschritten

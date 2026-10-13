@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Switch integration via SNMP v2c/v3 using standard MIBs (IF-MIB, ENTITY-MIB) – reference device
+  Cisco C1300, works with any managed switch: link, speed, traffic rate, utilisation and errors
+  per port; monitored ports (with a description or selected) that are down are problems. A
+  schematic front panel (RJ45/SFP, stack units, LEDs, utilisation) on the resources page, the
+  services page and the dashboard tile; port details with traffic history. The panel layout is
+  derived from the device; "Front layout" in the form overrides it.
+- Server management via DMTF Redfish – reference HPE iLO 5 (plus Oem.Hpe aggregate health and
+  SmartStorage), also Dell iDRAC, Lenovo XCC, Supermicro, OpenBMC: health per component, power
+  supplies, fans, temperatures with distance to the critical threshold, drives and logical
+  drives with SSD remaining life, power draw, power state. Hardware cards on the resources page.
+- Pi-hole v6 integration (app password, reuses its API session): queries, blocked %, active
+  clients, blocklist size and age, blocking on/off, available updates.
+- Several dashboards as tabs, each with a free 12-column grid: drag and resize tiles right on
+  the dashboard (edit mode), add tiles from a dialog, rename, pick an icon, delete.
+- Metric tiles: any metric of any integration (incl. switch ports and BMC sensors) as number,
+  sparkline, chart with up to three series or gauge, for 1 hour (live) up to 30 days.
+- Live values: polling interval from 5 s; the last hour is kept in memory at full resolution
+  (history range "1h"), every chart ends at the current value.
 - Proxmox VE integration (API token, role PVEAuditor): load of the nodes (CPU, RAM, root disk),
   status, CPU, RAM, disk and network per VM and container, storage usage, SMART state and
   remaining life of the disks, ZFS pool health, last backup per VM/container from the backup
@@ -32,6 +50,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   30 days; hidden while there is too little data or the line is flat.
 
 ### Changed
+- Minimum polling interval 5 s (was 15 s). Raw samples are stored at most once a minute per
+  metric; daily values (min/max) still see every value.
+- Settings → Dashboard manages the dashboards (order, delete, show/hide tiles); arranging and
+  sizing happens on the dashboard itself. The old layout (sizes 1–3) is converted on first load;
+  `/api/dashboard` stays as an alias of the main dashboard.
+- "Verify TLS" is hidden for integrations that don't speak HTTP (SNMP, NUT).
 - Dashboard is flatter: the tiles are the traffic light (colored bar on the left), each tile
   shows one large number, one secondary line and its own problems (two, more on click). The
   long problem list at the top is gone; the overall status is one line with counts of errors and
@@ -42,6 +66,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   compact status row instead of a card with counters and chart.
 - Services page: grouped metrics are split into tables by kind (storage, disks, ZFS pools,
   filesystems, users); state values (mains/battery, OK/failed) get no chart.
+
+### Fixed
+- Dashboard could flicker endlessly when the page was about as tall as the window (the scrollbar
+  appeared and disappeared, changing the grid width); numbers then stopped mid-count. The
+  scrollbar space is now always reserved.
+- Charts no longer restart their animation whenever a tile re-renders.
+- `npm run screenshots` wrote the images outside the repository.
 
 ## [0.4.0] – 2026-10-07
 
