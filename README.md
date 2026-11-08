@@ -233,9 +233,12 @@ The screenshots in `docs/screenshots` are generated with `cd e2e && npm run scre
 
 Pushing a tag `vX.Y.Z` builds multi-arch images (`linux/amd64`, `linux/arm64`) and publishes
 them to `ghcr.io/mrcdlm/labdeck` as `X.Y.Z`, `X.Y` and `latest` (plus `X` from 1.0 on),
-together with a GitHub release; every push to `main` publishes `main`. The GitLab pipeline
-builds the same image for version tags into the GitLab registry. Changes are listed in the
-[changelog](CHANGELOG.md).
+together with a GitHub release; every push to `main` publishes `main`. Changes are listed in
+the [changelog](CHANGELOG.md).
+
+Development happens on a self-hosted Forgejo; this GitHub repository is a push mirror
+([setup](docs/forgejo-mirror.md)). Issues and pull requests are welcome here – accepted changes
+are applied upstream and arrive with the next sync.
 
 ## License
 

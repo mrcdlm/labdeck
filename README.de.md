@@ -240,9 +240,13 @@ Die Screenshots in `docs/screenshots` entstehen mit `cd e2e && npm run screensho
 
 Ein Tag `vX.Y.Z` baut Multi-Arch-Images (`linux/amd64`, `linux/arm64`) und veröffentlicht sie
 auf `ghcr.io/mrcdlm/labdeck` als `X.Y.Z`, `X.Y` und `latest` (ab 1.0 zusätzlich `X`), samt
-GitHub-Release; jeder Push auf `main` veröffentlicht `main`. Die GitLab-Pipeline baut für
-Versions-Tags dasselbe Image in die GitLab-Registry. Änderungen stehen im
+GitHub-Release; jeder Push auf `main` veröffentlicht `main`. Änderungen stehen im
 [Changelog](CHANGELOG.md).
+
+Entwickelt wird auf einem selbst gehosteten Forgejo; dieses GitHub-Repository ist ein
+Push-Spiegel ([Einrichtung](docs/forgejo-mirror.md)). Issues und Pull Requests sind hier
+willkommen – übernommene Änderungen landen auf Forgejo und kommen mit der nächsten
+Synchronisation zurück.
 
 ## Lizenz
 

@@ -1,6 +1,7 @@
 # VCS / Editor
 .git
 .github
+.forgejo
 .vscode
 .idea
 
