@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] – 2026-11-08
+
+This release also contains the changes of 0.5.0 to 0.7.0, which were tagged without release
+notes.
+
 ### Added
 - Switch integration via SNMP v2c/v3 using standard MIBs (IF-MIB, ENTITY-MIB) – reference device
   Cisco C1300, works with any managed switch: link, speed, traffic rate, utilisation and errors

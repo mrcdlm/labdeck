@@ -100,7 +100,7 @@ thresholds, dashboard and notifications are managed in the web interface.
 |---|---|---|
 | `APP_PASSWORD` | yes | Password for the web interface (plain text or bcrypt hash, max. 72 bytes) |
 | `LABDECK_SECRET_KEY` | yes | 32 bytes, Base64 (`openssl rand -base64 32`) – encrypts credentials of integrations and webhook tokens |
-| `LABDECK_VERSION` | yes (Compose) | Image version to run, e.g. `0.4.0` – pinned on purpose, no `latest` |
+| `LABDECK_VERSION` | yes (Compose) | Image version to run, e.g. `0.8.0` – pinned on purpose, no `latest` |
 | `LABDECK_PORT` | no | Host port for the web interface (default `8080`) |
 | `TZ` | no | Time zone for log timestamps (default `UTC`); the display time zone is set in the web interface |
 | `SECRET_*` | no | Credentials referenced as `${SECRET_NAME}` in integrations (instead of entering them) |
