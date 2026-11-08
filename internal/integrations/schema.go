@@ -65,6 +65,9 @@ type Field struct {
 	// ShowIf: Feld nur anzeigen, wenn ein anderes (Auswahl-)Feld einen der
 	// Werte hat; nur Darstellung, geprüft wird trotzdem
 	ShowIf *Condition `json:"show_if,omitempty"`
+	// Target: Feld bestimmt, wohin die Zugangsdaten gesendet werden (z. B.
+	// Host, Port). URL-Felder gelten immer als Ziel. Siehe TargetChanged.
+	Target bool `json:"-"`
 }
 
 // Condition: Feld Key hat einen der Werte.
@@ -97,6 +100,44 @@ func (s ConfigSchema) Field(key string) (Field, bool) {
 		}
 	}
 	return Field{}, false
+}
+
+// TargetChanged meldet, ob sich das Ziel der Zugangsdaten geändert hat: die
+// Herkunft (Schema, Host, Port) eines URL-Felds oder der Wert eines Felds mit
+// Target. Gespeicherte Secrets dürfen dann nicht stillschweigend an das neue
+// Ziel gehen – sonst ließen sie sich über eine geänderte Adresse abgreifen.
+func (s ConfigSchema) TargetChanged(old, cur map[string]any) bool {
+	for _, f := range s.Fields {
+		switch {
+		case f.Type == FieldURL:
+			if URLOrigin(old[f.Key]) != URLOrigin(cur[f.Key]) {
+				return true
+			}
+		case f.Target:
+			if fmt.Sprint(valueOrDefault(old, f)) != fmt.Sprint(valueOrDefault(cur, f)) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func valueOrDefault(values map[string]any, f Field) any {
+	if v, ok := values[f.Key]; ok && v != nil {
+		return v
+	}
+	return f.Default
+}
+
+// URLOrigin liefert Schema und Host (mit Port) einer Adresse in Kleinschrift;
+// Pfad, Query und Fragment zählen nicht.
+func URLOrigin(v any) string {
+	s, _ := v.(string)
+	u, err := url.Parse(strings.TrimSpace(s))
+	if err != nil {
+		return s
+	}
+	return strings.ToLower(u.Scheme) + "://" + strings.ToLower(u.Host)
 }
 
 // Ptr hilft beim Setzen von Min/Max.

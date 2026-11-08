@@ -70,14 +70,14 @@ func (*Integration) Schema() integrations.ConfigSchema {
 		Docs:  "https://www.rfc-editor.org/rfc/rfc2863",
 		NoTLS: true,
 		Fields: []F{
-			{Key: "host", Type: integrations.FieldString, Required: true,
+			{Key: "host", Type: integrations.FieldString, Required: true, Target: true,
 				Label: T{DE: "Host", EN: "Host"},
 				Help: T{
 					DE: "IP-Adresse oder Name des Switches. Auf dem Cisco C1300: Administration → SNMP aktivieren (Security → SNMP), Community bzw. Benutzer anlegen und die IP von labdeck als Management-Station zulassen.",
 					EN: "IP address or name of the switch. On the Cisco C1300: enable SNMP (Security → SNMP), create a community or user and allow labdeck's IP as management station.",
 				},
 				Placeholder: "192.168.1.2"},
-			{Key: "port", Type: integrations.FieldNumber, Default: float64(defaultPort), Half: true,
+			{Key: "port", Type: integrations.FieldNumber, Default: float64(defaultPort), Half: true, Target: true,
 				Min: integrations.Ptr(1), Max: integrations.Ptr(65535),
 				Label: T{DE: "Port (UDP)", EN: "Port (UDP)"}},
 			{Key: "version", Type: integrations.FieldSelect, Default: "v2c", Half: true,

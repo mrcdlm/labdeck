@@ -338,7 +338,7 @@
     "name": "Name",
     "nameHint": "Shown on the dashboard, e.g. \"Healthchecks home lab\".",
     "secretRef": "Reference: {{ref}} – leave empty to keep",
-    "secretSet": "stored – leave empty to keep",
+    "secretSet": "stored – leave empty to keep (re-enter after changing the address)",
     "secretKeep": "Keep",
     "secretClear": "Remove",
     "secretHint": "Instead of the value, you can also use a reference such as <code>{{example}}</code> to an environment variable with the prefix SECRET_.",
@@ -536,7 +536,7 @@
     "presetGeneric": "Generic (JSON)",
     "name": "Name",
     "token": "Token",
-    "tokenSet": "stored – leave empty to keep",
+    "tokenSet": "stored – leave empty to keep (re-enter after changing the URL)",
     "tokenHint": "Stored encrypted and never shown; inserted as <code>{{urlVar}}</code> or <code>{{bodyVar}}</code>.",
     "tokenNeeded": "This configuration uses a token – please enter it.",
     "tokenFor": {

@@ -36,13 +36,15 @@ var catalog = map[string]entry{
 	"integration.field_url_userinfo": {"{field}: Benutzer/Passwort gehören nicht in die Adresse, sondern in die Felder für Zugangsdaten", "{field}: user name/password do not belong in the address but in the credential fields"},
 	"integration.field_url_invalid":  {"ungültige Adresse", "invalid address"},
 	"integration.field_secret_ref":   {"{field}: {detail}", "{field}: {detail}"},
-	"integration.type_unknown":       {"unbekannter Integrationstyp {type}", "unknown integration type {type}"},
-	"integration.name_invalid":       {"Name fehlt oder ist zu lang (max. 100 Zeichen)", "Name is missing or too long (max. 100 characters)"},
-	"integration.interval_range":     {"Abfrageintervall muss zwischen {min} und {max} Sekunden liegen", "The polling interval must be between {min} and {max} seconds"},
-	"integration.timeout_range":      {"Timeout muss zwischen {min} und {max} Sekunden liegen und kürzer als das Intervall sein", "The timeout must be between {min} and {max} seconds and shorter than the interval"},
-	"integration.type_change":        {"Der Typ einer Integration kann nicht geändert werden", "The type of an integration cannot be changed"},
-	"integration.not_found_id":       {"Integration nicht gefunden", "Integration not found"},
-	"integration.no_data_yet":        {"Noch nicht abgefragt", "Not polled yet"},
+	"integration.field_secret_reenter": {"{field}: Adresse geändert – gespeicherte Zugangsdaten bitte erneut eingeben (sie werden nicht an ein neues Ziel übertragen)",
+		"{field}: address changed – please enter the stored credential again (it is not sent to a new destination)"},
+	"integration.type_unknown":   {"unbekannter Integrationstyp {type}", "unknown integration type {type}"},
+	"integration.name_invalid":   {"Name fehlt oder ist zu lang (max. 100 Zeichen)", "Name is missing or too long (max. 100 characters)"},
+	"integration.interval_range": {"Abfrageintervall muss zwischen {min} und {max} Sekunden liegen", "The polling interval must be between {min} and {max} seconds"},
+	"integration.timeout_range":  {"Timeout muss zwischen {min} und {max} Sekunden liegen und kürzer als das Intervall sein", "The timeout must be between {min} and {max} seconds and shorter than the interval"},
+	"integration.type_change":    {"Der Typ einer Integration kann nicht geändert werden", "The type of an integration cannot be changed"},
+	"integration.not_found_id":   {"Integration nicht gefunden", "Integration not found"},
+	"integration.no_data_yet":    {"Noch nicht abgefragt", "Not polled yet"},
 
 	// Integrationen: Abfrage
 	"integration.unauthorized":  {"Zugriff verweigert (HTTP {status}) – API-Key bzw. Token und Berechtigungen prüfen", "Access denied (HTTP {status}) – check the API key or token and its permissions"},
@@ -116,6 +118,7 @@ var catalog = map[string]entry{
 	"webhook.unreachable":      {"nicht erreichbar: {detail}", "unreachable: {detail}"},
 	"webhook.redirect":         {"HTTP {status} – Weiterleitung auf einen anderen Host wird aus Sicherheitsgründen nicht verfolgt", "HTTP {status} – redirects to another host are not followed for security reasons"},
 	"webhook.http":             {"HTTP {status}", "HTTP {status}"},
+	"webhook.token_reenter":    {"URL geändert – das gespeicherte Token bitte erneut eingeben oder entfernen (es wird nicht an ein neues Ziel übertragen)", "URL changed – please enter the stored token again or remove it (it is not sent to a new destination)"},
 	"webhook.no_key":           {"LABDECK_SECRET_KEY ist nicht gesetzt – ein Token kann nicht gespeichert werden", "LABDECK_SECRET_KEY is not set – a token cannot be stored"},
 
 	// Benachrichtigungen

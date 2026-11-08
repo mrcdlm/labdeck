@@ -74,6 +74,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Charts no longer restart their animation whenever a tile re-renders.
 - `npm run screenshots` wrote the images outside the repository.
 
+### Security
+- Stored credentials are no longer sent to a new destination: after changing the address
+  (scheme, host or port; host/port for SNMP and NUT) of an integration, or the URL of a webhook,
+  stored secrets and tokens have to be entered again. This also applies to "Test connection".
+  Previously, a session was enough to redirect stored credentials to another server.
+- Built with Go 1.27.3 (fixes several vulnerabilities in `net/http`, HTTP/2, `crypto/tls` and
+  `crypto/x509` of Go 1.27.1), `golang.org/x/crypto` 0.58.0; frontend dev dependencies updated
+  (Vite, source-map-js).
+- Additional response headers: `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy`,
+  `Permissions-Policy`, CSP `object-src 'none'`; request headers limited to 64 KB.
+- New files in the data directory (database, WAL) are created readable by the container user
+  only.
+- Compose files: read-only root filesystem (`read_only`, `tmpfs` for `/tmp`) and `pids_limit`.
+
 ## [0.4.0] – 2026-10-07
 
 ### Added

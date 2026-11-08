@@ -308,8 +308,17 @@ func TestPWAFiles(t *testing.T) {
 		t.Fatalf("sw.js: %d %q", resp.StatusCode, resp.Header.Get("Cache-Control"))
 	}
 	if csp := resp.Header.Get("Content-Security-Policy"); !strings.Contains(csp, "worker-src 'self'") ||
-		!strings.Contains(csp, "manifest-src 'self'") {
+		!strings.Contains(csp, "manifest-src 'self'") || !strings.Contains(csp, "object-src 'none'") {
 		t.Fatalf("CSP: %q", csp)
+	}
+	for k, want := range map[string]string{"X-Frame-Options": "DENY", "X-Content-Type-Options": "nosniff",
+		"Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Resource-Policy": "same-origin"} {
+		if got := resp.Header.Get(k); got != want {
+			t.Errorf("%s: %q, erwartet %q", k, got, want)
+		}
+	}
+	if !strings.Contains(resp.Header.Get("Permissions-Policy"), "camera=()") {
+		t.Errorf("Permissions-Policy: %q", resp.Header.Get("Permissions-Policy"))
 	}
 
 	resp = e.do(t, "GET", "/manifest.webmanifest", "", nil)

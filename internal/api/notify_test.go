@@ -78,6 +78,12 @@ func TestWebhooksWithToken(t *testing.T) {
 	if list := body(t, e.do(t, "GET", "/api/webhooks", "", c).Body); strings.Contains(list, "tk-geheim") || strings.Contains(list, `"token":`) {
 		t.Fatalf("Token in Liste: %s", list)
 	}
+	// Neue URL (anderer Host) ohne neues Token: abgelehnt, Token geht nicht mit
+	resp = e.do(t, "PUT", fmt.Sprintf("/api/webhooks/%d", wh.ID), `{"name":"ntfy 2","method":"POST","url":"https://evil.example/t",
+		"headers":[{"name":"Authorization","value":"Bearer ${TOKEN}"}],"events":["check_down"]}`, c)
+	if raw := body(t, resp.Body); resp.StatusCode != 400 || !strings.Contains(raw, "webhook.token_reenter") {
+		t.Fatalf("neue URL: %d %s", resp.StatusCode, raw)
+	}
 	if got := update(`,"clear_token":true`); got.TokenSet || !got.TokenMissing {
 		t.Fatalf("entfernt: %+v", got)
 	}

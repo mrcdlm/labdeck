@@ -245,8 +245,14 @@ func (m *Manager) prepare(in Input, existing *store.Integration, lang i18n.Lang)
 
 	// Secrets: bisherige Werte als Ausgangspunkt
 	refs, literals := map[string]string{}, map[string]string{}
+	// targetChanged: Adresse/Host geändert – gespeicherte Klartext-Secrets
+	// werden dann nicht übernommen, sondern müssen neu eingegeben werden.
+	// Sonst könnte jeder mit einer Session sie an einen eigenen Server lenken.
+	targetChanged := false
 	if existing != nil {
-		_, refs = split(schema, existing.Config)
+		var oldValues map[string]any
+		oldValues, refs = split(schema, existing.Config)
+		targetChanged = schema.TargetChanged(oldValues, values)
 		old, err := m.openSecrets(*existing)
 		switch {
 		case err == nil:
@@ -273,6 +279,10 @@ func (m *Manager) prepare(in Input, existing *store.Integration, lang i18n.Lang)
 		v := strings.TrimSpace(in.Secrets[f.Key])
 		switch {
 		case v == "":
+			if targetChanged && literals[f.Key] != "" {
+				add("integration.field_secret_reenter", "field", f.Label.In(lang))
+				continue
+			}
 		case secrets.IsRef(v):
 			if err := secrets.CheckRefs(v); err != nil {
 				add("integration.field_secret_ref", "field", f.Label.In(lang), "detail", i18n.Nest(i18n.FromError(err)))

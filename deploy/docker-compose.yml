@@ -16,6 +16,12 @@ services:
     # Runs as non-root and needs no Linux capabilities.
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
+    # Writes only to /data; everything else stays read-only
+    # (/tmp for SQLite temp files only).
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    pids_limit: 256
     ports:
       - "${LABDECK_PORT:-8080}:8080"
     env_file: .env

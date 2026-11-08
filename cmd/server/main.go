@@ -82,6 +82,8 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	// Neue Dateien (Datenbank, WAL) nur für den eigenen User lesbar.
+	restrictUmask()
 	if err := ensureWritable(cfg.DataDir); err != nil {
 		return err
 	}
@@ -237,6 +239,9 @@ func run() error {
 		}).Routes(),
 		ReadHeaderTimeout: 10 * time.Second,
 		IdleTimeout:       120 * time.Second,
+		// Kein ReadTimeout/WriteTimeout: SSE-Verbindungen laufen lange. Bodys
+		// begrenzt jeder Handler selbst (MaxBytesReader).
+		MaxHeaderBytes: 64 << 10,
 	}
 
 	errCh := make(chan error, 1)

@@ -13,6 +13,7 @@ import (
 
 	"github.com/mrcdlm/labdeck/internal/events"
 	"github.com/mrcdlm/labdeck/internal/i18n"
+	"github.com/mrcdlm/labdeck/internal/integrations"
 	"github.com/mrcdlm/labdeck/internal/notify"
 	"github.com/mrcdlm/labdeck/internal/secrets"
 	"github.com/mrcdlm/labdeck/internal/store"
@@ -184,6 +185,13 @@ func (s *Server) handleUpdateWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	wh.ID, wh.Token = id, old.Token
+	// Neues Ziel: das gespeicherte Token nicht stillschweigend mitschicken –
+	// sonst ließe es sich über eine geänderte URL abgreifen.
+	if old.Token != "" && strings.TrimSpace(in.Token) == "" && !in.ClearToken &&
+		integrations.URLOrigin(old.URL) != integrations.URLOrigin(wh.URL) {
+		writeMsg(w, r, http.StatusBadRequest, i18n.M("webhook.token_reenter"))
+		return
+	}
 	switch {
 	case strings.TrimSpace(in.Token) != "":
 		if wh.Token, err = s.sealToken(in.Token, id); err != nil {

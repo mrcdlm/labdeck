@@ -338,7 +338,7 @@
     "name": "Name",
     "nameHint": "Erscheint auf dem Dashboard, z. B. „Healthchecks Homelab“.",
     "secretRef": "Verweis: {{ref}} – leer lassen = unverändert",
-    "secretSet": "gespeichert – leer lassen = unverändert",
+    "secretSet": "gespeichert – leer lassen = unverändert (nach Adressänderung neu eingeben)",
     "secretKeep": "Behalten",
     "secretClear": "Entfernen",
     "secretHint": "Statt des Werts geht auch ein Verweis wie <code>{{example}}</code> auf eine Env-Variable mit Präfix SECRET_.",
@@ -536,7 +536,7 @@
     "presetGeneric": "Allgemein (JSON)",
     "name": "Name",
     "token": "Token",
-    "tokenSet": "gespeichert – leer lassen = unverändert",
+    "tokenSet": "gespeichert – leer lassen = unverändert (nach URL-Änderung neu eingeben)",
     "tokenHint": "Wird verschlüsselt gespeichert und nie angezeigt; eingesetzt als <code>{{urlVar}}</code> bzw. <code>{{bodyVar}}</code>.",
     "tokenNeeded": "Diese Konfiguration verwendet ein Token – bitte eintragen.",
     "tokenFor": {

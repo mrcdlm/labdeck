@@ -294,8 +294,14 @@ func securityHeaders(next http.Handler) http.Handler {
 		h.Set("Referrer-Policy", "same-origin")
 		h.Set("Content-Security-Policy",
 			"default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "+
-				"connect-src 'self'; manifest-src 'self'; worker-src 'self'; "+
+				"connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; "+
 				"frame-ancestors 'none'; base-uri 'self'; form-action 'self'")
+		// Fremde Fenster/Seiten erhalten keinen Zugriff auf dieses Fenster bzw.
+		// dürfen Antworten nicht einbetten; Geräte-APIs braucht das UI nicht.
+		h.Set("Cross-Origin-Opener-Policy", "same-origin")
+		h.Set("Cross-Origin-Resource-Policy", "same-origin")
+		h.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=(), "+
+			"serial=(), bluetooth=(), hid=(), interest-cohort=()")
 		next.ServeHTTP(w, r)
 	})
 }

@@ -121,6 +121,89 @@ func TestCreateStoresSecretEncrypted(t *testing.T) {
 	}
 }
 
+// Gespeicherte Secrets gehen nie an eine geänderte Adresse – weder beim
+// Speichern noch bei „Verbindung testen“ mit id.
+func TestSecretNotSentToNewTarget(t *testing.T) {
+	e := newEnv(t, 1)
+	ctx := context.Background()
+	v, err := e.m.Create(ctx, e.input("ro-key"), i18n.DE)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var got []string
+	evil := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = append(got, r.Header.Get("X-Api-Key"))
+		w.Write([]byte(`{"checks":[]}`))
+	}))
+	defer evil.Close()
+
+	moved := e.input("")
+	moved.Config["base_url"] = evil.URL
+	if _, err := e.m.Update(ctx, v.ID, moved, i18n.DE); vcodes(t, err) != "integration.field_secret_reenter" {
+		t.Fatalf("Update mit neuer Adresse: %v", err)
+	}
+	if _, err := e.m.Test(ctx, v.ID, moved, i18n.DE); vcodes(t, err) != "integration.field_secret_reenter" {
+		t.Fatalf("Test mit neuer Adresse: %v", err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("Secret an neues Ziel gesendet: %q", got)
+	}
+
+	// Gleiche Herkunft (nur Pfad/Schreibweise anders) behält das Secret.
+	same := e.input("")
+	same.Config["base_url"] = strings.Replace(e.url, "http://", "HTTP://", 1) + "/"
+	if _, err := e.m.Update(ctx, v.ID, same, i18n.DE); err != nil {
+		t.Fatalf("gleiche Herkunft: %v", err)
+	}
+
+	// Neu eingegeben: erlaubt
+	moved.Secrets = map[string]string{"api_key": "anderer-key"}
+	if _, err := e.m.Update(ctx, v.ID, moved, i18n.DE); err != nil {
+		t.Fatalf("mit neuem Secret: %v", err)
+	}
+}
+
+func TestTargetChanged(t *testing.T) {
+	s := integrations.ConfigSchema{Fields: []integrations.Field{
+		{Key: "url", Type: integrations.FieldURL},
+		{Key: "host", Type: integrations.FieldString, Target: true},
+		{Key: "port", Type: integrations.FieldNumber, Target: true, Default: float64(161)},
+		{Key: "name", Type: integrations.FieldString},
+	}}
+	base := map[string]any{"url": "https://a.lan:8007/api", "host": "sw1", "port": float64(161), "name": "x"}
+	with := func(k string, v any) map[string]any {
+		m := map[string]any{}
+		for kk, vv := range base {
+			m[kk] = vv
+		}
+		if v == nil {
+			delete(m, k)
+		} else {
+			m[k] = v
+		}
+		return m
+	}
+	for name, tc := range map[string]struct {
+		cur  map[string]any
+		want bool
+	}{
+		"gleich":         {base, false},
+		"anderer Name":   {with("name", "y"), false},
+		"anderer Pfad":   {with("url", "https://A.lan:8007/other?q=1"), false},
+		"anderer Host":   {with("url", "https://b.lan:8007/api"), true},
+		"anderer Port":   {with("url", "https://a.lan:8443/api"), true},
+		"http statt TLS": {with("url", "http://a.lan:8007/api"), true},
+		"Host-Feld":      {with("host", "sw2"), true},
+		"Port-Feld":      {with("port", float64(1161)), true},
+		"Port = Default": {with("port", nil), false},
+	} {
+		if got := s.TargetChanged(base, tc.cur); got != tc.want {
+			t.Errorf("%s: %v, erwartet %v", name, got, tc.want)
+		}
+	}
+}
+
 func TestSecretRefs(t *testing.T) {
 	e := newEnv(t, 0) // ohne LABDECK_SECRET_KEY
 	ctx := context.Background()

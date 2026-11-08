@@ -42,14 +42,14 @@ func (*Integration) Schema() integrations.ConfigSchema {
 		Docs:  "https://networkupstools.org/docs/user-manual.chunked/",
 		NoTLS: true,
 		Fields: []integrations.Field{
-			{Key: "host", Type: integrations.FieldString, Required: true,
+			{Key: "host", Type: integrations.FieldString, Required: true, Target: true,
 				Label: T{DE: "Host", EN: "Host"},
 				Help: T{
 					DE: "Rechner mit upsd, z. B. das NAS oder ein Raspberry Pi. upsd muss im Netz lauschen (LISTEN in upsd.conf).",
 					EN: "Machine running upsd, e.g. the NAS or a Raspberry Pi. upsd has to listen on the network (LISTEN in upsd.conf).",
 				},
 				Placeholder: "nas.lan"},
-			{Key: "port", Type: integrations.FieldNumber, Default: float64(defaultPort), Half: true,
+			{Key: "port", Type: integrations.FieldNumber, Default: float64(defaultPort), Half: true, Target: true,
 				Min: integrations.Ptr(1), Max: integrations.Ptr(65535),
 				Label: T{DE: "Port", EN: "Port"}},
 			{Key: "ups", Type: integrations.FieldString, Half: true,
