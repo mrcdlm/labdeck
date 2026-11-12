@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] – 2026-11-12
+
 ### Changed
 - Clearer structure: the "Services" and "Resources" pages are merged into **Systems**. It lists
   all integrations grouped by area (servers and virtualization, network, storage and backup,

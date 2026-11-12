@@ -10,7 +10,7 @@ name: labdeck
 services:
   labdeck:
     # Pinned version from .env – intentionally no "latest"
-    image: ghcr.io/mrcdlm/labdeck:${LABDECK_VERSION:?Set LABDECK_VERSION in .env, e.g. 0.8.0}
+    image: ghcr.io/mrcdlm/labdeck:${LABDECK_VERSION:?Set LABDECK_VERSION in .env, e.g. 0.9.0}
     container_name: labdeck
     restart: unless-stopped
     # Runs as non-root and needs no Linux capabilities.

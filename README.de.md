@@ -107,7 +107,7 @@ Schwellwerte, Dashboard und Benachrichtigungen werden im Web-UI eingestellt.
 |---|---|---|
 | `APP_PASSWORD` | ja | Passwort für die Weboberfläche (Klartext oder bcrypt-Hash, max. 72 Bytes) |
 | `LABDECK_SECRET_KEY` | ja | 32 Byte, Base64 (`openssl rand -base64 32`) – verschlüsselt Zugangsdaten der Integrationen und Webhook-Tokens |
-| `LABDECK_VERSION` | ja (Compose) | Image-Version, z. B. `0.8.0` – bewusst fest, kein `latest` |
+| `LABDECK_VERSION` | ja (Compose) | Image-Version, z. B. `0.9.0` – bewusst fest, kein `latest` |
 | `LABDECK_PORT` | nein | Port auf dem Host (Standard `8080`) |
 | `TZ` | nein | Zeitzone der Log-Zeitstempel (Standard `UTC`); die Zeitzone der Anzeige wird im Web-UI eingestellt |
 | `SECRET_*` | nein | Zugangsdaten, auf die Integrationen als `${SECRET_NAME}` verweisen (statt sie einzutragen) |
