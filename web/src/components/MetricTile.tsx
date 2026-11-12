@@ -21,7 +21,7 @@ import { axisTick, tickFormatter } from '@/lib/chart'
 import { absoluteTime } from '@/lib/format'
 import { formatMetric, formatMetricShort, isStateUnit, metricTitle } from '@/lib/metrics'
 import { reducedMotion } from '@/lib/motion'
-import { worstStatus } from '@/lib/problems'
+import { systemLink, worstStatus } from '@/lib/problems'
 import { useMetricHistory } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
@@ -294,7 +294,7 @@ export function MetricTile({ tile, integration: i, icon }: { tile: DashboardTile
 
   return (
     <StatusTile
-      to={i ? `/dienste#integration-${i.id}` : '/dienste'}
+      to={i ? systemLink(i) : '/systeme'}
       icon={i ? <IntegrationIcon name={icon} type={i.type} className="size-4" /> : <GaugeIcon className="size-4" />}
       title={title}
       tile={tile.id}

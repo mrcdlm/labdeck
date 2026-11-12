@@ -1,6 +1,6 @@
 import { Loader2 } from 'lucide-react'
 import { lazy, Suspense, type ReactNode } from 'react'
-import { Navigate, Route, Routes } from 'react-router'
+import { Navigate, Route, Routes, useLocation } from 'react-router'
 
 import { Layout } from '@/components/Layout'
 import { RequireAuth } from '@/components/RequireAuth'
@@ -12,8 +12,8 @@ const Settings = lazy(() => import('@/pages/Settings').then((m) => ({ default: m
 const Backups = lazy(() => import('@/pages/Backups').then((m) => ({ default: m.Backups })))
 const Checks = lazy(() => import('@/pages/Checks').then((m) => ({ default: m.Checks })))
 const History = lazy(() => import('@/pages/History').then((m) => ({ default: m.History })))
-const Resources = lazy(() => import('@/pages/Resources').then((m) => ({ default: m.Resources })))
-const Services = lazy(() => import('@/pages/Services').then((m) => ({ default: m.Services })))
+const Systems = lazy(() => import('@/pages/Systems').then((m) => ({ default: m.Systems })))
+const SystemDetail = lazy(() => import('@/pages/SystemDetail').then((m) => ({ default: m.SystemDetail })))
 
 function Lazy({ children }: { children: ReactNode }) {
   return (
@@ -27,6 +27,15 @@ function Lazy({ children }: { children: ReactNode }) {
       {children}
     </Suspense>
   )
+}
+
+/**
+ * Alte Adressen der Seiten „Dienste“ und „Ressourcen“ (Lesezeichen, Links in
+ * Benachrichtigungen): /dienste#integration-3 → /systeme/3, sonst → /systeme.
+ */
+function LegacySystems() {
+  const m = /^#integration-(\d+)$/.exec(useLocation().hash)
+  return <Navigate to={m ? `/systeme/${m[1]}` : '/systeme'} replace />
 }
 
 export default function App() {
@@ -44,8 +53,10 @@ export default function App() {
         <Route path="d/:id" element={<Dashboard />} />
         <Route path="backups" element={<Lazy><Backups /></Lazy>} />
         <Route path="checks" element={<Lazy><Checks /></Lazy>} />
-        <Route path="dienste" element={<Lazy><Services /></Lazy>} />
-        <Route path="ressourcen" element={<Lazy><Resources /></Lazy>} />
+        <Route path="systeme" element={<Lazy><Systems /></Lazy>} />
+        <Route path="systeme/:id" element={<Lazy><SystemDetail /></Lazy>} />
+        <Route path="dienste" element={<LegacySystems />} />
+        <Route path="ressourcen" element={<LegacySystems />} />
         <Route path="verlauf" element={<Lazy><History /></Lazy>} />
         <Route path="einstellungen" element={<Lazy><Settings /></Lazy>} />
       </Route>

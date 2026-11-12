@@ -80,7 +80,8 @@ export function MetricChart({
   const h = history.data
   const points = h.points.map((p) => ({ t: new Date(p.t).getTime(), v: p.v }))
   if (points.length < 2) {
-    return <p className="text-muted-foreground py-10 text-center text-sm">{t('services.chartTooFew')}</p>
+    // eine Zeile statt einer leeren Diagrammfläche
+    return <p className="text-muted-foreground text-sm">{t('services.chartTooFew')}</p>
   }
   const daily = range === '30d' || range === '1y'
   // Zählwerte nur ganzzahlig; fast konstante Werte mit etwas Abstand (sonst 5× dieselbe Zahl)

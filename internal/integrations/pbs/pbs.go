@@ -47,8 +47,9 @@ func (*Integration) Schema() integrations.ConfigSchema {
 			DE: "Letzter Snapshot, Größe und Verify-Status je VM, Container und Host sowie die Belegung der Datastores.",
 			EN: "Last snapshot, size and verify state per VM, container and host, plus datastore usage.",
 		},
-		Icon: "database-backup",
-		Docs: "https://pbs.proxmox.com/docs/user-management.html#api-tokens",
+		Icon:     "database-backup",
+		Category: integrations.CategoryStorage,
+		Docs:     "https://pbs.proxmox.com/docs/user-management.html#api-tokens",
 		Fields: []integrations.Field{
 			{Key: "base_url", Type: integrations.FieldURL, Required: true, Default: "https://pbs.lan:8007",
 				Label: T{DE: "Adresse", EN: "Address"},

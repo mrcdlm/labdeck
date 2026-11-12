@@ -47,8 +47,9 @@ func (*Integration) Schema() integrations.ConfigSchema {
 			DE: "Beliebige Werte aus einer JSON-Schnittstelle – mit Schwellwerten oder als Backup-Zeitstempel.",
 			EN: "Any values from a JSON API – with thresholds or as backup timestamp.",
 		},
-		Icon: "braces",
-		Docs: "https://github.com/tidwall/gjson/blob/master/SYNTAX.md",
+		Icon:     "braces",
+		Category: integrations.CategoryMonitoring,
+		Docs:     "https://github.com/tidwall/gjson/blob/master/SYNTAX.md",
 		Fields: []integrations.Field{
 			{Key: "url", Type: integrations.FieldURL, Required: true,
 				Label:       T{DE: "Adresse", EN: "Address"},

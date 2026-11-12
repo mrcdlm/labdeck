@@ -1,32 +1,23 @@
-import { ArrowDown, ArrowUp, ChevronDown, Container, Cpu, Network, Plug, Search, Server, ServerCog } from 'lucide-react'
-import { Fragment, useMemo, useState } from 'react'
+import { ArrowDown, ArrowUp, ChevronDown } from 'lucide-react'
+import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
 
 import { IntegrationIcon } from '@/components/IntegrationIcon'
 import { Meter } from '@/components/Meter'
 import { MetricChart, MetricRangeToggle } from '@/components/MetricChart'
 import { LiveItem, LiveTableRow } from '@/components/LiveRow'
-import { PageHeader } from '@/components/PageHeader'
 import { Segmented } from '@/components/Segmented'
 import { StatusBadge } from '@/components/StatusBadge'
-import { ServerCard } from '@/components/ServerView'
-import { SwitchCard } from '@/components/SwitchView'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { Integration, MetricRange, Resource } from '@/lib/api'
+import { anchorId, useHash } from '@/lib/anchor'
 import { formatBytes, formatNumber, formatUptime } from '@/lib/format'
-import { useIntegrations, useIntegrationTypes } from '@/lib/queries'
+import { running } from '@/lib/resources'
 import { cn } from '@/lib/utils'
 
-type StateFilter = 'all' | 'running' | 'stopped'
-type SortKey = 'name' | 'cpu' | 'mem'
-
 const pct = (used?: number, total?: number) => (used !== undefined && total ? (used / total) * 100 : undefined)
-const running = (r: Resource) => ['running', 'online', 'healthy', 'unhealthy'].includes(r.state)
 
 function KindBadge({ r }: { r: Resource }) {
   const { t } = useTranslation()
@@ -114,7 +105,7 @@ function ResourceHistory({ integration, r }: { integration: Integration; r: Reso
 }
 
 /** Host bzw. Node: große Anzeige für CPU, RAM, Platte. */
-function HostCard({ integration, host, icon, guests }: {
+export function HostCard({ integration, host, icon, guests }: {
   integration: Integration
   host: Resource
   icon?: string
@@ -124,7 +115,7 @@ function HostCard({ integration, host, icon, guests }: {
   const [open, setOpen] = useState(false)
   const up = guests.filter(running).length
   return (
-    <Card className="gap-4 py-5" data-host={host.name}>
+    <Card className="gap-4 py-5" data-host={host.name} data-anchor={anchorId('res', host.id)}>
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <span className="bg-muted grid size-10 shrink-0 place-items-center rounded-lg">
@@ -179,9 +170,11 @@ function HostCard({ integration, host, icon, guests }: {
   )
 }
 
-function GuestTable({ integration, list }: { integration: Integration; list: Resource[] }) {
+export function GuestTable({ integration, list }: { integration: Integration; list: Resource[] }) {
   const { t } = useTranslation()
-  const [open, setOpen] = useState<string>()
+  // Sprung aus der Problemliste: Verlauf der Ressource gleich aufklappen
+  const hash = useHash()
+  const [open, setOpen] = useState<string | undefined>(() => list.find((r) => anchorId('res', r.id) === hash)?.id)
   if (list.length === 0) return null
   return (
     <Card className="gap-0 py-0">
@@ -207,6 +200,7 @@ function GuestTable({ integration, list }: { integration: Integration; list: Res
                   className={cn('cursor-pointer', !running(r) && 'opacity-60')}
                   onClick={() => setOpen((o) => (o === r.id ? undefined : r.id))}
                   data-resource={r.name}
+                  data-anchor={anchorId('res', r.id)}
                   aria-expanded={open === r.id}
                 >
                   <TableCell className="max-w-[18rem] min-w-40 pl-6 whitespace-normal">
@@ -253,7 +247,7 @@ function GuestTable({ integration, list }: { integration: Integration; list: Res
       </div>
       <ul className="divide-y md:hidden">
         {list.map((r, n) => (
-          <LiveItem watch={r.state} index={n} key={r.id} className={cn('flex flex-col gap-2 p-4', !running(r) && 'opacity-60')} data-resource={r.name}>
+          <LiveItem watch={r.state} index={n} key={r.id} className={cn('flex flex-col gap-2 p-4', !running(r) && 'opacity-60')} data-resource={r.name} data-anchor={anchorId('res', r.id)}>
             <div className="flex items-start justify-between gap-2">
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="font-medium">{r.name}</span>
@@ -274,154 +268,3 @@ function GuestTable({ integration, list }: { integration: Integration; list: Res
   )
 }
 
-/** Server-Hardware über den BMC (Redfish). */
-function HardwareSection({ sources }: { sources: Integration[] }) {
-  const { t } = useTranslation()
-  const servers = sources.flatMap((i) =>
-    (i.snapshot?.resources ?? []).filter((r) => r.kind === 'server').map((server) => ({ i, server })),
-  )
-  if (servers.length === 0) return null
-  return (
-    <section className="flex flex-col gap-3" aria-labelledby="hardware-heading">
-      <h2 id="hardware-heading" className="flex items-center gap-2 font-medium">
-        <ServerCog className="size-4" aria-hidden />
-        {t('resources.hardware')}
-      </h2>
-      {servers.map(({ i, server }) => (
-        <ServerCard key={`${i.id}/${server.id}`} integration={i} server={server} />
-      ))}
-    </section>
-  )
-}
-
-/** Switches (SNMP) mit schematischer Front. */
-function NetworkSection({ sources }: { sources: Integration[] }) {
-  const { t } = useTranslation()
-  const switches = sources.flatMap((i) =>
-    (i.snapshot?.resources ?? []).filter((r) => r.kind === 'switch').map((sw) => ({ i, sw })),
-  )
-  if (switches.length === 0) return null
-  return (
-    <section className="flex flex-col gap-3" aria-labelledby="network-heading">
-      <h2 id="network-heading" className="flex items-center gap-2 font-medium">
-        <Network className="size-4" aria-hidden />
-        {t('resources.network')}
-      </h2>
-      {switches.map(({ i, sw }) => (
-        <SwitchCard key={`${i.id}/${sw.id}`} integration={i} sw={sw} />
-      ))}
-    </section>
-  )
-}
-
-function Empty() {
-  const { t } = useTranslation()
-  return (
-    <Card>
-      <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-        <span className="bg-muted grid size-12 place-items-center rounded-lg">
-          <Cpu className="text-muted-foreground size-6" />
-        </span>
-        <p className="font-medium">{t('resources.emptyTitle')}</p>
-        <p className="text-muted-foreground max-w-md text-sm">{t('resources.empty')}</p>
-        <Link to="/einstellungen" className="text-primary flex items-center gap-1 text-sm font-medium hover:underline">
-          <Plug className="size-4" /> {t('checks.toSettings')}
-        </Link>
-      </CardContent>
-    </Card>
-  )
-}
-
-export function Resources() {
-  const { t } = useTranslation()
-  const integrations = useIntegrations()
-  const types = useIntegrationTypes()
-  const [query, setQuery] = useState('')
-  const [state, setState] = useState<StateFilter>('all')
-  const [sort, setSort] = useState<SortKey>('name')
-
-  const sources = useMemo(
-    () => (integrations.data ?? []).filter((i) => i.enabled && (i.snapshot?.resources?.length ?? 0) > 0),
-    [integrations.data],
-  )
-  const hasHosts = sources.some((i) => i.snapshot!.resources!.some((r) => r.kind === 'node'))
-
-  function children(list: Resource[], host: Resource) {
-    const q = query.trim().toLowerCase()
-    return list
-      .filter((r) => r.kind !== 'node' && r.parent === host.name)
-      .filter((r) => state === 'all' || (state === 'running') === running(r))
-      .filter((r) => !q || [r.name, r.info?.vmid, r.info?.image, ...(r.tags ?? [])].some((x) => x?.toLowerCase().includes(q)))
-      .sort((a, b) =>
-        sort === 'cpu'
-          ? (b.cpu ?? -1) - (a.cpu ?? -1)
-          : sort === 'mem'
-            ? (b.mem_used ?? -1) - (a.mem_used ?? -1)
-            : a.name.localeCompare(b.name, undefined, { numeric: true }),
-      )
-  }
-
-  return (
-    <div className="flex flex-col gap-6">
-      <PageHeader title={t('nav.resources')} subtitle={t('resources.subtitle')} />
-      {integrations.isPending ? (
-        <Skeleton className="h-64 rounded-xl" />
-      ) : sources.length === 0 ? (
-        <Empty />
-      ) : (
-        <>
-          {hasHosts && (
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative w-full sm:w-64">
-                <Search className="text-muted-foreground absolute top-2.5 left-2.5 size-4" aria-hidden />
-                <Input
-                  className="pl-8"
-                  placeholder={t('resources.search')}
-                  aria-label={t('resources.search')}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </div>
-              <Segmented
-                label={t('resources.filter')}
-                value={state}
-                onChange={setState}
-                options={(['all', 'running', 'stopped'] as const).map((v) => ({ value: v, label: t(`resources.filters.${v}`) }))}
-              />
-              <Segmented
-                label={t('resources.sort')}
-                value={sort}
-                onChange={setSort}
-                options={(['name', 'cpu', 'mem'] as const).map((v) => ({ value: v, label: t(`resources.sorts.${v}`) }))}
-              />
-            </div>
-          )}
-          {sources.map((i) => {
-            const list = i.snapshot!.resources!
-            const icon = types.data?.types.find((x) => x.type === i.type)?.icon
-            return list
-              .filter((r) => r.kind === 'node')
-              .map((host) => {
-                const kids = children(list, host)
-                return (
-                  <section key={`${i.id}/${host.id}`} className="flex flex-col gap-3">
-                    <HostCard integration={i} host={host} icon={icon} guests={list.filter((r) => r.parent === host.name)} />
-                    <GuestTable integration={i} list={kids} />
-                  </section>
-                )
-              })
-          })}
-          <HardwareSection sources={sources} />
-          <NetworkSection sources={sources} />
-          {hasHosts && (
-            <p className="text-muted-foreground flex items-center gap-2 text-sm">
-              <Server className="size-4 shrink-0" aria-hidden />
-              <Container className="size-4 shrink-0" aria-hidden />
-              {t('resources.hint')}
-            </p>
-          )}
-        </>
-      )}
-    </div>
-  )
-}

@@ -37,8 +37,9 @@ func (*Integration) Schema() integrations.ConfigSchema {
 			DE: "Fotos, Videos und Speicherbelegung – gesamt und je Benutzer.",
 			EN: "Photos, videos and storage usage – in total and per user.",
 		},
-		Icon: "image",
-		Docs: "https://api.immich.app/endpoints/server/getServerStatistics",
+		Icon:     "image",
+		Category: integrations.CategoryApps,
+		Docs:     "https://api.immich.app/endpoints/server/getServerStatistics",
 		Fields: []integrations.Field{
 			{
 				Key: "base_url", Type: integrations.FieldURL, Required: true,

@@ -66,9 +66,10 @@ func (*Integration) Schema() integrations.ConfigSchema {
 			DE: "Ports, Link, Traffic und Fehler eines Switches über SNMP – z. B. Cisco C1300, UniFi, MikroTik, TP-Link, Netgear.",
 			EN: "Ports, link, traffic and errors of a switch via SNMP – e.g. Cisco C1300, UniFi, MikroTik, TP-Link, Netgear.",
 		},
-		Icon:  "network",
-		Docs:  "https://www.rfc-editor.org/rfc/rfc2863",
-		NoTLS: true,
+		Icon:     "network",
+		Category: integrations.CategoryNetwork,
+		Docs:     "https://www.rfc-editor.org/rfc/rfc2863",
+		NoTLS:    true,
 		Fields: []F{
 			{Key: "host", Type: integrations.FieldString, Required: true, Target: true,
 				Label: T{DE: "Host", EN: "Host"},

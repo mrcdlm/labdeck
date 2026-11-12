@@ -102,6 +102,8 @@ export interface IntegrationType {
   docs?: string
   /** spricht kein HTTP(S): „TLS prüfen“ ausblenden */
   no_tls?: boolean
+  /** Bereich für die Gruppierung auf der Seite „Systeme“ */
+  category: 'compute' | 'network' | 'storage' | 'power' | 'apps' | 'monitoring'
   fields: SchemaField[]
 }
 
@@ -323,7 +325,9 @@ export interface BackupsOverview {
 }
 
 export interface Problem {
-  kind: 'integration' | 'checks' | 'backup' | 'metric'
+  /** stabil je Problem: <kind>:<integration>:<item> */
+  id: string
+  kind: 'integration' | 'check' | 'backup' | 'metric'
   status: Status
   integration_id: number
   integration_name: string
@@ -339,10 +343,13 @@ export interface Problem {
   state?: string
   /** Fehlermeldung der Integration */
   detail?: string
+  /** Kennzahl: Host, VM, Container, Port …, zu dem sie gehört */
+  resource_id?: string
+  resource_name?: string
+  /** letzter Erfolg (Integration), letzter Ping (Check), letzter Lauf (Backup) */
   at?: string
-  /** checks: Anzahl und Namen der ausgefallenen Checks */
-  count?: number
-  items?: string[]
+  /** Beginn des Problems laut Verlauf */
+  since?: string
 }
 
 export interface Overview {

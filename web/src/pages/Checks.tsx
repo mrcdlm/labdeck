@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { CheckItem, UptimeRange } from '@/lib/api'
+import { anchorId, useHashTarget } from '@/lib/anchor'
 import { absoluteTime, relativeTime, useNow } from '@/lib/format'
 import { useChecks } from '@/lib/queries'
 import { cn } from '@/lib/utils'
@@ -127,6 +128,7 @@ function GroupCard({ group, range, now }: { group: Group; range: UptimeRange; no
                 key={`${c.integration_id}/${c.id}`}
                 className={cn(c.status === 'paused' && 'opacity-60')}
                 data-check={c.name}
+                data-anchor={anchorId('check', c.integration_id, c.id)}
               >
                 <TableCell className="max-w-[22rem] min-w-44 pl-6 whitespace-normal">
                   <NameCell check={c} />
@@ -156,6 +158,7 @@ function GroupCard({ group, range, now }: { group: Group; range: UptimeRange; no
             key={`${c.integration_id}/${c.id}`}
             className={cn('flex flex-col gap-2 p-4', c.status === 'paused' && 'opacity-60')}
             data-check={c.name}
+            data-anchor={anchorId('check', c.integration_id, c.id)}
           >
             <div className="flex items-start justify-between gap-2">
               <NameCell check={c} />
@@ -199,6 +202,7 @@ export function Checks() {
   const [range, setRange] = useState<UptimeRange>('24h')
   const [groupBy, setGroupBy] = useState<GroupBy>('project')
   const [selected, setSelected] = useState<string[]>([])
+  useHashTarget(checks.isSuccess)
 
   const list = useMemo(() => checks.data?.checks ?? [], [checks.data])
   const tags = useMemo(() => [...new Set(list.flatMap((c) => c.tags))].sort(), [list])

@@ -56,8 +56,9 @@ func (*Integration) Schema() integrations.ConfigSchema {
 			DE: "Auslastung der Nodes und je VM/Container, Storages, SMART, ZFS und Sicherungen.",
 			EN: "Load of the nodes and per VM/container, storages, SMART, ZFS and backups.",
 		},
-		Icon: "server",
-		Docs: "https://pve.proxmox.com/wiki/User_Management#pveum_tokens",
+		Icon:     "server",
+		Category: integrations.CategoryCompute,
+		Docs:     "https://pve.proxmox.com/wiki/User_Management#pveum_tokens",
 		Fields: []integrations.Field{
 			{Key: "base_url", Type: integrations.FieldURL, Required: true, Default: "https://pve.lan:8006",
 				Label: T{DE: "Adresse", EN: "Address"},

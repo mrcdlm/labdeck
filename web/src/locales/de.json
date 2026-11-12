@@ -10,10 +10,9 @@
     "dashboard": "Dashboard",
     "backups": "Backups",
     "checks": "Checks",
-    "services": "Dienste",
     "history": "Verlauf",
     "settings": "Einstellungen",
-    "resources": "Ressourcen"
+    "systems": "Systeme"
   },
   "live": {
     "on": "Live",
@@ -63,24 +62,14 @@
     "activeIntegrations_other": "{{count}} Integrationen aktiv",
     "loadError": "Gesamtstatus konnte nicht geladen werden: {{error}}",
     "noneActive": "Keine Integration aktiv",
-    "problemList": "Probleme",
     "problem": {
       "integration": "Nicht erreichbar",
       "at": {
         "integration": "zuletzt erfolgreich {{time}}",
         "backup": "letzter Lauf {{time}}",
         "check": "letzter Ping {{time}}",
-        "metric": "gemessen {{time}}",
-        "checks": "{{time}}"
-      },
-      "value": "Wert {{value}}"
-    },
-    "kind": {
-      "integration": "Integration",
-      "backup": "Backup",
-      "check": "Check",
-      "metric": "Kennzahl",
-      "checks": "Healthchecks"
+        "metric": "gemessen {{time}}"
+      }
     },
     "noBackups": "Noch keine Backups",
     "backupsOk": "{{count}} OK",
@@ -94,14 +83,10 @@
     "checksAllOk_one": "läuft",
     "checksAllOk_other": "alle OK",
     "overall": "Gesamtstatus",
-    "inAreas_one": "in {{count}} Bereich",
-    "inAreas_other": "in {{count}} Bereichen",
     "errorsCount_one": "{{count}} Fehler",
     "errorsCount_other": "{{count}} Fehler",
     "warningsCount_one": "{{count}} Warnung",
     "warningsCount_other": "{{count}} Warnungen",
-    "moreProblems_one": "+{{count}} weiteres",
-    "moreProblems_other": "+{{count}} weitere",
     "showLess": "weniger anzeigen",
     "moreBackups_one": "+{{count}} weiteres Backup – alle anzeigen",
     "moreBackups_other": "+{{count}} weitere Backups – alle anzeigen",
@@ -128,7 +113,13 @@
     "deleteTitle": "„{{name}}“ löschen?",
     "deleteHint": "Das Dashboard und seine Kachel-Anordnung werden entfernt. Integrationen und Daten bleiben erhalten.",
     "newName": "Dashboard {{n}}",
-    "empty": "Noch keine Kacheln – hier klicken und welche hinzufügen"
+    "empty": "Noch keine Kacheln – hier klicken und welche hinzufügen",
+    "kind": {
+      "integration": "Integration",
+      "backup": "Backup",
+      "check": "Check",
+      "metric": "Kennzahl"
+    }
   },
   "backups": {
     "subtitle": "Letzte Läufe, Ergebnisse und überfällige Backups",
@@ -208,7 +199,6 @@
     }
   },
   "services": {
-    "subtitle": "Kennzahlen und Diagramme je Integration",
     "empty": "Hier erscheint je Integration eine Karte mit ihren Kennzahlen, z. B. Fotos, Videos und Speicher in Immich.",
     "emptyTitle": "Noch keine Dienste",
     "noMetrics": "Noch keine Kennzahlen",
@@ -229,8 +219,6 @@
       "group": "Gruppe",
       "datastore": "Datastore"
     },
-    "toResources_one": "{{count}} Ressource ansehen",
-    "toResources_other": "{{count}} Ressourcen ansehen",
     "sections": {
       "storage": "Storage",
       "disk": "Platten",
@@ -598,9 +586,6 @@
     }
   },
   "resources": {
-    "subtitle": "CPU, RAM und Platten der Hosts, VMs und Container – und deine Switches",
-    "emptyTitle": "Noch keine Ressourcen",
-    "empty": "Hier erscheinen Nodes, VMs, Container und Switches, sobald eine Integration für Proxmox VE, Dockhand oder einen Switch (SNMP) eingerichtet ist.",
     "search": "Name, ID, Tag oder Image suchen",
     "filter": "Zustand",
     "filters": {
@@ -771,5 +756,31 @@
     "tabMetric": "Eigene Kennzahl",
     "allShown": "Alle Kacheln sind schon auf diesem Dashboard.",
     "addMetric": "Kennzahl hinzufügen"
+  },
+  "problems": {
+    "since": "seit {{duration}}",
+    "showAll_one": "{{count}} Problem anzeigen",
+    "showAll_other": "Alle {{count}} anzeigen"
+  },
+  "systems": {
+    "subtitle": "Alle Integrationen mit ihren Hosts, Geräten und Kennzahlen",
+    "search": "Systeme, Hosts, VMs, Container oder Ports suchen",
+    "noHits": "Nichts gefunden.",
+    "disabled": "Deaktiviert",
+    "pollNow": "Jetzt abfragen",
+    "edit": "Bearbeiten",
+    "metrics": "Kennzahlen",
+    "hosts": "Hosts und Gäste",
+    "details": "Details",
+    "toChecks": "Zu den Checks",
+    "notFound": "Diese Integration gibt es nicht (mehr).",
+    "category": {
+      "compute": "Server und Virtualisierung",
+      "network": "Netzwerk",
+      "storage": "Speicher und Backup",
+      "power": "Strom",
+      "apps": "Anwendungen",
+      "monitoring": "Überwachung und eigene Quellen"
+    }
   }
 }

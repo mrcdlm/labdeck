@@ -24,6 +24,7 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { BackupItem, BackupsOverview, BackupState, UptimeRange } from '@/lib/api'
+import { anchorId, useHashTarget } from '@/lib/anchor'
 import { absoluteTime, formatBytes, formatHours, relativeTime, useNow } from '@/lib/format'
 import { useBackups, useIntegrationTypes, useSetBackupMaxAge } from '@/lib/queries'
 import { cn } from '@/lib/utils'
@@ -254,6 +255,7 @@ export function Backups() {
   const icon = (type: string) => types.data?.types.find((x) => x.type === type)?.icon
   const data = backups.data
   const stale = data?.backups.some((b) => b.stale)
+  useHashTarget(backups.isSuccess)
 
   return (
     <div className="flex flex-col gap-6">
@@ -302,6 +304,7 @@ export function Backups() {
                       key={`${b.integration_id}/${b.id}`}
                       className={cn(b.state === 'paused' && 'opacity-60')}
                       data-backup={b.name}
+                      data-anchor={anchorId('backup', b.integration_id, b.id)}
                     >
                       <TableCell className="max-w-[20rem] min-w-44 pl-6 whitespace-normal">
                         <NameCell item={b} icon={icon(b.integration_type)} />
@@ -334,6 +337,7 @@ export function Backups() {
                   key={`${b.integration_id}/${b.id}`}
                   className={cn('flex flex-col gap-2 p-4', b.state === 'paused' && 'opacity-60')}
                   data-backup={b.name}
+                  data-anchor={anchorId('backup', b.integration_id, b.id)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <NameCell item={b} icon={icon(b.integration_type)} />

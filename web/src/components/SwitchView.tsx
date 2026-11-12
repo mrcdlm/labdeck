@@ -8,6 +8,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { StatusDot } from '@/components/StatusTile'
 import { Card, CardContent } from '@/components/ui/card'
 import type { Integration, MetricRange, Resource } from '@/lib/api'
+import { anchorId, useHash } from '@/lib/anchor'
 import { formatBits, formatNumber, formatUptime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
@@ -320,7 +321,11 @@ function PortDetail({ integration, port, onClose }: { integration: Integration; 
   const current = keys.find((k) => k.name === metric) ?? keys[0]
   const speed = num(port.info?.speed)
   return (
-    <div className="bg-muted/40 flex flex-col gap-3 rounded-lg border p-4" data-port-detail={port.name}>
+    <div
+      className="bg-muted/40 flex flex-col gap-3 rounded-lg border p-4"
+      data-port-detail={port.name}
+      data-anchor={anchorId('res', port.id)}
+    >
       <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -389,8 +394,12 @@ function PortDetail({ integration, port, onClose }: { integration: Integration; 
 /** Karte eines Switches: Kopf, Front, Ports mit Problemen, Details zum gewählten Port. */
 export function SwitchCard({ integration, sw }: { integration: Integration; sw: Resource }) {
   const { t } = useTranslation()
-  const [selected, setSelected] = useState<string>()
   const ports = (integration.snapshot?.resources ?? []).filter((r) => r.kind === 'port' && r.parent === sw.name)
+  // Sprung aus der Problemliste (#res-port_…): Port gleich auswählen
+  const hash = useHash()
+  const [selected, setSelected] = useState<string | undefined>(
+    () => ports.find((p) => anchorId('res', p.id) === hash)?.id,
+  )
   const port = ports.find((p) => p.id === selected)
   const problems = ports.filter((p) => p.status === 'error' || p.status === 'warning')
   const total = num(sw.info?.ports_total)
@@ -399,7 +408,7 @@ export function SwitchCard({ integration, sw }: { integration: Integration; sw: 
     ports.filter((p) => p.info?.media !== 'lag').reduce((s, p) => s + bits(p[k]), 0)
   const haveRates = ports.some((p) => p.net_in !== undefined)
   return (
-    <Card className="gap-4 py-5" data-switch={sw.name}>
+    <Card className="gap-4 py-5" data-switch={sw.name} data-anchor={anchorId('res', sw.id)}>
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <span className="bg-muted grid size-10 shrink-0 place-items-center rounded-lg">

@@ -62,8 +62,9 @@ func (*Integration) Schema() integrations.ConfigSchema {
 			DE: "Anfragen, geblockte Anfragen, Clients und Blockliste von Pi-hole v6 – und ob das Blocken aktiv ist.",
 			EN: "Queries, blocked queries, clients and blocklist of Pi-hole v6 – and whether blocking is active.",
 		},
-		Icon: "shield-check",
-		Docs: "https://docs.pi-hole.net/api/",
+		Icon:     "shield-check",
+		Category: integrations.CategoryNetwork,
+		Docs:     "https://docs.pi-hole.net/api/",
 		Fields: []integrations.Field{
 			{Key: "base_url", Type: integrations.FieldURL, Required: true,
 				Label:       T{DE: "Adresse", EN: "Address"},

@@ -90,7 +90,24 @@ type ConfigSchema struct {
 	Fields []Field `json:"fields"`
 	// NoTLS: Quelle spricht kein HTTP(S) – „TLS prüfen“ ausblenden
 	NoTLS bool `json:"no_tls,omitempty"`
+	// Category ordnet die Integration auf der Seite „Systeme“ ein
+	Category Category `json:"category"`
 }
+
+// Category: Bereich einer Integration für die Gruppierung im UI.
+type Category string
+
+const (
+	CategoryCompute    Category = "compute"    // Server, Virtualisierung, Container
+	CategoryNetwork    Category = "network"    // Switches, DNS
+	CategoryStorage    Category = "storage"    // Speicher und Backup
+	CategoryPower      Category = "power"      // USV
+	CategoryApps       Category = "apps"       // Anwendungen wie Immich
+	CategoryMonitoring Category = "monitoring" // Überwachung und generische Quellen
+)
+
+// Categories in Anzeigereihenfolge.
+var Categories = []Category{CategoryCompute, CategoryNetwork, CategoryStorage, CategoryPower, CategoryApps, CategoryMonitoring}
 
 // Field liefert das Feld mit key.
 func (s ConfigSchema) Field(key string) (Field, bool) {

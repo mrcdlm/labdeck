@@ -38,9 +38,10 @@ func (*Integration) Schema() integrations.ConfigSchema {
 			DE: "Netz- oder Batteriebetrieb, Ladung, Restlaufzeit und Last deiner USV über Network UPS Tools.",
 			EN: "Mains or battery operation, charge, runtime and load of your UPS via Network UPS Tools.",
 		},
-		Icon:  "battery-charging",
-		Docs:  "https://networkupstools.org/docs/user-manual.chunked/",
-		NoTLS: true,
+		Icon:     "battery-charging",
+		Category: integrations.CategoryPower,
+		Docs:     "https://networkupstools.org/docs/user-manual.chunked/",
+		NoTLS:    true,
 		Fields: []integrations.Field{
 			{Key: "host", Type: integrations.FieldString, Required: true, Target: true,
 				Label: T{DE: "Host", EN: "Host"},

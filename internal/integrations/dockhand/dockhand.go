@@ -40,8 +40,9 @@ func (*Integration) Schema() integrations.ConfigSchema {
 			DE: "Docker-Hosts und Container aus Dockhand: CPU, RAM, Health und ausstehende Image-Updates.",
 			EN: "Docker hosts and containers from Dockhand: CPU, RAM, health and pending image updates.",
 		},
-		Icon: "container",
-		Docs: "https://github.com/Finsys/dockhand",
+		Icon:     "container",
+		Category: integrations.CategoryCompute,
+		Docs:     "https://github.com/Finsys/dockhand",
 		Fields: []integrations.Field{
 			{Key: "base_url", Type: integrations.FieldURL, Required: true, Default: "http://dockhand.lan:3000",
 				Label:       T{DE: "Adresse", EN: "Address"},

@@ -44,8 +44,9 @@ func (*Integration) Schema() integrations.ConfigSchema {
 			DE: "Hardware-Zustand über den BMC: Netzteile, Lüfter, Temperaturen, Speicher, Laufwerke – HPE iLO, Dell iDRAC, Lenovo XCC, Supermicro.",
 			EN: "Hardware health via the BMC: power supplies, fans, temperatures, memory, drives – HPE iLO, Dell iDRAC, Lenovo XCC, Supermicro.",
 		},
-		Icon: "server-cog",
-		Docs: "https://servermanagementportal.ext.hpe.com/docs/redfishservices/ilos/ilo5/",
+		Icon:     "server-cog",
+		Category: integrations.CategoryCompute,
+		Docs:     "https://servermanagementportal.ext.hpe.com/docs/redfishservices/ilos/ilo5/",
 		Fields: []integrations.Field{
 			{Key: "base_url", Type: integrations.FieldURL, Required: true,
 				Label: T{DE: "Adresse des BMC", EN: "BMC address"},

@@ -59,8 +59,9 @@ func (*Integration) Schema() integrations.ConfigSchema {
 			DE: "Beliebige PromQL-Abfragen mit Einheit und Schwellwerten – alles, was Exporter liefern.",
 			EN: "Any PromQL queries with unit and thresholds – everything exporters provide.",
 		},
-		Icon: "flame",
-		Docs: "https://prometheus.io/docs/prometheus/latest/querying/api/#instant-queries",
+		Icon:     "flame",
+		Category: integrations.CategoryMonitoring,
+		Docs:     "https://prometheus.io/docs/prometheus/latest/querying/api/#instant-queries",
 		Fields: []integrations.Field{
 			{Key: "base_url", Type: integrations.FieldURL, Required: true,
 				Label:       T{DE: "Adresse", EN: "Address"},

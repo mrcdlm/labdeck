@@ -10,10 +10,9 @@
     "dashboard": "Dashboard",
     "backups": "Backups",
     "checks": "Checks",
-    "services": "Services",
     "history": "History",
     "settings": "Settings",
-    "resources": "Resources"
+    "systems": "Systems"
   },
   "live": {
     "on": "Live",
@@ -63,24 +62,14 @@
     "activeIntegrations_other": "{{count}} integrations active",
     "loadError": "Could not load the overall status: {{error}}",
     "noneActive": "No integration active",
-    "problemList": "Problems",
     "problem": {
       "integration": "Unreachable",
       "at": {
         "integration": "last successful {{time}}",
         "backup": "last run {{time}}",
         "check": "last ping {{time}}",
-        "metric": "measured {{time}}",
-        "checks": "{{time}}"
-      },
-      "value": "value {{value}}"
-    },
-    "kind": {
-      "integration": "Integration",
-      "backup": "Backup",
-      "check": "Check",
-      "metric": "Metric",
-      "checks": "Healthchecks"
+        "metric": "measured {{time}}"
+      }
     },
     "noBackups": "No backups yet",
     "backupsOk": "{{count}} OK",
@@ -94,14 +83,10 @@
     "checksAllOk_one": "running",
     "checksAllOk_other": "all OK",
     "overall": "Overall status",
-    "inAreas_one": "in {{count}} area",
-    "inAreas_other": "in {{count}} areas",
     "errorsCount_one": "{{count}} error",
     "errorsCount_other": "{{count}} errors",
     "warningsCount_one": "{{count}} warning",
     "warningsCount_other": "{{count}} warnings",
-    "moreProblems_one": "+{{count}} more",
-    "moreProblems_other": "+{{count}} more",
     "showLess": "show less",
     "moreBackups_one": "+{{count}} more backup – show all",
     "moreBackups_other": "+{{count}} more backups – show all",
@@ -128,7 +113,13 @@
     "deleteTitle": "Delete \"{{name}}\"?",
     "deleteHint": "The dashboard and its tile arrangement are removed. Integrations and data stay.",
     "newName": "Dashboard {{n}}",
-    "empty": "No tiles yet – click here to add some"
+    "empty": "No tiles yet – click here to add some",
+    "kind": {
+      "integration": "Integration",
+      "backup": "Backup",
+      "check": "Check",
+      "metric": "Metric"
+    }
   },
   "backups": {
     "subtitle": "Last runs, results and overdue backups",
@@ -208,7 +199,6 @@
     }
   },
   "services": {
-    "subtitle": "Metrics and charts per integration",
     "empty": "Each integration gets a card with its metrics here, e.g. photos, videos and storage in Immich.",
     "emptyTitle": "No services yet",
     "noMetrics": "No metrics yet",
@@ -229,8 +219,6 @@
       "group": "Group",
       "datastore": "Datastore"
     },
-    "toResources_one": "View {{count}} resource",
-    "toResources_other": "View {{count}} resources",
     "sections": {
       "storage": "Storage",
       "disk": "Disks",
@@ -598,9 +586,6 @@
     }
   },
   "resources": {
-    "subtitle": "CPU, RAM and disks of hosts, VMs and containers – and your switches",
-    "emptyTitle": "No resources yet",
-    "empty": "Nodes, VMs, containers and switches appear here once an integration for Proxmox VE, Dockhand or a switch (SNMP) is set up.",
     "search": "Search name, ID, tag or image",
     "filter": "State",
     "filters": {
@@ -771,5 +756,31 @@
     "tabMetric": "Own metric",
     "allShown": "All tiles are already on this dashboard.",
     "addMetric": "Add metric"
+  },
+  "problems": {
+    "since": "for {{duration}}",
+    "showAll_one": "Show {{count}} problem",
+    "showAll_other": "Show all {{count}}"
+  },
+  "systems": {
+    "subtitle": "All integrations with their hosts, devices and metrics",
+    "search": "Search systems, hosts, VMs, containers or ports",
+    "noHits": "Nothing found.",
+    "disabled": "Disabled",
+    "pollNow": "Poll now",
+    "edit": "Edit",
+    "metrics": "Metrics",
+    "hosts": "Hosts and guests",
+    "details": "Details",
+    "toChecks": "Go to checks",
+    "notFound": "This integration does not exist (anymore).",
+    "category": {
+      "compute": "Servers and virtualization",
+      "network": "Network",
+      "storage": "Storage and backup",
+      "power": "Power",
+      "apps": "Applications",
+      "monitoring": "Monitoring and custom sources"
+    }
   }
 }

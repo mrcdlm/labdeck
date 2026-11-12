@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"testing"
+
+	"github.com/mrcdlm/labdeck/internal/integrations"
 )
 
 type integrationResp struct {
@@ -35,6 +38,12 @@ func TestIntegrationTypes(t *testing.T) {
 		got.Limits["interval_min"] != 5 || got.Types[1].Fields[1].Type != "secret" ||
 		!strings.HasPrefix(got.Types[1].Fields[1].Help, "Projekt") {
 		t.Fatalf("Typen (de): %+v", got)
+	}
+	// Jeder Typ ist für die Seite „Systeme“ einer bekannten Kategorie zugeordnet
+	for _, ty := range got.Types {
+		if !slices.Contains(integrations.Categories, ty.Category) {
+			t.Errorf("%s: Kategorie %q", ty.Type, ty.Category)
+		}
 	}
 	e.language = "en"
 	resp = e.do(t, "GET", "/api/integration-types", "", c)

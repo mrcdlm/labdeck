@@ -1,6 +1,5 @@
 import {
   Activity,
-  AlertTriangle,
   Check,
   ChevronRight,
   Cpu,
@@ -13,7 +12,6 @@ import {
   Image,
   LayoutDashboard,
   Network,
-  PauseCircle,
   Pencil,
   Plug,
   Plus,
@@ -38,7 +36,8 @@ import { Segmented } from '@/components/Segmented'
 import { ServerHealth } from '@/components/ServerView'
 import { Sparkline } from '@/components/Sparkline'
 import { StatusBadge } from '@/components/StatusBadge'
-import { ProblemLines, StatusDot, StatusTile, TileValue, type ProblemLine } from '@/components/StatusTile'
+import { ProblemList } from '@/components/ProblemList'
+import { StatusDot, StatusTile, TileValue } from '@/components/StatusTile'
 import { SwitchFront } from '@/components/SwitchView'
 import { TileDialog } from '@/components/TileDialog'
 import { UptimeBar } from '@/components/UptimeBar'
@@ -67,9 +66,9 @@ import type {
   TileOptions,
   UptimeRange,
 } from '@/lib/api'
-import { absoluteTime, formatBytes, relativeTime, useNow } from '@/lib/format'
+import { formatBytes } from '@/lib/format'
 import { formatMetric, isStateUnit, metricLabel, metricTitle } from '@/lib/metrics'
-import { problemOwner, statusRank, worstStatus } from '@/lib/problems'
+import { problemOwner, statusRank, systemLink, worstStatus } from '@/lib/problems'
 import {
   useBackups,
   useCreateDashboard,
@@ -107,181 +106,13 @@ function NoIntegrations() {
   )
 }
 
-const backupStates = ['failed', 'overdue', 'due_soon'] as const
-
-/**
- * Problem als kurze Zeile für die Kachel: was, wo (grau) und Zustand bzw.
- * Wert rechts; Quelle und Zeitpunkt im Tooltip. Checks-Probleme werden zu
- * einer Zeile je ausgefallenem Check.
- */
-function useProblemLines(now: number) {
-  const { t } = useTranslation()
-  return (problems: Problem[], withSource = false): ProblemLine[] =>
-    problems.flatMap((p): ProblemLine[] => {
-      const key = `${p.kind}/${p.integration_id}/${p.item_id ?? ''}`
-      const at = p.at ? t(`dashboard.problem.at.${p.kind}`, { time: relativeTime(p.at, now) }) : ''
-      const title = [p.integration_name, at, p.at && absoluteTime(p.at)].filter(Boolean).join(' · ')
-      const source = withSource ? `${p.integration_name}: ` : ''
-      if (p.kind === 'checks') {
-        return (p.items ?? []).map((name) => ({
-          key: `${key}/${name}`,
-          status: p.status,
-          id: name,
-          name: source + name,
-          state: t('dashboard.down'),
-          title,
-        }))
-      }
-      if (p.kind === 'integration') {
-        return [
-          {
-            key,
-            status: p.status,
-            id: p.name,
-            name: source + t('dashboard.problem.integration'),
-            detail: p.detail,
-            wrap: true,
-            title,
-          },
-        ]
-      }
-      if (p.kind === 'metric') {
-        const name = metricLabel(p.integration_type, {
-          key: p.item_id ?? '',
-          name: p.name,
-        })
-        return [
-          {
-            key,
-            status: p.status,
-            id: p.name,
-            name: <span className="inline-block first-letter:uppercase">{source + name}</span>,
-            detail: p.group,
-            // OK/Fehler-Werte kennen nur zwei Texte – Warnungen heißen so
-            state: p.unit === 'okfail' ? t(`status.${p.status}`) : formatMetric(p.value ?? 0, p.unit),
-            title,
-          },
-        ]
-      }
-      const b = backupStates.find((s) => s === p.state)
-      return [
-        {
-          key,
-          status: p.status,
-          id: p.name,
-          name: source + p.name,
-          detail: p.group,
-          state: b ? t(`backups.state.${b}`) : t(`status.${p.status}`),
-          title,
-        },
-      ]
-    })
-}
-
-/**
- * Ampel des Gesamtstatus: bei Fehlern pulsiert ein Ring um das Symbol, bei
- * „Alles in Ordnung“ zeichnet sich ein Häkchen.
- */
-function StatusMark({ tone }: { tone: 'idle' | 'ok' | 'warning' | 'error' }) {
-  const box = {
-    idle: 'bg-muted text-muted-foreground',
-    ok: 'bg-success/15 text-success',
-    warning: 'bg-warning/15 text-warning',
-    error: 'bg-destructive/15 text-destructive',
-  }[tone]
-  return (
-    <span className={cn('relative grid size-10 shrink-0 place-items-center rounded-lg', box)} data-tone={tone}>
-      {(tone === 'error' || tone === 'warning') && (
-        <span
-          className={cn(
-            'animate-ring absolute inset-0 rounded-lg',
-            tone === 'error' ? 'bg-destructive/30' : 'bg-warning/30',
-          )}
-          aria-hidden
-        />
-      )}
-      {tone === 'idle' && <PauseCircle className="size-5" />}
-      {tone === 'ok' && (
-        <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden>
-          <path d="M5 12.5l4.5 4.5L19 7.5" className="animate-draw" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      )}
-      {(tone === 'error' || tone === 'warning') && <AlertTriangle className="relative size-5" />}
-    </span>
-  )
-}
-
-/**
- * Gesamtstatus als schlanke Zeile: Ampel, „11 Probleme in 4 Bereichen“,
- * Zähler für Fehler und Warnungen. Die Probleme selbst stehen in den Kacheln;
- * nur solche ohne sichtbare Kachel (orphans) folgen hier als flache Liste.
- */
-function OverallStatus({ overview, orphans }: { overview: Overview; orphans: Problem[] }) {
-  const { t } = useTranslation()
-  const now = useNow()
-  const toLines = useProblemLines(now)
-  const problems = overview.problems
-  const errors = problems.filter((p) => p.status === 'error').length
-  const warnings = problems.filter((p) => p.status === 'warning').length
-  const areas = new Set(problems.map(problemOwner)).size
-  const ok = problems.length === 0
-  const idle = overview.integrations.active === 0 // alle deaktiviert
-  const tone = idle ? 'idle' : ok ? 'ok' : errors > 0 ? 'error' : 'warning'
-
-  return (
-    <section className="flex flex-col gap-3" aria-label={t('dashboard.overall')}>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-        <StatusMark tone={tone} />
-        <div className="min-w-48 flex-1">
-          <p className="text-lg font-semibold">
-            {idle
-              ? t('dashboard.noneActive')
-              : ok
-                ? t('dashboard.allGood')
-                : `${t('dashboard.problems', { count: problems.length })}${areas > 1 ? ` ${t('dashboard.inAreas', { count: areas })}` : ''}`}
-          </p>
-          <p className="text-muted-foreground text-sm">
-            {t('dashboard.activeIntegrations', {
-              count: overview.integrations.active,
-            })}
-          </p>
-        </div>
-        {!ok && (
-          // mobil in eigener Zeile unter dem Text
-          <div className="flex w-full flex-wrap gap-2 pl-14 sm:w-auto sm:pl-0">
-            {errors > 0 && (
-              <span className="bg-destructive/10 text-destructive inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium tabular-nums">
-                <StatusDot status="error" />
-                {t('dashboard.errorsCount', { count: errors })}
-              </span>
-            )}
-            {warnings > 0 && (
-              <span className="bg-warning/15 text-warning inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-medium tabular-nums">
-                <StatusDot status="warning" />
-                {t('dashboard.warningsCount', { count: warnings })}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-      {orphans.length > 0 && (
-        <div className="pl-14">
-          <ProblemLines lines={toLines(orphans, true)} max={5} label={t('dashboard.problemList')} />
-        </div>
-      )}
-    </section>
-  )
-}
-
 function BackupsTile({ overview, problems }: { overview: Overview; problems: Problem[] }) {
   const { t } = useTranslation()
-  const toLines = useProblemLines(useNow())
   const s = overview.backups
   const n = (k: keyof typeof s.states) => s.states[k] ?? 0
   const sub = [
     n('ok') > 0 && t('dashboard.backupsOk', { count: n('ok') }),
     n('due_soon') > 0 && t('dashboard.backupsDueSoon', { count: n('due_soon') }),
-    n('overdue') + n('failed') > 0 && t('dashboard.problems', { count: n('overdue') + n('failed') }),
     n('unknown') + n('paused') > 0 && t('dashboard.other', { count: n('unknown') + n('paused') }),
   ].filter(Boolean)
   return (
@@ -301,16 +132,14 @@ function BackupsTile({ overview, problems }: { overview: Overview; problems: Pro
         )
       }
       sub={sub.join(' · ')}
-    >
-      <ProblemLines lines={toLines(problems)} />
-    </StatusTile>
+      problems={problems.length}
+    />
   )
 }
 
 /** Healthchecks.io als Ampel: grün, wenn alle Checks laufen, rot mit den ausgefallenen. */
 function ChecksTile({ overview, problems }: { overview: Overview; problems: Problem[] }) {
   const { t } = useTranslation()
-  const toLines = useProblemLines(useNow())
   const c = overview.checks
   const down = c.statuses.error ?? 0
   const active = c.total - (c.statuses.paused ?? 0)
@@ -339,9 +168,8 @@ function ChecksTile({ overview, problems }: { overview: Overview; problems: Prob
           </span>
         )
       }
-    >
-      <ProblemLines lines={toLines(problems)} />
-    </StatusTile>
+      problems={problems.length}
+    />
   )
 }
 
@@ -370,7 +198,6 @@ function ServiceTile({
   problems: Problem[]
 }) {
   const { t } = useTranslation()
-  const toLines = useProblemLines(useNow())
   const main = (i.snapshot?.metrics ?? []).filter((m) => !m.group && !m.resource)
   const [first, ...rest] = main
   const spark = sparkMetric(main)
@@ -378,7 +205,7 @@ function ServiceTile({
   const server = i.snapshot?.resources?.find((r) => r.kind === 'server')
   return (
     <StatusTile
-      to={`/dienste#integration-${i.id}`}
+      to={systemLink(i)}
       icon={<IntegrationIcon name={icon} type={i.type} className="size-4" />}
       title={i.name}
       tile={i.name}
@@ -401,8 +228,8 @@ function ServiceTile({
         .slice(0, 2)
         .map((m) => metricText(i.type, m))
         .join(' · ')}
+      problems={problems.length}
     >
-      <ProblemLines lines={toLines(problems)} />
       {ports.length > 0 ? (
         <div className="mt-3">
           <SwitchFront ports={ports} compact />
@@ -440,7 +267,7 @@ function HostsTile({
   const online = hosts.filter((h) => h.r.status !== 'error').length
   return (
     <StatusTile
-      to="/ressourcen"
+      to="/systeme"
       icon={<Server className="size-4" />}
       title={t('dashboard.tile.hosts')}
       tile="hosts"
@@ -620,13 +447,12 @@ function useTileLabel(tiles: DashboardTile[]) {
 }
 
 /**
- * Gesamtstatus und Kacheln eines Dashboards. Probleme ohne sichtbare Kachel
- * stehen nur auf dem Haupt-Dashboard unter dem Gesamtstatus.
+ * Problemliste und Kacheln eines Dashboards. Die Kacheln zeigen nur die
+ * Anzahl ihrer Probleme; was genau kaputt ist, steht oben in der Liste.
  */
 function Board({
   overview,
   dashboard,
-  isMain,
   editing,
   onLayout,
   onRemove,
@@ -634,7 +460,6 @@ function Board({
 }: {
   overview: Overview
   dashboard: DashboardT
-  isMain: boolean
   editing: boolean
   onLayout: (l: Layout) => void
   onRemove: (id: string) => void
@@ -676,13 +501,11 @@ function Board({
     return <ServiceTile integration={i} icon={icons[i.type]} problems={mine(id)} />
   }
 
-  const visible = new Set(dashboard.tiles.filter((x) => x.visible).map((x) => x.id))
-  const orphans = isMain ? overview.problems.filter((p) => !visible.has(problemOwner(p))) : []
   const rank = (id: string) => Math.min(statusRank(worstStatus(mine(id).map((p) => p.status)) ?? 'ok'), 2)
 
   return (
     <>
-      <OverallStatus overview={overview} orphans={orphans} />
+      <ProblemList overview={overview} />
       <DashboardGrid
         tiles={dashboard.tiles}
         render={render}
@@ -1003,7 +826,6 @@ export function Dashboard() {
             <Board
               overview={o!}
               dashboard={shown}
-              isMain={isMain}
               editing={editing}
               onLayout={onLayout}
               onRemove={onRemove}

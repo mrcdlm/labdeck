@@ -70,13 +70,14 @@ func toFieldDTOs(fields []integrations.Field, lang i18n.Lang) []fieldDTO {
 }
 
 type typeDTO struct {
-	Type        string     `json:"type"`
-	Title       string     `json:"title"`
-	Description string     `json:"description"`
-	Icon        string     `json:"icon"`
-	Docs        string     `json:"docs,omitempty"`
-	NoTLS       bool       `json:"no_tls,omitempty"`
-	Fields      []fieldDTO `json:"fields"`
+	Type        string                `json:"type"`
+	Title       string                `json:"title"`
+	Description string                `json:"description"`
+	Icon        string                `json:"icon"`
+	Docs        string                `json:"docs,omitempty"`
+	NoTLS       bool                  `json:"no_tls,omitempty"`
+	Category    integrations.Category `json:"category"`
+	Fields      []fieldDTO            `json:"fields"`
 }
 
 type typesDTO struct {
@@ -97,7 +98,7 @@ func (s *Server) handleIntegrationTypes(w http.ResponseWriter, r *http.Request) 
 	for _, integ := range s.integrations.Registry().All() {
 		sc := integ.Schema()
 		out.Types = append(out.Types, typeDTO{Type: integ.Type(), Title: sc.Title.In(lang), Description: sc.Description.In(lang),
-			Icon: sc.Icon, Docs: sc.Docs, NoTLS: sc.NoTLS, Fields: toFieldDTOs(sc.Fields, lang)})
+			Icon: sc.Icon, Docs: sc.Docs, NoTLS: sc.NoTLS, Category: sc.Category, Fields: toFieldDTOs(sc.Fields, lang)})
 	}
 	writeJSON(w, http.StatusOK, out)
 }

@@ -4,7 +4,6 @@ import {
   History,
   LayoutDashboard,
   LogOut,
-  Cpu,
   Server,
   Settings,
   type LucideIcon,
@@ -18,17 +17,16 @@ import { Preferences } from '@/components/Preferences'
 import { Button } from '@/components/ui/button'
 import { useLive } from '@/lib/live-context'
 import { setDisplayTimeZone } from '@/lib/format'
-import { useLogout, useSettings } from '@/lib/queries'
+import { useLogout, useOverview, useSettings } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
-type NavKey = 'dashboard' | 'backups' | 'checks' | 'services' | 'resources' | 'history' | 'settings'
+type NavKey = 'dashboard' | 'backups' | 'checks' | 'systems' | 'history' | 'settings'
 
 const nav: { to: string; key: NavKey; icon: LucideIcon }[] = [
   { to: '/', key: 'dashboard', icon: LayoutDashboard },
   { to: '/backups', key: 'backups', icon: DatabaseBackup },
   { to: '/checks', key: 'checks', icon: HeartPulse },
-  { to: '/dienste', key: 'services', icon: Server },
-  { to: '/ressourcen', key: 'resources', icon: Cpu },
+  { to: '/systeme', key: 'systems', icon: Server },
   { to: '/verlauf', key: 'history', icon: History },
   { to: '/einstellungen', key: 'settings', icon: Settings },
 ]
@@ -38,10 +36,14 @@ function NavEntry({ item, compact }: { item: (typeof nav)[number]; compact?: boo
   const Icon = item.icon
   // weitere Dashboards (/d/…) gehören zum Dashboard
   const onDashboard = useLocation().pathname.startsWith('/d/') && item.to === '/'
+  // Fehler als Zähler an der Übersicht – auch von anderen Seiten aus sichtbar
+  const overview = useOverview()
+  const errors =
+    item.key === 'dashboard' ? (overview.data?.problems ?? []).filter((p) => p.status === 'error').length : 0
   return (
     <NavLink
       to={item.to}
-      end
+      end={item.to === '/'}
       className={({ isActive }) =>
         cn(
           'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
@@ -54,6 +56,15 @@ function NavEntry({ item, compact }: { item: (typeof nav)[number]; compact?: boo
     >
       <Icon className="size-4" />
       {t(`nav.${item.key}`)}
+      {errors > 0 && (
+        <span
+          className="bg-destructive/10 text-destructive ml-auto rounded-full px-1.5 text-xs leading-5 font-medium tabular-nums"
+          title={t('dashboard.errorsCount', { count: errors })}
+          data-nav-errors={errors}
+        >
+          {errors}
+        </span>
+      )}
     </NavLink>
   )
 }

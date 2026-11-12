@@ -21,6 +21,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { StatusDot } from '@/components/StatusTile'
 import { Card, CardContent } from '@/components/ui/card'
 import type { Integration, Metric, MetricRange, Resource } from '@/lib/api'
+import { anchorId } from '@/lib/anchor'
 import { formatNumber } from '@/lib/format'
 import { formatMetric } from '@/lib/metrics'
 import { cn } from '@/lib/utils'
@@ -180,7 +181,7 @@ export function ServerCard({ integration, server }: { integration: Integration; 
   const info = server.info ?? {}
 
   return (
-    <Card className="gap-4 py-5" data-server={server.name}>
+    <Card className="gap-4 py-5" data-server={server.name} data-anchor={anchorId('res', server.id)}>
       <CardContent className="flex flex-col gap-5">
         <div className="flex flex-wrap items-center gap-3">
           <span className="bg-muted grid size-10 shrink-0 place-items-center rounded-lg">

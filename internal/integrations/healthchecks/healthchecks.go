@@ -57,8 +57,9 @@ func (*Integration) Schema() integrations.ConfigSchema {
 			DE: "Cron-Jobs und Backups überwachen – Cloud oder selbst gehostet.",
 			EN: "Monitor cron jobs and backups – cloud or self-hosted.",
 		},
-		Icon: "heart-pulse",
-		Docs: "https://healthchecks.io/docs/api/",
+		Icon:     "heart-pulse",
+		Category: integrations.CategoryMonitoring,
+		Docs:     "https://healthchecks.io/docs/api/",
 		Fields: []integrations.Field{
 			{
 				Key: "base_url", Type: integrations.FieldURL, Required: true, Default: "https://healthchecks.io",
