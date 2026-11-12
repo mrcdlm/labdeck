@@ -35,3 +35,16 @@ export const mock = {
   hcStatus: (name: string, status: string) =>
     fetch(`${MOCK}/_healthchecks/status?name=${encodeURIComponent(name)}&status=${status}`, { method: 'POST' }),
 }
+
+/** Gesamtstatus oben auf der Übersicht („2 Probleme“, „Alles in Ordnung“). */
+export const overall = (page: Page) => page.getByRole('region', { name: 'Gesamtstatus' })
+
+/** Problemliste (Übersicht oder Detailseite eines Systems). */
+export const problemList = (page: Page) => page.locator('[data-problem-list]').first()
+
+/** Detailseite eines Systems über die Seite „Systeme“ öffnen. */
+export async function openSystem(page: Page, name: string) {
+  await page.goto('/systeme')
+  await page.locator(`[data-system="${name}"]`).click()
+  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
+}

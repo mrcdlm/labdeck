@@ -38,7 +38,7 @@ test('Navigation zu allen Seiten, Live-Verbindung', async ({ page }) => {
   for (const [link, url, heading] of [
     ['Backups', '/backups', 'Backups'],
     ['Checks', '/checks', 'Checks'],
-    ['Dienste', '/dienste', 'Dienste'],
+    ['Systeme', '/systeme', 'Systeme'],
     ['Verlauf', '/verlauf', 'Verlauf'],
     ['Einstellungen', '/einstellungen', 'Einstellungen'],
     ['Dashboard', '/', 'Dashboard'],
@@ -47,6 +47,13 @@ test('Navigation zu allen Seiten, Live-Verbindung', async ({ page }) => {
     await expect(page).toHaveURL(url)
     await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible()
   }
+
+  // alte Adressen der Seiten „Dienste“ und „Ressourcen“ leiten weiter
+  for (const old of ['/dienste', '/ressourcen', '/dienste#integration-42']) {
+    await page.goto(old)
+    await expect(page).toHaveURL(old.endsWith('42') ? '/systeme/42' : '/systeme')
+  }
+  await page.goto('/')
 
   // Gesamtstatus führt zu den Einstellungen
   await page.getByRole('link', { name: /Noch keine Integrationen eingerichtet/ }).click()

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { api, login, mock, MOCK } from './helpers'
+import { api, login, mock, MOCK, problemList } from './helpers'
 
 interface Integration {
   id: number
@@ -35,14 +35,16 @@ test('Logos laden ohne CSP-Fehler, Checks-Kachel als Ampel (live grün → rot)'
   await mock.hcStatus('DynDNS', 'down')
   await api(page, 'POST', `/api/integrations/${created.json.id}/poll`)
   await expect(tile).toContainText('1 Check ausgefallen')
-  await expect(tile).toContainText('DynDNS')
+  await expect(tile).toHaveAttribute('data-tone', 'error')
+  await expect(problemList(page).locator('[data-problem="DynDNS"]')).toBeVisible()
   await expect(page.locator('[data-tone="error"] .animate-ring')).toBeVisible()
 
-  // Dienste: Healthchecks nur als Ampel-Zeile
-  await page.goto('/dienste')
-  const row = page.locator('[data-service="Homelab"]')
-  await expect(row).toContainText('1 Check ausgefallen')
-  await expect(row.getByRole('button')).toHaveCount(0) // keine Kennzahl-Kacheln, kein Diagramm
+  // Systeme: Healthchecks als Karte, die zur Checks-Seite führt
+  await page.goto('/systeme')
+  const card = page.locator('[data-category="monitoring"] [data-system="Homelab"]')
+  await expect(card).toHaveAttribute('data-tone', 'error')
+  await expect(card.locator('[data-problem-count]')).toHaveText('1 Problem')
+  await expect(card).toHaveAttribute('href', '/checks')
 
   expect(errors.filter((e) => /Content Security Policy|Refused/.test(e))).toEqual([])
 

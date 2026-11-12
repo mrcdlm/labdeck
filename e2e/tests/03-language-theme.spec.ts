@@ -21,10 +21,10 @@ test.describe('Sprache', () => {
     await expect(page.getByText('No integrations set up yet')).toBeVisible()
 
     await page.reload()
-    await expect(page.getByRole('link', { name: 'Services' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Systems' })).toBeVisible()
 
     await page.locator('aside').getByRole('group', { name: 'Language' }).getByRole('button', { name: 'de' }).click()
-    await expect(page.getByRole('link', { name: 'Dienste' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Systeme' })).toBeVisible()
   })
 
   test.describe('englischer Browser', () => {

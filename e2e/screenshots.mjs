@@ -91,8 +91,7 @@ if (mode === 'setup') {
     ['dashboard', '/'],
     ['backups', '/backups'],
     ['checks', '/checks'],
-    ['services', '/dienste'],
-    ['resources', '/ressourcen'],
+    ['systems', '/systeme'],
     ['history', '/verlauf'],
     ['settings', '/einstellungen'],
   ]
@@ -107,6 +106,9 @@ if (mode === 'setup') {
     const locale = lang === 'de' ? 'de-DE' : 'en-US'
     const page = await session({ locale })
     for (const [name, path] of shots) await shoot(page, name, path, `${name}.${lang}`, name !== 'settings')
+    // Detailseite eines Systems (Proxmox VE: Hosts, Gäste, Speicher)
+    const pve = (await api(page, 'GET', '/api/integrations')).find((x) => x.type === 'pve')
+    await shoot(page, 'system', `/systeme/${pve.id}`, `system-detail.${lang}`)
     const net = (await api(page, 'GET', '/api/dashboards')).dashboards.find((d) => d.id !== 'main')
     await shoot(page, 'dashboard', `/d/${net.id}`, `dashboard-network.${lang}`)
     const dark = await session({ locale, colorScheme: 'dark' })

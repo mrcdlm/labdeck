@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { api, login, mock, MOCK } from './helpers'
+import { api, login, mock, MOCK, overall, problemList } from './helpers'
 
 interface Integration {
   id: number
@@ -57,15 +57,20 @@ test('Healthchecks: anlegen, testen, abfragen, bearbeiten, deaktivieren, lösche
   // Dashboard: Gesamtstatus
   await page.getByRole('link', { name: 'Dashboard' }).first().click()
   // Demo-Daten: vzdump überfällig, Borg bald fällig
-  await expect(page.getByText('2 Probleme')).toBeVisible()
+  await expect(overall(page).getByText('2 Probleme', { exact: true })).toBeVisible()
   await expect(page.getByText('1 Integration aktiv')).toBeVisible()
 
   // Ausfall der Quelle → Problem auf dem Dashboard (live)
   await mock.hcFail(500)
   await api(page, 'POST', `/api/integrations/${list.json[0].id}/poll`)
-  await expect(page.getByText('3 Probleme')).toBeVisible()
-  // Ausfall steht in der Kachel, zu der die Quelle gehört
-  await expect(page.locator('[data-tile="checks"]').getByText('Dienst antwortet mit HTTP 500')).toBeVisible()
+  await expect(overall(page).getByText('3 Probleme', { exact: true })).toBeVisible()
+  // Ausfall steht als eigene Zeile in der Problemliste, ganz oben
+  const down = problemList(page).locator('[data-problem]').first()
+  await expect(down).toContainText('Nicht erreichbar')
+  await expect(down).toContainText('Dienst antwortet mit HTTP 500')
+  await expect(down).toHaveAttribute('href', '/checks')
+  // Kachel zeigt nur die Anzahl
+  await expect(page.locator('[data-tile="checks"] [data-problem-count]')).toBeVisible()
   await mock.hcFail(0)
 
   // Abfragen per Button → wieder in Ordnung

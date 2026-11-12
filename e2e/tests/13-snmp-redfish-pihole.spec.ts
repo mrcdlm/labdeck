@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { api, expectNoHorizontalOverflow, login, MOCK } from './helpers'
+import { api, expectNoHorizontalOverflow, login, MOCK, openSystem, problemList } from './helpers'
 
 // Switch (SNMP), Server-Management (Redfish/iLO) und Pi-hole gegen cmd/mock:
 // SNMP-Agenten auf UDP 8794 (Cisco C1300) und 8795 (8-Port-Switch).
@@ -38,7 +38,9 @@ test('Switch per SNMP: Formular, Verbindung testen, Front mit Ports', async ({ p
   })
   await api(page, 'POST', `/api/integrations/${small.json.id}/poll`)
 
-  await page.goto('/ressourcen')
+  await page.goto('/systeme')
+  await expect(page.locator('[data-category="network"] [data-system]')).toHaveCount(2)
+  await openSystem(page, 'Core-Switch')
   const core = page.locator('[data-switch="core-switch"]')
   await expect(core).toContainText('C1300-24P-4G')
   await expect(core.locator('[data-port]')).toHaveCount(28)
@@ -50,14 +52,19 @@ test('Switch per SNMP: Formular, Verbindung testen, Front mit Ports', async ({ p
   await core.locator('[data-port="gi1/0/1"]').click()
   await expect(core.locator('[data-port-detail="gi1/0/1"]')).toContainText('pve-01')
 
+  await openSystem(page, 'Büro-Switch')
   const office = page.locator('[data-switch="office-switch"]')
   await expect(office.locator('[data-port]')).toHaveCount(8)
   await expect(office.locator('[data-port="Port 7"]')).toHaveAttribute('data-tone', 'error')
 
-  // Problem auf dem Dashboard
+  // Problem auf dem Dashboard: Port als Zeile, Klick öffnet die Details des Ports
   await page.goto('/')
-  await expect(page.locator('[data-tile="Core-Switch"]')).toContainText('gi1/0/12')
   await expect(page.locator('[data-tile="Core-Switch"]')).toHaveAttribute('data-tone', 'error')
+  const port = problemList(page).getByRole('link', { name: /gi1\/0\/12/ })
+  await expect(port).toContainText('Core-Switch')
+  await port.click()
+  await expect(page).toHaveURL(/\/systeme\/\d+#res-port_gi1_0_12$/)
+  await expect(page.locator('[data-port-detail="gi1/0/12"]')).toBeInViewport()
 
   for (const i of (await api<{ id: number; type: string }[]>(page, 'GET', '/api/integrations')).json) {
     if (i.type === 'snmp') await api(page, 'DELETE', `/api/integrations/${i.id}`)
@@ -71,7 +78,7 @@ test('Server per Redfish (iLO 5): Hardware-Karte, Netzteil fällt aus', async ({
     secrets: { password: 'ilo-pass' },
   })
   await api(page, 'POST', `/api/integrations/${ilo.json.id}/poll`)
-  await page.goto('/ressourcen')
+  await openSystem(page, 'iLO pve-01')
   const card = page.locator('[data-server="pve-01"]')
   await expect(card).toContainText('ProLiant DL380 Gen10')
   await expect(card).toContainText('212 W')
@@ -85,7 +92,7 @@ test('Server per Redfish (iLO 5): Hardware-Karte, Netzteil fällt aus', async ({
   await expect(card.locator('[data-item="PSU 2"]')).toContainText('Fehler')
   await page.goto('/')
   await expect(page.locator('[data-tile="iLO pve-01"]')).toHaveAttribute('data-tone', 'error')
-  await expect(page.locator('[data-tile="iLO pve-01"]')).toContainText('Netzteil-Redundanz')
+  await expect(problemList(page).getByRole('link', { name: /Netzteil-Redundanz/ })).toContainText('iLO pve-01')
 
   await fetch(`${MOCK}/_ilo/psu?n=1&health=OK`, { method: 'POST' })
   await api(page, 'DELETE', `/api/integrations/${ilo.json.id}`)
@@ -97,7 +104,7 @@ test('Pi-hole: Kennzahlen, Blocken aus als Warnung, mobil', async ({ page }) => 
     ...base, type: 'pihole', name: 'Pi-hole', config: { base_url: `${MOCK}/pihole` }, secrets: { password: 'pihole-app' },
   })
   await api(page, 'POST', `/api/integrations/${ph.json.id}/poll`)
-  await page.goto('/dienste')
+  await openSystem(page, 'Pi-hole')
   const card = page.locator('[data-service="Pi-hole"]')
   await expect(card).toContainText('15,3 %')
   await expect(card).toContainText('48.213')
@@ -107,10 +114,11 @@ test('Pi-hole: Kennzahlen, Blocken aus als Warnung, mobil', async ({ page }) => 
   await page.goto('/')
   const tile = page.locator('[data-tile="Pi-hole"]')
   await expect(tile).toHaveAttribute('data-tone', 'warning')
-  await expect(tile).toContainText('Aus')
+  await expect(tile.locator('[data-problem-count]')).toHaveText('1 Problem')
+  await expect(problemList(page).getByRole('link', { name: /Pi-hole/ })).toContainText('Aus')
 
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/ressourcen')
+  await openSystem(page, 'Pi-hole')
   await expectNoHorizontalOverflow(page)
 
   await fetch(`${MOCK}/_pihole/blocking?value=enabled`, { method: 'POST' })

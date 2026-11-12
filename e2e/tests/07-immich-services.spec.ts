@@ -39,9 +39,16 @@ test('Immich: anlegen, Kachel, Dienste-Seite mit Kennzahlen, Benutzern und Diagr
   await expect(tile).toContainText('1.204 Videos')
   await expect(tile).toContainText('412 GB Speicher')
 
-  // Dienste-Seite: Kennzahlen, Version, je Benutzer
+  // Systeme: Karte unter „Anwendungen“ mit den Kernzahlen
+  await page.goto('/systeme')
+  const sys = page.locator('[data-category="apps"] [data-system="Fotos"]')
+  await expect(sys).toContainText('48.213 Fotos')
+  await expect(sys).toContainText('Immich · v1.140.1')
+
+  // Detailseite (von der Kachel aus): Kennzahlen, Version, je Benutzer
+  await page.goto('/')
   await tile.click()
-  await expect(page).toHaveURL(/\/dienste#integration-\d+/)
+  await expect(page).toHaveURL(/\/systeme\/\d+$/)
   const card = page.locator('[data-service="Fotos"]')
   await expect(card).toContainText('Immich · v1.140.1')
   await expect(card.getByRole('button', { name: /Fotos\s*48\.213/ })).toHaveAttribute('aria-pressed', 'true')

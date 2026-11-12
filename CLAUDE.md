@@ -71,7 +71,7 @@ Jede Datenquelle ist eine **Integration** mit einheitlichem Go-Interface:
 ```go
 type Integration interface {
     Type() string                                     // "healthchecks", "immich", "pbs", "httpjson", "prometheus"
-    Schema() ConfigSchema                             // Felder für das UI-Formular (Name, Typ, Pflicht, Secret?, Default, Hilfetext DE/EN)
+    Schema() ConfigSchema                             // Felder für das UI-Formular (Name, Typ, Pflicht, Secret?, Default, Hilfetext DE/EN) + Category für „Systeme“
     Test(ctx context.Context, cfg Config) error       // „Verbindung testen“-Button
     Collect(ctx context.Context, cfg Config) (Snapshot, error)
 }
@@ -130,7 +130,9 @@ Neue Quellen sprechen offene Protokolle; Herstellerspezifisches nur als optional
 - Backups-Seite: Tabelle mit Quelle, Name, letzter Lauf („vor 3 h“), Ergebnis, Größe, Verlauf als UptimeBar; sortiert nach Problemen zuerst
 
 ## UI-Seiten
-- **Dashboard:** oben Gesamtstatus („Alles in Ordnung“ / „2 Probleme“ mit Liste), darunter frei anordenbare Kacheln
+- **Dashboard:** oben Gesamtstatus („Alles in Ordnung“ / „2 Probleme“) und darunter **jedes Problem als eigene Zeile**
+  (was, wo, Wert, seit wann; Link zur genauen Stelle per `#backup-…`, `#check-…`, `#res-…`, `#grp-…` = `data-anchor`).
+  Kacheln zeigen nur die Anzahl ihrer Probleme, farbige Leiste nur bei Problemen. Darunter frei anordenbare Kacheln
   (Backups, Healthchecks, Immich, eigene Kennzahlen), unten letzte Ereignisse.
   Mehrere Dashboards (Reiter, `/d/:id`), Raster aus 12 Spalten (x, y, w, h; react-grid-layout), Bearbeiten direkt auf
   dem Dashboard. Neue Kacheln kommen nur aufs Haupt-Dashboard (`main`). Kennzahl-Kacheln (`metric:<id>`) mit
@@ -138,7 +140,10 @@ Neue Quellen sprechen offene Protokolle; Herstellerspezifisches nur als optional
   (validiert, siehe index.css). SSE trägt weiterhin nur Themen – Live-Werte kommen über die API.
 - **Backups:** siehe oben
 - **Checks:** alle Healthchecks-Checks, gruppiert nach Projekt/Tag, Uptime-Balken
-- **Dienste:** eine Karte je Integration mit ihren Kennzahlen und Diagrammen
+- **Systeme** (`/systeme`): alle Integrationen nach `Category` aus dem Schema gruppiert, Probleme zuerst, Suche über
+  Ressourcen. **Eine Detailseite je Integration** (`/systeme/:id`) mit allem: Probleme, Kennzahlen + Diagramm,
+  Hosts/Gäste, Hardware, Switch-Front, Tabellen. Jede Information hat genau einen Ort – keine zweite Seite mit
+  denselben Daten anlegen. `/dienste` und `/ressourcen` leiten weiter.
 - **Verlauf:** Statuswechsel und Fehler aller Integrationen, filterbar
 - **Einstellungen:**
   - *Integrationen:* hinzufügen (Typ wählen → Formular aus Schema), bearbeiten, „Verbindung testen“, aktivieren/deaktivieren, löschen

@@ -25,8 +25,9 @@ Sister project of [dnsdeck](https://github.com/mrcdlm/dnsdeck) – same look, sa
 
 ## Features
 
-- **Overall status** – one traffic light for the whole home lab; overdue or failed backups,
-  checks that are down, unreachable services and exceeded thresholds are listed first.
+- **Overall status** – one traffic light for the whole home lab and, right below it, every
+  problem as its own row: what is wrong, where (integration, host, VM, port), the value and
+  since when. Each row leads straight to the affected backup, check, container or port.
 - **Backups** – every backup from all sources in one table: last run, result, size, when it
   is due, history bar. A backup is *due soon* from 80 % of its maximum age and *overdue*
   after it (default 26 hours, adjustable per backup).
@@ -42,7 +43,7 @@ Sister project of [dnsdeck](https://github.com/mrcdlm/dnsdeck) – same look, sa
 - **Prometheus** – any PromQL queries with unit and thresholds, one row per label value;
   everything exporters provide (node_exporter, restic/borg exporters, SMART …).
 - **Proxmox VE, Dockhand and UPS** – CPU, RAM and disk of every node, VM, LXC and Docker
-  container (all Docker hosts managed by Dockhand, incl. health and pending image updates) on a resources page with meters and history; storages, SMART, ZFS, vzdump backups;
+  container (all Docker hosts managed by Dockhand, incl. health and pending image updates) with meters and history; storages, SMART, ZFS, vzdump backups;
   UPS on battery as a problem.
 - **Switches via SNMP** (v2c/v3) – any switch with standard MIBs (Cisco C1300, UniFi, MikroTik,
   TP-Link, Netgear …): schematic front panel with RJ45/SFP ports, link, speed, traffic,
@@ -50,8 +51,11 @@ Sister project of [dnsdeck](https://github.com/mrcdlm/dnsdeck) – same look, sa
 - **Server hardware via Redfish** – HPE iLO, Dell iDRAC, Lenovo XCC, Supermicro: health per
   component, power supplies, fans, temperatures, drives/RAID with SSD remaining life, power draw.
 - **Pi-hole** (v6) – queries, blocked %, clients, blocklist age, blocking on/off, updates.
-- **Services page and charts** – one card per integration with its metrics and a chart
-  (24 hours to 1 year; raw values 30 days, daily values 1 year, configurable).
+- **Systems** – all integrations grouped by area (servers, network, storage, power, apps,
+  monitoring), problems first, with a search across hosts, VMs, containers and ports. Each has
+  one detail page with everything it delivers: metrics and charts (24 hours to 1 year; raw
+  values 30 days, daily values 1 year, configurable), hosts and guests, hardware, switch front
+  panel and tables.
 - **History** – status changes and errors of all integrations, filterable.
 - **Notifications via webhooks** – presets for ntfy, Gotify, Discord, Slack, Telegram and
   Home Assistant; check down/up, backup overdue/failed/OK again, integration
@@ -65,9 +69,9 @@ Sister project of [dnsdeck](https://github.com/mrcdlm/dnsdeck) – same look, sa
 - **Secure by default** – runs as non-root on a distroless image; credentials encrypted with
   AES-256-GCM and never returned by the API; single-password login with rate limiting.
 
-| Backups | Checks | Services | History |
+| Backups | Checks | Systems | History |
 |---|---|---|---|
-| ![Backups](docs/screenshots/backups.en.png) | ![Checks](docs/screenshots/checks.en.png) | ![Services](docs/screenshots/services.en.png) | ![History](docs/screenshots/history.en.png) |
+| ![Backups](docs/screenshots/backups.en.png) | ![Checks](docs/screenshots/checks.en.png) | ![Systems](docs/screenshots/systems.en.png) | ![History](docs/screenshots/history.en.png) |
 
 ## Quick start
 

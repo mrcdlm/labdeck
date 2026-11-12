@@ -25,9 +25,9 @@ Schwesterprojekt von [dnsdeck](https://github.com/mrcdlm/dnsdeck) – gleiche Op
 
 ## Funktionen
 
-- **Gesamtstatus** – eine Ampel für das ganze HomeLab; überfällige oder fehlgeschlagene
-  Backups, ausgefallene Checks, nicht erreichbare Dienste und überschrittene Schwellwerte
-  stehen ganz oben.
+- **Gesamtstatus** – eine Ampel für das ganze HomeLab und direkt darunter jedes Problem als
+  eigene Zeile: was, wo (Integration, Host, VM, Port), Wert und seit wann. Ein Klick führt
+  direkt zum betroffenen Backup, Check, Container oder Port.
 - **Backups** – alle Backups aller Quellen in einer Tabelle: letzter Lauf, Ergebnis, Größe,
   Fälligkeit, Verlauf als Balken. Ab 80 % des Höchstalters *bald fällig*, danach *überfällig*
   (Standard 26 Stunden, je Backup einstellbar).
@@ -45,7 +45,7 @@ Schwesterprojekt von [dnsdeck](https://github.com/mrcdlm/dnsdeck) – gleiche Op
 - **Prometheus** – beliebige PromQL-Abfragen mit Einheit und Schwellwerten, eine Zeile je
   Label-Wert; alles, was Exporter liefern (node_exporter, restic-/borg-Exporter, SMART …).
 - **Proxmox VE, Dockhand und USV** – CPU, RAM und Platte jedes Nodes, jeder VM, jedes LXC- und
-  Docker-Containers (alle Docker-Hosts aus Dockhand, inkl. Health und ausstehender Image-Updates) auf einer Ressourcen-Seite mit Füllständen und Verlauf; Storages, SMART,
+  Docker-Containers (alle Docker-Hosts aus Dockhand, inkl. Health und ausstehender Image-Updates) mit Füllständen und Verlauf; Storages, SMART,
   ZFS, vzdump-Sicherungen; USV im Batteriebetrieb als Problem.
 - **Switches per SNMP** (v2c/v3) – jeder Switch mit Standard-MIBs (Cisco C1300, UniFi, MikroTik,
   TP-Link, Netgear …): schematische Front mit RJ45/SFP-Ports, Link, Geschwindigkeit, Traffic,
@@ -53,8 +53,11 @@ Schwesterprojekt von [dnsdeck](https://github.com/mrcdlm/dnsdeck) – gleiche Op
 - **Server-Hardware per Redfish** – HPE iLO, Dell iDRAC, Lenovo XCC, Supermicro: Zustand je
   Komponente, Netzteile, Lüfter, Temperaturen, Laufwerke/RAID mit SSD-Restlebensdauer, Leistung.
 - **Pi-hole** (v6) – Anfragen, geblockt %, Clients, Alter der Blockliste, Blocken an/aus, Updates.
-- **Dienste-Seite und Diagramme** – eine Karte je Integration mit Kennzahlen und Diagramm
-  (24 Stunden bis 1 Jahr; Rohwerte 30 Tage, Tageswerte 1 Jahr, einstellbar).
+- **Systeme** – alle Integrationen nach Bereich (Server, Netzwerk, Speicher, Strom, Anwendungen,
+  Überwachung), Probleme zuerst, mit Suche über Hosts, VMs, Container und Ports. Je Integration
+  eine Detailseite mit allem, was sie liefert: Kennzahlen und Diagramme (24 Stunden bis 1 Jahr;
+  Rohwerte 30 Tage, Tageswerte 1 Jahr, einstellbar), Hosts und Gäste, Hardware, Switch-Front
+  und Tabellen.
 - **Verlauf** – Statuswechsel und Fehler aller Integrationen, filterbar.
 - **Benachrichtigungen per Webhook** – Vorlagen für ntfy, Gotify, Discord, Slack, Telegram und
   Home Assistant; Check down/wieder up, Backup überfällig/fehlgeschlagen/wieder OK,
@@ -69,9 +72,9 @@ Schwesterprojekt von [dnsdeck](https://github.com/mrcdlm/dnsdeck) – gleiche Op
   AES-256-GCM verschlüsselt und nie von der API ausgeliefert; Login mit einem Passwort und
   Begrenzung der Fehlversuche.
 
-| Backups | Checks | Dienste | Verlauf |
+| Backups | Checks | Systeme | Verlauf |
 |---|---|---|---|
-| ![Backups](docs/screenshots/backups.de.png) | ![Checks](docs/screenshots/checks.de.png) | ![Dienste](docs/screenshots/services.de.png) | ![Verlauf](docs/screenshots/history.de.png) |
+| ![Backups](docs/screenshots/backups.de.png) | ![Checks](docs/screenshots/checks.de.png) | ![Systeme](docs/screenshots/systems.de.png) | ![Verlauf](docs/screenshots/history.de.png) |
 
 ## Schnellstart
 

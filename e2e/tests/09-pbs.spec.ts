@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { api, login, MOCK } from './helpers'
+import { api, login, MOCK, openSystem, problemList } from './helpers'
 
 interface Integration {
   id: number
@@ -42,15 +42,17 @@ test('Proxmox Backup Server: Backups je VM/CT/Host, Verify, Datastore-Belegung',
   await expect(ha.getByRole('img', { name: /Uptime 7 Tage: \d/ })).toBeVisible()
   await expect(page.locator('tr[data-backup="ct/200 (testbox)"]')).toContainText('local · lab')
 
-  // Dienste: Belegung je Datastore
-  await page.goto('/dienste')
+  // Systeme → „Speicher und Backup“ → Detailseite: Belegung je Datastore
+  await page.goto('/systeme')
+  await expect(page.locator('[data-category="storage"] [data-system="PBS"]')).toBeVisible()
+  await openSystem(page, 'PBS')
   const card = page.locator('[data-service="PBS"]')
   await expect(card.getByRole('row', { name: /offsite/ })).toContainText('93,5 %')
   await expect(card.getByRole('row', { name: /^local/ })).toContainText('73 %')
 
   // Gesamtstatus: Datastore fast voll
   await page.goto('/')
-  await expect(page.locator('[data-problem="used_pct"], [data-problem="Belegung"]').first()).toBeVisible()
+  await expect(problemList(page).locator('[data-problem="used_pct"], [data-problem="Belegung"]').first()).toBeVisible()
 
   const list = await api<Integration[]>(page, 'GET', '/api/integrations')
   await api(page, 'DELETE', `/api/integrations/${list.json.find((i) => i.name === 'PBS')!.id}`)

@@ -6,6 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Clearer structure: the "Services" and "Resources" pages are merged into **Systems**. It lists
+  all integrations grouped by area (servers and virtualization, network, storage and backup,
+  power, applications, monitoring), problems first, with a search across hosts, VMs,
+  containers and ports. Each integration has one detail page (`/systeme/<id>`) with everything
+  it delivers: its problems, metrics and chart, hosts and guests, hardware, switch front panel
+  and tables. Old addresses (`/dienste`, `/ressourcen`) redirect.
+- The overview lists every problem as its own row right below the overall status: what is
+  wrong, where (integration › host, VM, port or group), value or state and since when. Each
+  row links to the exact place – the backup or check row, the container, the switch port (its
+  details open) or the table row. Failed checks are listed one by one.
+- Calmer tiles: only tiles with problems get a coloured bar; they show the number of problems
+  instead of repeating them. Tiles without problems show a small status dot.
+- The navigation shows the number of errors next to "Dashboard".
+- Charts with too few values show a single line instead of an empty area.
+
+### Added
+- API: problems in `/api/overview` carry a stable `id`, `since` (start of the problem from the
+  history) and `resource_id`/`resource_name`; integration types carry a `category`.
+
 ## [0.8.0] – 2026-11-08
 
 This release also contains the changes of 0.5.0 to 0.7.0, which were tagged without release

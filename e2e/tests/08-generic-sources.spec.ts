@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { api, login, MOCK } from './helpers'
+import { api, login, MOCK, openSystem, problemList } from './helpers'
 
 interface Integration {
   id: number
@@ -61,9 +61,11 @@ test('HTTP-JSON: Werte per Formular-Liste, Schwellwert, Zeitstempel als Backup',
 
   // Schwellwert überschritten → Problem auf dem Dashboard
   await page.goto('/')
-  const problem = page.locator('[data-tile="Paperless"] [data-problem="Dokumente"]')
+  const problem = problemList(page).locator('[data-problem="Dokumente"]')
   await expect(problem).toContainText('1.523')
+  await expect(problem).toContainText('Paperless')
   await expect(page.locator('[data-tile="Paperless"]')).toHaveAttribute('data-tone', 'warning')
+  await expect(page.locator('[data-tile="Paperless"] [data-problem-count]')).toHaveText('1 Problem')
 
   // Zeitstempel als Backup
   await page.goto('/backups')
@@ -93,7 +95,7 @@ test('Prometheus: Abfragen mit Label je Ergebnis und Schwellwerten', async ({ pa
   expect(created.status).toBe(201)
   await api(page, 'POST', `/api/integrations/${created.json.id}/poll`)
 
-  await page.goto('/dienste')
+  await openSystem(page, 'Prometheus')
   const card = page.locator('[data-service="Prometheus"]')
   await expect(card.getByRole('button', { name: /CPU\s*12,4 %/ })).toBeVisible()
   await expect(card.getByRole('row', { name: /pve:9100/ })).toContainText('9,6 %')
@@ -107,7 +109,12 @@ test('Prometheus: Abfragen mit Label je Ergebnis und Schwellwerten', async ({ pa
   expect(test.json.error).toContain('Kaputt: Abfrage ungültig')
 
   await page.goto('/')
-  await expect(page.locator('[data-problem="Frei"]')).toContainText('pve:9100')
+  const frei = problemList(page).locator('[data-problem="Frei"]')
+  await expect(frei).toContainText('pve:9100')
+  // gruppierte Kennzahl: Sprung zur Zeile in den Details
+  await frei.click()
+  await expect(page).toHaveURL(/\/systeme\/\d+#grp-pve_9100$/)
+  await expect(card.getByRole('row', { name: /pve:9100/ })).toBeInViewport()
   await page.goto('/backups')
   await expect(page.locator('tr[data-backup="Restic"]')).toHaveCount(2)
 

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { api, expectNoHorizontalOverflow, login, mock, MOCK } from './helpers'
+import { api, expectNoHorizontalOverflow, login, mock, MOCK, overall, problemList } from './helpers'
 
 interface Integration {
   id: number
@@ -17,13 +17,17 @@ test('Backups, Checks und Gesamtstatus aus Healthchecks.io', async ({ page }) =>
   const id = created.json.id
   await api(page, 'POST', `/api/integrations/${id}/poll`)
 
-  // Dashboard: Gesamtstatus oben, Probleme in ihren Kacheln
+  // Dashboard: Gesamtstatus oben mit jedem Problem als Zeile, Kacheln nur mit Anzahl
   await page.goto('/')
-  await expect(page.getByText('2 Probleme')).toBeVisible()
+  await expect(overall(page).getByText('2 Probleme', { exact: true })).toBeVisible()
+  const list = problemList(page)
+  await expect(list.locator('[data-problem]').first()).toHaveAttribute('data-problem', 'Proxmox vzdump')
+  await expect(list.locator('[data-problem="Proxmox vzdump"]')).toContainText('Überfällig')
+  await expect(list.locator('[data-problem="Proxmox vzdump"]')).toContainText('Homelab')
+  await expect(list.locator('[data-problem="Borg Laptop"]')).toContainText('Bald fällig')
   const problems = page.locator('[data-tile="backups"]')
   await expect(problems).toHaveAttribute('data-tone', 'error')
-  await expect(problems.locator('[data-problem="Proxmox vzdump"]')).toContainText('Überfällig')
-  await expect(problems.locator('[data-problem="Borg Laptop"]')).toContainText('Bald fällig')
+  await expect(problems.locator('[data-problem-count]')).toHaveText('2 Probleme')
   await expect(problems).toContainText('3 Backups überwacht')
   // Zeitleiste: je Backup ein Balken, Probleme zuerst
   const timeline = page.locator('[data-tile="backup-timeline"]')
@@ -34,7 +38,13 @@ test('Backups, Checks und Gesamtstatus aus Healthchecks.io', async ({ page }) =>
   // Healthchecks als Ampel: vzdump ist down (zählt hier mit, steht aber als Backup in der Liste)
   await expect(page.locator('[data-tile="checks"]')).toContainText('1 Check ausgefallen')
 
+  // Problemzeile führt direkt zum Backup
+  await list.locator('[data-problem="Proxmox vzdump"]').click()
+  await expect(page).toHaveURL(/\/backups#backup-\d+-/)
+  await expect(page.locator('tr[data-backup="Proxmox vzdump"]')).toBeInViewport()
+
   // Backups: Probleme zuerst, Verlauf als Balken
+  await page.goto('/')
   await page.locator('[data-tile="backups"]').click()
   await expect(page).toHaveURL('/backups')
   const rows = page.locator('tr[data-backup]')
@@ -82,15 +92,21 @@ test('Backups, Checks und Gesamtstatus aus Healthchecks.io', async ({ page }) =>
   await page.goto('/')
   await mock.hcStatus('DynDNS', 'down')
   await api(page, 'POST', `/api/integrations/${id}/poll`)
-  await expect(page.getByText('3 Probleme')).toBeVisible()
-  // ausgefallene Checks stehen in der Checks-Kachel, die nach vorne rückt
+  await expect(overall(page).getByText('3 Probleme', { exact: true })).toBeVisible()
+  // ausgefallener Check als eigene Zeile; die Checks-Kachel zeigt die Anzahl
+  await expect(problemList(page).locator('[data-problem="DynDNS"]')).toContainText('ausgefallen')
   const checksTile = page.locator('[data-tile="checks"]')
-  await expect(checksTile.locator('[data-problem="DynDNS"]')).toContainText('ausgefallen')
+  await expect(checksTile.locator('[data-problem-count]')).toHaveText('1 Problem')
   await expect(checksTile).toContainText('2 Checks ausgefallen')
   await expect(checksTile).toHaveAttribute('data-tone', 'error')
+  // Zeile führt zum Check
+  await problemList(page).locator('[data-problem="DynDNS"]').click()
+  await expect(page).toHaveURL(/\/checks#check-\d+-/)
+  await expect(page.locator('tr[data-check="DynDNS"]')).toBeInViewport()
   await mock.hcStatus('DynDNS', 'up')
   await api(page, 'POST', `/api/integrations/${id}/poll`)
-  await expect(page.getByText('2 Probleme')).toBeVisible()
+  await page.goto('/')
+  await expect(overall(page).getByText('2 Probleme', { exact: true })).toBeVisible()
 
   // Standard-Höchstalter in den Einstellungen
   await page.goto('/einstellungen')
