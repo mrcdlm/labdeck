@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 )
 
 type execer interface {
@@ -80,8 +81,7 @@ func (s *Store) ListHistory(ctx context.Context, f HistoryFilter) ([]HistoryEntr
 		args = append(args, f.Kind)
 	}
 	if f.Problems {
-		bad := `('error', 'warning', 'overdue', 'failed', 'due_soon')`
-		where = append(where, "(c.to_status IN "+bad+" OR c.from_status IN "+bad+")")
+		where = append(where, "(c.to_status IN "+badStatuses+" OR c.from_status IN "+badStatuses+")")
 	}
 	if f.BeforeID != 0 {
 		where = append(where, "c.id < ?")
@@ -140,4 +140,41 @@ func (s *Store) SetBackupState(ctx context.Context, k BackupKey, state string) e
 		SELECT id, ?, ? FROM integrations WHERE id = ?
 		ON CONFLICT (integration_id, item_id) DO UPDATE SET state = excluded.state`, k.ItemID, state, k.IntegrationID)
 	return err
+}
+
+// badStatuses sind Zustände, die als Problem gelten (Status und Backup-Zustände).
+const badStatuses = `('error', 'warning', 'overdue', 'failed', 'due_soon')`
+
+// ProblemKey bezeichnet ein Element im Verlauf (Integration: ItemID leer).
+type ProblemKey struct {
+	IntegrationID int64
+	Kind          string
+	ItemID        string
+}
+
+// ProblemSince liefert je Element den Zeitpunkt, an dem es zuletzt aus einem
+// guten in einen schlechten Zustand gewechselt ist. Wechsel zwischen zwei
+// schlechten Zuständen (Warnung → Fehler) verschieben den Beginn nicht.
+func (s *Store) ProblemSince(ctx context.Context) (map[ProblemKey]time.Time, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT integration_id, kind, item_id, MAX(at) FROM status_changes
+		WHERE to_status IN `+badStatuses+` AND from_status NOT IN `+badStatuses+`
+		GROUP BY integration_id, kind, item_id`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[ProblemKey]time.Time{}
+	for rows.Next() {
+		var k ProblemKey
+		var at string
+		if err := rows.Scan(&k.IntegrationID, &k.Kind, &k.ItemID, &at); err != nil {
+			return nil, err
+		}
+		t, err := parseTime(at)
+		if err != nil {
+			return nil, err
+		}
+		out[k] = t
+	}
+	return out, rows.Err()
 }

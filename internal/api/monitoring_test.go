@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/mrcdlm/labdeck/internal/integrations/dockhand/dockhandtest"
 )
 
 // setupHC legt eine Healthchecks-Integration gegen den Fake an und fragt sie ab.
@@ -76,13 +78,15 @@ type overviewResp struct {
 		Total int `json:"total"`
 	} `json:"backups"`
 	Problems []struct {
-		Kind   string   `json:"kind"`
-		Status string   `json:"status"`
-		Name   string   `json:"name"`
-		State  string   `json:"state"`
-		Detail string   `json:"detail"`
-		Count  int      `json:"count"`
-		Items  []string `json:"items"`
+		ID              string  `json:"id"`
+		Kind            string  `json:"kind"`
+		Status          string  `json:"status"`
+		Name            string  `json:"name"`
+		IntegrationName string  `json:"integration_name"`
+		ItemID          string  `json:"item_id"`
+		State           string  `json:"state"`
+		Detail          string  `json:"detail"`
+		Since           *string `json:"since"`
 	} `json:"problems"`
 }
 
@@ -238,9 +242,12 @@ func TestOverviewAPI(t *testing.T) {
 	for _, p := range got.Problems {
 		kinds = append(kinds, p.Kind+":"+p.Name)
 	}
+	// Ausgefallene Checks einzeln, mit stabiler ID und Beginn aus dem Verlauf
 	if len(got.Problems) != 4 || got.Problems[0].Kind != "integration" || !strings.Contains(got.Problems[0].Detail, "Zugriff verweigert") ||
-		got.Problems[2].Kind != "checks" || got.Problems[2].Name != "Homelab" || got.Problems[2].Count != 1 ||
-		len(got.Problems[2].Items) != 1 || got.Problems[2].Items[0] != "DynDNS" || got.Checks.Status != "error" {
+		got.Problems[2].Kind != "check" || got.Problems[2].Name != "DynDNS" || got.Problems[2].IntegrationName != "Homelab" ||
+		got.Problems[2].ID != fmt.Sprintf("check:%d:%s", id, got.Problems[2].ItemID) || got.Problems[2].Since == nil ||
+		got.Problems[0].ID != fmt.Sprintf("integration:%d:", id) || got.Problems[0].Since == nil ||
+		got.Checks.Status != "error" {
 		t.Fatalf("Probleme: %v %+v", kinds, got.Problems)
 	}
 }
@@ -273,6 +280,44 @@ func TestOverviewMetricThresholds(t *testing.T) {
 	json.Unmarshal([]byte(raw), &got)
 	if got.Status != "error" || len(got.Problems) != 1 || got.Problems[0].Kind != "metric" || got.Problems[0].Name != "Disk" ||
 		*got.Problems[0].Value != 95 || got.Problems[0].Unit != "%" || !strings.Contains(raw, `"integration_type":"httpjson"`) {
+		t.Fatalf("%s", raw)
+	}
+}
+
+func TestOverviewProblemResource(t *testing.T) {
+	e := newTestEnv(t, nil)
+	c := e.login(t)
+	srv := httptest.NewServer(dockhandtest.New("dh_testtoken").Demo())
+	defer srv.Close()
+	resp := e.do(t, "POST", "/api/integrations", fmt.Sprintf(`{"type":"dockhand","name":"Dockhand","enabled":true,
+		"interval_seconds":60,"timeout_seconds":5,"tls_verify":true,"config":{"base_url":%q},
+		"secrets":{"api_token":"dh_testtoken"}}`, srv.URL), c)
+	if resp.StatusCode != 201 {
+		t.Fatalf("anlegen: %d %s", resp.StatusCode, body(t, resp.Body))
+	}
+	var it integrationResp
+	json.NewDecoder(resp.Body).Decode(&it)
+	e.do(t, "POST", fmt.Sprintf("/api/integrations/%d/poll", it.ID), "", c)
+
+	var got struct {
+		Problems []struct {
+			Kind         string  `json:"kind"`
+			Group        string  `json:"group"`
+			ResourceID   string  `json:"resource_id"`
+			ResourceName string  `json:"resource_name"`
+			Since        *string `json:"since"`
+		} `json:"problems"`
+	}
+	raw := body(t, e.do(t, "GET", "/api/overview", "", c).Body)
+	json.Unmarshal([]byte(raw), &got)
+	// vaultwarden ist unhealthy → Kennzahl mit Bezug zum Container
+	found := false
+	for _, p := range got.Problems {
+		if p.Kind == "metric" && p.ResourceName == "vaultwarden" && p.ResourceID != "" && p.Since != nil {
+			found = true
+		}
+	}
+	if !found {
 		t.Fatalf("%s", raw)
 	}
 }

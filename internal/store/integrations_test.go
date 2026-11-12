@@ -118,3 +118,41 @@ func TestPollResults(t *testing.T) {
 		t.Fatalf("Tageswerte nach Löschen: %+v", d)
 	}
 }
+
+func TestProblemSince(t *testing.T) {
+	s, ctx := openTest(t), context.Background()
+	it, _ := s.CreateIntegration(ctx, Integration{Type: "x", Name: "X", Enabled: true, Interval: time.Minute,
+		Timeout: time.Second, Config: "{}"}, nil)
+	t0 := time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC)
+	err := s.AddStatusChanges(ctx, it.ID, []StatusChange{
+		// Kennzahl: ok → Warnung → Fehler; Beginn bleibt bei der Warnung
+		{Kind: "metric", ItemID: "disk", From: "ok", To: "warning", At: t0},
+		{Kind: "metric", ItemID: "disk", From: "warning", To: "error", At: t0.Add(time.Hour)},
+		// Check: fällt aus, erholt sich, fällt erneut aus; Beginn = zweiter Ausfall
+		{Kind: "check", ItemID: "c1", From: "new", To: "error", At: t0},
+		{Kind: "check", ItemID: "c1", From: "error", To: "ok", At: t0.Add(time.Hour)},
+		{Kind: "check", ItemID: "c1", From: "ok", To: "error", At: t0.Add(2 * time.Hour)},
+		// Integration ohne Element
+		{Kind: "integration", From: "ok", To: "error", At: t0.Add(3 * time.Hour)},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.ProblemSince(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[ProblemKey]time.Time{
+		{it.ID, "metric", "disk"}:  t0,
+		{it.ID, "check", "c1"}:     t0.Add(2 * time.Hour),
+		{it.ID, "integration", ""}: t0.Add(3 * time.Hour),
+	}
+	if len(got) != len(want) {
+		t.Fatalf("%v", got)
+	}
+	for k, w := range want {
+		if !got[k].Equal(w) {
+			t.Errorf("%v: %v, erwartet %v", k, got[k], w)
+		}
+	}
+}

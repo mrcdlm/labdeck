@@ -189,6 +189,8 @@ func (s *Server) handleSetBackupMaxAge(w http.ResponseWriter, r *http.Request) {
 // --- Gesamtstatus --------------------------------------------------------------
 
 type problemDTO struct {
+	// ID: stabil je Problem (<kind>:<integration>:<item>)
+	ID string `json:"id"`
 	// Kind: integration, check, backup, metric
 	Kind            string              `json:"kind"`
 	Status          integrations.Status `json:"status"` // error, warning
@@ -206,11 +208,13 @@ type problemDTO struct {
 	State string `json:"state,omitempty"`
 	// Detail: Fehlermeldung der Integration
 	Detail string `json:"detail,omitempty"`
-	// Checks: Anzahl und Namen der ausgefallenen Checks
-	Count int      `json:"count,omitempty"`
-	Items []string `json:"items,omitempty"`
+	// Resource: Host, VM, Container, Port …, zu dem die Kennzahl gehört
+	ResourceID   string `json:"resource_id,omitempty"`
+	ResourceName string `json:"resource_name,omitempty"`
 	// At: letzter Erfolg (Integration), letzter Ping (Check), letzter Lauf (Backup)
 	At *time.Time `json:"at,omitempty"`
+	// Since: Beginn des Problems laut Verlauf (fehlt, wenn nicht bekannt)
+	Since *time.Time `json:"since,omitempty"`
 }
 
 type checksSummary struct {
@@ -231,7 +235,7 @@ type overviewDTO struct {
 	Problems []problemDTO    `json:"problems"`
 }
 
-var kindOrder = map[string]int{"integration": 0, "backup": 1, "checks": 2, "metric": 3}
+var kindOrder = map[string]int{"integration": 0, "backup": 1, "check": 2, "metric": 3}
 
 func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 	all, err := s.integrations.List(r.Context())
@@ -263,9 +267,19 @@ func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 					continue
 				}
 				val := m.Value
-				out.Problems = append(out.Problems, problemDTO{Kind: "metric", Status: m.Status, IntegrationID: v.ID,
+				p := problemDTO{Kind: "metric", Status: m.Status, IntegrationID: v.ID,
 					IntegrationName: v.Name, IntegrationType: v.Type, ItemID: m.Key, Name: m.Name, Group: m.Group,
-					Value: &val, Unit: m.Unit})
+					Value: &val, Unit: m.Unit}
+				if m.Resource != "" {
+					p.ResourceID = m.Resource
+					for _, res := range v.Snapshot.Resources {
+						if res.ID == m.Resource {
+							p.ResourceName = res.Name
+							break
+						}
+					}
+				}
+				out.Problems = append(out.Problems, p)
 			}
 		}
 	}
@@ -289,28 +303,33 @@ func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 
 	checks := collectChecks(active, now)
 	out.Checks = checksSummary{Total: len(checks), Statuses: map[integrations.Status]int{}, Status: integrations.StatusUnknown}
-	// Healthchecks als Ampel: ausgefallene Checks je Integration in einer Zeile;
-	// Karenzzeit ist (noch) kein Problem. Checks, die zugleich Backups sind,
-	// erscheinen nur als Backup.
-	failed := map[int64]*problemDTO{}
-	var order []int64
+	// Ausgefallene Checks einzeln; Karenzzeit ist (noch) kein Problem.
+	// Checks, die zugleich Backups sind, erscheinen nur als Backup.
 	for _, c := range checks {
 		out.Checks.Statuses[c.Status]++
 		if c.Status != integrations.StatusError || isBackup[store.BackupKey{IntegrationID: c.IntegrationID, ItemID: c.ID}] {
 			continue
 		}
-		p, ok := failed[c.IntegrationID]
-		if !ok {
-			p = &problemDTO{Kind: "checks", Status: integrations.StatusError, IntegrationID: c.IntegrationID,
-				IntegrationName: c.IntegrationName, IntegrationType: "healthchecks", Name: c.IntegrationName}
-			failed[c.IntegrationID] = p
-			order = append(order, c.IntegrationID)
-		}
-		p.Count++
-		p.Items = append(p.Items, c.Name)
+		out.Problems = append(out.Problems, problemDTO{Kind: "check", Status: integrations.StatusError,
+			IntegrationID: c.IntegrationID, IntegrationName: c.IntegrationName, IntegrationType: "healthchecks",
+			ItemID: c.ID, Name: c.Name, Group: c.Group, State: c.Raw, At: c.LastPing})
 	}
-	for _, id := range order {
-		out.Problems = append(out.Problems, *failed[id])
+
+	// Beginn je Problem aus dem Verlauf; ohne Verlauf fehlt die Angabe nur
+	since := map[store.ProblemKey]time.Time{}
+	if s.history != nil {
+		if m, err := s.history.ProblemSince(r.Context()); err != nil {
+			s.log.Warn("Beginn der Probleme laden", "err", err)
+		} else {
+			since = m
+		}
+	}
+	for i := range out.Problems {
+		p := &out.Problems[i]
+		p.ID = p.Kind + ":" + strconv.FormatInt(p.IntegrationID, 10) + ":" + p.ItemID
+		if t, ok := since[store.ProblemKey{IntegrationID: p.IntegrationID, Kind: p.Kind, ItemID: p.ItemID}]; ok {
+			p.Since = &t
+		}
 	}
 	switch {
 	case len(checks) == 0:

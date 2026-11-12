@@ -12,6 +12,7 @@ import (
 
 type historyStore interface {
 	ListHistory(ctx context.Context, f store.HistoryFilter) ([]store.HistoryEntry, error)
+	ProblemSince(ctx context.Context) (map[store.ProblemKey]time.Time, error)
 }
 
 type historyEntryDTO struct {
