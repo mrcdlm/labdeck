@@ -438,16 +438,29 @@
       "load": "Last",
       "input_voltage": "Eingangsspannung"
     },
-    "dockhand": {
+    "arcane": {
       "containers_running": "Container aktiv",
-      "cpu": "CPU",
-      "mem_pct": "RAM",
-      "updates": "Updates verfügbar",
       "containers": "Container",
+      "unhealthy": "unhealthy",
+      "stacks_running": "Stacks aktiv",
+      "stacks": "Stacks",
+      "updates": "Updates verfügbar",
       "hosts": "Docker-Hosts",
       "container_health": "Container unhealthy",
+      "stack_partial": "Stack nur teilweise aktiv",
       "online": "Online",
+      "cpu": "CPU",
       "mem": "RAM"
+    },
+    "netbird": {
+      "peers_online": "Peers online",
+      "peers": "Peers",
+      "watched_offline": "Überwachte offline",
+      "proxies_active": "Proxy-Dienste aktiv",
+      "proxies": "Proxy-Dienste",
+      "peer": "Überwachter Peer",
+      "proxy": "Reverse-Proxy-Dienst",
+      "cluster": "Proxy-Cluster offline"
     },
     "snmp": {
       "ports_up": "Ports aktiv",
@@ -623,7 +636,9 @@
       "container": "Docker",
       "switch": "Switch",
       "port": "Port",
-      "server": "Server"
+      "server": "Server",
+      "peer": "Peer",
+      "proxy": "Proxy"
     },
     "state": {
       "running": "Läuft",
@@ -645,6 +660,41 @@
     "hint": "Zeile anklicken für den Verlauf. Netzwerk: Daten seit dem Start der VM bzw. des Containers.",
     "network": "Netzwerk",
     "hardware": "Hardware"
+  },
+  "vpn": {
+    "title": "VPN & Reverse Proxy",
+    "online": "{{count}} von {{total}} Peers online",
+    "watchedProblems_one": "{{count}} überwachter Peer mit Problem",
+    "watchedProblems_other": "{{count}} überwachte Peers mit Problem",
+    "filter": "Peers",
+    "filters": {
+      "watched": "Überwacht",
+      "all": "Alle"
+    },
+    "peers": "Peers",
+    "proxies": "Reverse-Proxy-Dienste",
+    "watched": "überwacht",
+    "now": "jetzt",
+    "certIssued": "Zertifikat {{time}}",
+    "col": {
+      "address": "Adresse",
+      "os": "Betriebssystem",
+      "version": "Version",
+      "lastSeen": "Zuletzt gesehen"
+    },
+    "state": {
+      "online": "Online",
+      "offline": "Offline",
+      "login_expired": "Login abgelaufen",
+      "approval_required": "Freigabe nötig",
+      "active": "Aktiv",
+      "pending": "Wird eingerichtet",
+      "certificate_pending": "Zertifikat ausstehend",
+      "certificate_failed": "Zertifikat fehlgeschlagen",
+      "tunnel_not_created": "Kein Tunnel",
+      "error": "Fehler",
+      "disabled": "Deaktiviert"
+    }
   },
   "units": {
     "mainsOn": "Netzbetrieb",

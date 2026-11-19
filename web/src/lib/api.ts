@@ -131,7 +131,7 @@ export interface Metric {
   resource?: string
 }
 
-export type ResourceKind = 'node' | 'vm' | 'ct' | 'container' | 'switch' | 'port' | 'server'
+export type ResourceKind = 'node' | 'vm' | 'ct' | 'container' | 'switch' | 'port' | 'server' | 'peer' | 'proxy'
 
 /** Host, VM oder Container mit Auslastung. */
 export interface Resource {

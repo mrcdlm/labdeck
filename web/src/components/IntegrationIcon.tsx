@@ -16,10 +16,12 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 
+import arcane from '@/assets/brands/arcane.svg'
 import discord from '@/assets/brands/discord.svg'
 import healthchecks from '@/assets/brands/healthchecks.svg'
 import homeassistant from '@/assets/brands/home-assistant.svg'
 import immich from '@/assets/brands/immich.svg'
+import netbird from '@/assets/brands/netbird.svg'
 import ntfy from '@/assets/brands/ntfy.svg'
 import nut from '@/assets/brands/nut.svg'
 import prometheus from '@/assets/brands/prometheus.svg'
@@ -50,6 +52,8 @@ const icons: Record<string, LucideIcon> = {
 const logos: Record<string, { src: string; dark?: boolean }> = {
   healthchecks: { src: healthchecks },
   immich: { src: immich },
+  arcane: { src: arcane },
+  netbird: { src: netbird },
   pve: { src: proxmox, dark: true },
   pbs: { src: proxmox, dark: true },
   prometheus: { src: prometheus },

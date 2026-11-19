@@ -250,7 +250,7 @@ function ServiceTile({
 
 const pct = (used?: number, total?: number) => (used !== undefined && total ? (used / total) * 100 : undefined)
 
-/** Alle Hosts/Nodes (Proxmox VE, Dockhand) mit kleinen CPU- und RAM-Balken. */
+/** Alle Hosts/Nodes (Proxmox VE, Arcane) mit kleinen CPU- und RAM-Balken. */
 function HostsTile({
   integrations,
   icons,

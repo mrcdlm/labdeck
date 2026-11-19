@@ -17,12 +17,13 @@ import (
 	"github.com/mrcdlm/labdeck/internal/config"
 	"github.com/mrcdlm/labdeck/internal/events"
 	"github.com/mrcdlm/labdeck/internal/integrations"
-	"github.com/mrcdlm/labdeck/internal/integrations/dockhand"
+	"github.com/mrcdlm/labdeck/internal/integrations/arcane"
 	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks"
 	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks/hctest"
 	"github.com/mrcdlm/labdeck/internal/integrations/httpjson"
 	"github.com/mrcdlm/labdeck/internal/integrations/immich"
 	"github.com/mrcdlm/labdeck/internal/integrations/immich/immichtest"
+	"github.com/mrcdlm/labdeck/internal/integrations/netbird"
 	"github.com/mrcdlm/labdeck/internal/integrations/nut"
 	"github.com/mrcdlm/labdeck/internal/integrations/pbs"
 	"github.com/mrcdlm/labdeck/internal/integrations/pihole"
@@ -82,7 +83,7 @@ func newTestEnv(t *testing.T, static fstest.MapFS) *testEnv {
 	imSrv := httptest.NewServer(im)
 	t.Cleanup(imSrv.Close)
 	box, _ := secrets.New(bytes.Repeat([]byte{1}, 32))
-	mgr := integrations.NewManager(integrations.NewRegistry(dockhand.New(), healthchecks.New(), httpjson.New(), immich.New(), nut.New(), pbs.New(), pihole.New(), prometheus.New(), pve.New(), redfish.New(), snmp.New()), st, box,
+	mgr := integrations.NewManager(integrations.NewRegistry(arcane.New(), healthchecks.New(), httpjson.New(), immich.New(), netbird.New(), nut.New(), pbs.New(), pihole.New(), prometheus.New(), pve.New(), redfish.New(), snmp.New()), st, box,
 		func(string) (string, bool) { return "", false }, log)
 	mgr.Pub = broker
 	liveBuf := live.New()

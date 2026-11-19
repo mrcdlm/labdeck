@@ -36,7 +36,7 @@ const integrations = (m) => [
     type: 'pve', name: 'Proxmox VE', config: { base_url: `${m}/pve`, token_id: 'labdeck@pve!dashboard', backups: false },
     secrets: { token_secret: 'pve-secret' },
   },
-  { type: 'dockhand', name: 'Dockhand', config: { base_url: `${m}/dockhand` }, secrets: { api_token: 'dh_mock' } },
+  { type: 'arcane', name: 'Arcane', config: { base_url: `${m}/arcane` }, secrets: { api_key: 'arc_mock' } },
   { type: 'nut', name: 'USV', config: { host: new URL(m).hostname, port: 8794 }, secrets: {} },
   {
     type: 'snmp', name: 'Core-Switch', config: { host: new URL(m).hostname, port: 8796, lags: true },

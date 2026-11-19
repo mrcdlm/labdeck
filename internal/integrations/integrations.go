@@ -57,6 +57,8 @@ const (
 	KindSwitch    = "switch"    // Netzwerk-Switch (Ports als KindPort darunter)
 	KindPort      = "port"      // Switch-Port; Info: media, unit, pos, speed …
 	KindServer    = "server"    // Server-Hardware über den BMC (Redfish, z. B. iLO)
+	KindPeer      = "peer"      // VPN-Peer (NetBird); Info: ip, dns, os, version, last_seen, watched
+	KindProxy     = "proxy"     // Reverse-Proxy-Dienst (NetBird); Info: targets, cluster, cert_issued
 )
 
 // Resource ist ein Host, eine VM oder ein Container mit Auslastung.

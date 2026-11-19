@@ -10,6 +10,7 @@ import { Segmented } from '@/components/Segmented'
 import { ServerCard } from '@/components/ServerView'
 import { StatusBadge } from '@/components/StatusBadge'
 import { SwitchCard } from '@/components/SwitchView'
+import { VpnCard } from '@/components/VpnView'
 import { GroupTables, Stat } from '@/components/systems/MetricParts'
 import { GuestTable, HostCard } from '@/components/systems/ResourceParts'
 import { Button } from '@/components/ui/button'
@@ -143,7 +144,7 @@ function Metrics({ integration: i }: { integration: Integration }) {
   )
 }
 
-/** Hosts mit ihren Gästen (Proxmox VE, Dockhand), filter- und sortierbar. */
+/** Hosts mit ihren Gästen (Proxmox VE, Arcane), filter- und sortierbar. */
 function Hosts({ integration: i, icon }: { integration: Integration; icon?: string }) {
   const { t } = useTranslation()
   const [query, setQuery] = useState('')
@@ -276,6 +277,11 @@ export function SystemDetail() {
               {switches.map((sw) => (
                 <SwitchCard key={sw.id} integration={i} sw={sw} />
               ))}
+            </Section>
+          )}
+          {resources.some((r) => r.kind === 'peer' || r.kind === 'proxy') && (
+            <Section title={t('vpn.title')}>
+              <VpnCard integration={i} />
             </Section>
           )}
           {grouped.length > 0 && (

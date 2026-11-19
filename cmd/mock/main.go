@@ -13,14 +13,15 @@
 //	HTTP-JSON         http://localhost:8790/json/stats     Header: Authorization: Token json-token
 //	Proxmox Backup    http://localhost:8790/pbs            Token-ID: labdeck@pbs!dashboard, Secret: pbs-secret
 //	Proxmox VE        http://localhost:8790/pve            Token-ID: labdeck@pve!dashboard, Secret: pve-secret
-//	Dockhand          http://localhost:8790/dockhand       API-Token: dh_mock
+//	Arcane            http://localhost:8790/arcane         API-Key: arc_mock
 //	USV (NUT)         Host localhost, Port 8793 (-nut-addr), USV „ups“, ohne Anmeldung
 //	Switch (SNMP)     Host localhost, Port 8794 (-snmp-addr, Cisco C1300), 8795 (8-Port-Switch), v2c, Community: labdeck-ro
 //	Redfish (iLO 5)   http://localhost:8790/ilo              Benutzer: labdeck, Passwort: ilo-pass
 //	Redfish (BMC)     http://localhost:8790/bmc              Benutzer: labdeck, Passwort: ilo-pass (ohne HPE-Erweiterungen)
 //	Pi-hole (v6)      http://localhost:8790/pihole           App-Passwort: pihole-app
+//	NetBird           http://localhost:8790/netbird          Access Token: nbp_mock
 //
-// Steuerung (ohne Key), {svc} = healthchecks | immich | prometheus | json | pbs | pve | dockhand | ilo | bmc | pihole:
+// Steuerung (ohne Key), {svc} = healthchecks | immich | prometheus | json | pbs | pve | arcane | ilo | bmc | pihole | netbird:
 //
 //	POST /_{svc}/fail?status=500                    Ausfälle simulieren (status=0 beendet)
 //	POST /_{svc}/broken?on=1                        kaputtes JSON liefern (on=0 beendet)
@@ -28,13 +29,14 @@
 //	GET  /_{svc}/requests                           Anzahl der API-Anfragen
 //	POST /_healthchecks/status?name=DynDNS&status=down   Status eines Checks setzen
 //	POST /_immich/photos?n=100                      Fotos hinzufügen (Verlauf)
-//	POST /_dockhand/health?name=jellyfin&value=unhealthy   Health eines Containers setzen
+//	POST /_arcane/health?name=jellyfin&value=unhealthy     Health eines Containers setzen
 //	POST /_nut/status?value=OB+DISCHRG              Status der USV setzen (OL = Netz)
 //	POST /_snmp/link?name=gi1/0/12&up=1             Link eines Ports schalten (C1300)
 //	POST /_snmp/silent?on=1                         Switch antwortet nicht mehr (on=0 beendet)
 //	POST /_ilo/psu?n=1&health=Critical              Netzteil-Zustand setzen (iLO 5, n ab 0)
 //	POST /_ilo/power?on=0                           Server aus- bzw. einschalten (iLO 5)
 //	POST /_pihole/blocking?value=disabled           Blocken aus- bzw. einschalten (enabled)
+//	POST /_netbird/peer?name=nas&connected=0          Peer trennen bzw. verbinden
 //
 // Webhook-Empfänger: beliebige Anfragen an /hook/… werden aufgezeichnet,
 // GET /_hooks liefert sie, DELETE /_hooks leert die Liste.
@@ -48,9 +50,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mrcdlm/labdeck/internal/integrations/dockhand/dockhandtest"
+	"github.com/mrcdlm/labdeck/internal/integrations/arcane/arcanetest"
 	"github.com/mrcdlm/labdeck/internal/integrations/healthchecks/hctest"
 	"github.com/mrcdlm/labdeck/internal/integrations/immich/immichtest"
+	"github.com/mrcdlm/labdeck/internal/integrations/netbird/netbirdtest"
 	"github.com/mrcdlm/labdeck/internal/integrations/nut/nuttest"
 	"github.com/mrcdlm/labdeck/internal/integrations/pbs/pbstest"
 	"github.com/mrcdlm/labdeck/internal/integrations/pihole/piholetest"
@@ -129,10 +132,10 @@ func main() {
 	mount(mux, "json", &jsonStatus{})
 	mount(mux, "pbs", pbstest.New("labdeck@pbs!dashboard:pbs-secret", pbstest.Demo()...))
 	mount(mux, "pve", pvetest.New("labdeck@pve!dashboard=pve-secret").Demo())
-	dh := dockhandtest.New("dh_mock").Demo()
-	mount(mux, "dockhand", dh)
-	mux.HandleFunc("POST /_dockhand/health", func(w http.ResponseWriter, r *http.Request) {
-		dh.SetHealth(r.URL.Query().Get("name"), r.URL.Query().Get("value"))
+	ar := arcanetest.New("arc_mock").Demo()
+	mount(mux, "arcane", ar)
+	mux.HandleFunc("POST /_arcane/health", func(w http.ResponseWriter, r *http.Request) {
+		ar.SetHealth(r.URL.Query().Get("name"), r.URL.Query().Get("value"))
 		w.WriteHeader(http.StatusNoContent)
 	})
 
@@ -160,6 +163,19 @@ func main() {
 		w.WriteHeader(http.StatusNoContent)
 	})
 
+	nb := netbirdtest.New("nbp_mock").Demo()
+	mount(mux, "netbird", nb)
+	mux.HandleFunc("POST /_netbird/peer", func(w http.ResponseWriter, r *http.Request) {
+		nb.Update(func(f *netbirdtest.Fake) {
+			for i := range f.Peers {
+				if f.Peers[i].Name == r.URL.Query().Get("name") {
+					f.Peers[i].Connected = r.URL.Query().Get("connected") != "0"
+				}
+			}
+		})
+		w.WriteHeader(http.StatusNoContent)
+	})
+
 	(&hookRecorder{}).mount(mux)
 
 	nutSrv, err := nuttest.Start(*nutAddr, nuttest.Demo())
@@ -177,6 +193,6 @@ func main() {
 
 	mux.HandleFunc("GET /_health", func(w http.ResponseWriter, _ *http.Request) { w.Write([]byte("ok")) })
 
-	log.Printf("Mock auf %s – Healthchecks: /healthchecks (hc-readonly), Immich: /immich (immich-admin), Prometheus: /prometheus, JSON: /json/stats, PBS: /pbs, PVE: /pve, Dockhand: /dockhand", *addr)
+	log.Printf("Mock auf %s – Healthchecks: /healthchecks (hc-readonly), Immich: /immich (immich-admin), Prometheus: /prometheus, JSON: /json/stats, PBS: /pbs, PVE: /pve, Arcane: /arcane, NetBird: /netbird", *addr)
 	log.Fatal(http.ListenAndServe(*addr, mux))
 }

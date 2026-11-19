@@ -438,16 +438,29 @@
       "load": "load",
       "input_voltage": "input voltage"
     },
-    "dockhand": {
+    "arcane": {
       "containers_running": "containers running",
-      "cpu": "CPU",
-      "mem_pct": "RAM",
-      "updates": "updates available",
       "containers": "containers",
+      "unhealthy": "unhealthy",
+      "stacks_running": "stacks running",
+      "stacks": "stacks",
+      "updates": "updates available",
       "hosts": "Docker hosts",
       "container_health": "container unhealthy",
+      "stack_partial": "stack partially running",
       "online": "online",
+      "cpu": "CPU",
       "mem": "RAM"
+    },
+    "netbird": {
+      "peers_online": "peers online",
+      "peers": "peers",
+      "watched_offline": "monitored offline",
+      "proxies_active": "proxy services active",
+      "proxies": "proxy services",
+      "peer": "monitored peer",
+      "proxy": "reverse proxy service",
+      "cluster": "proxy cluster offline"
     },
     "snmp": {
       "ports_up": "Ports up",
@@ -623,7 +636,9 @@
       "container": "Docker",
       "switch": "Switch",
       "port": "Port",
-      "server": "Server"
+      "server": "Server",
+      "peer": "Peer",
+      "proxy": "Proxy"
     },
     "state": {
       "running": "Running",
@@ -646,6 +661,42 @@
     "network": "Network",
     "hardware": "Hardware"
   },
+  "vpn": {
+    "title": "VPN & reverse proxy",
+    "online": "{{count}} of {{total}} peers online",
+    "watchedProblems_one": "{{count}} monitored peer with a problem",
+    "watchedProblems_other": "{{count}} monitored peers with a problem",
+    "filter": "Peers",
+    "filters": {
+      "watched": "Monitored",
+      "all": "All"
+    },
+    "peers": "Peers",
+    "proxies": "Reverse proxy services",
+    "watched": "monitored",
+    "now": "now",
+    "certIssued": "Certificate {{time}}",
+    "col": {
+      "address": "Address",
+      "os": "Operating system",
+      "version": "Version",
+      "lastSeen": "Last seen"
+    },
+    "state": {
+      "online": "Online",
+      "offline": "Offline",
+      "login_expired": "Login expired",
+      "approval_required": "Approval required",
+      "active": "Active",
+      "pending": "Setting up",
+      "certificate_pending": "Certificate pending",
+      "certificate_failed": "Certificate failed",
+      "tunnel_not_created": "No tunnel",
+      "error": "Error",
+      "disabled": "Disabled"
+    }
+  },
+
   "units": {
     "mainsOn": "On mains",
     "mainsOff": "On battery",

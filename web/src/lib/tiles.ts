@@ -12,7 +12,7 @@ export const GRID_MARGIN = 16
 export const MAX_TILE_HEIGHT = 24
 
 /** Integrationstypen, die Hosts liefern (Kachel „Hosts“). */
-const hostTypes = ['pve', 'dockhand']
+const hostTypes = ['pve', 'arcane']
 
 /** Eingebaute und Integrations-Kacheln, die es gerade geben kann. */
 export function availableTiles(integrations: Integration[]): string[] {

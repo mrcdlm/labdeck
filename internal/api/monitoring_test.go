@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mrcdlm/labdeck/internal/integrations/dockhand/dockhandtest"
+	"github.com/mrcdlm/labdeck/internal/integrations/arcane/arcanetest"
 )
 
 // setupHC legt eine Healthchecks-Integration gegen den Fake an und fragt sie ab.
@@ -287,11 +287,11 @@ func TestOverviewMetricThresholds(t *testing.T) {
 func TestOverviewProblemResource(t *testing.T) {
 	e := newTestEnv(t, nil)
 	c := e.login(t)
-	srv := httptest.NewServer(dockhandtest.New("dh_testtoken").Demo())
+	srv := httptest.NewServer(arcanetest.New("arc_testtoken").Demo())
 	defer srv.Close()
-	resp := e.do(t, "POST", "/api/integrations", fmt.Sprintf(`{"type":"dockhand","name":"Dockhand","enabled":true,
+	resp := e.do(t, "POST", "/api/integrations", fmt.Sprintf(`{"type":"arcane","name":"Arcane","enabled":true,
 		"interval_seconds":60,"timeout_seconds":5,"tls_verify":true,"config":{"base_url":%q},
-		"secrets":{"api_token":"dh_testtoken"}}`, srv.URL), c)
+		"secrets":{"api_key":"arc_testtoken"}}`, srv.URL), c)
 	if resp.StatusCode != 201 {
 		t.Fatalf("anlegen: %d %s", resp.StatusCode, body(t, resp.Body))
 	}

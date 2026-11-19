@@ -85,7 +85,7 @@ type dashboardsDTO struct {
 }
 
 // Integrationstypen, die Hosts/Nodes liefern (Kachel „Hosts“).
-var hostTypes = []string{"pve", "dockhand"}
+var hostTypes = []string{"pve", "arcane"}
 
 var (
 	metricTileID = regexp.MustCompile(`^metric:[a-z0-9-]{1,40}$`)

@@ -157,10 +157,12 @@ var catalog = map[string]entry{
 	"pve.no_nodes":     {"Das Token sieht keine Nodes – Rolle PVEAuditor auf / für das Token vergeben", "The token sees no nodes – give the token the role PVEAuditor on /"},
 	"pve.node_missing": {"Node {nodes} nicht gefunden oder für das Token nicht sichtbar", "Node {nodes} not found or not visible to the token"},
 
-	// Dockhand
-	"dockhand.unexpected":  {"Antwort ist keine Dockhand-API – ist die Adresse die Dockhand-Oberfläche?", "The response is not the Dockhand API – is the address the Dockhand web interface?"},
-	"dockhand.no_envs":     {"Dockhand kennt keine Umgebung (Docker-Host) oder das Token darf keine sehen", "Dockhand knows no environment (Docker host) or the token may not see any"},
-	"dockhand.env_missing": {"Umgebung {names} in Dockhand nicht gefunden", "Environment {names} not found in Dockhand"},
+	// Arcane
+	"arcane.unexpected":  {"Antwort ist keine Arcane-API – ist die Adresse die Arcane-Oberfläche?", "The response is not the Arcane API – is the address the Arcane web interface?"},
+	"arcane.no_envs":     {"Arcane kennt keine Umgebung (Docker-Host) oder der API-Key darf keine sehen", "Arcane knows no environment (Docker host) or the API key may not see any"},
+	"arcane.env_missing": {"Umgebung {names} in Arcane nicht gefunden", "Environment {names} not found in Arcane"},
+	// NetBird
+	"netbird.unexpected": {"Antwort ist keine NetBird-Management-API – ist die Adresse der Management-Server (Cloud: https://api.netbird.io)?", "The response is not the NetBird management API – is the address the management server (cloud: https://api.netbird.io)?"},
 
 	// USV (NUT)
 	"nut.protocol":      {"Antwort ist kein NUT-Protokoll – läuft unter Host und Port upsd?", "The response is not the NUT protocol – is upsd running at host and port?"},

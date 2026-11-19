@@ -203,7 +203,7 @@ func TestAvailableTilesHosts(t *testing.T) {
 	if strings.Join(got, " ") != "backups checks integration:2 backup-timeline events" {
 		t.Errorf("ohne Hosts: %v", got)
 	}
-	got = availableTiles([]integrations.View{{ID: 3, Type: "dockhand"}, {ID: 4, Type: "pve"}})
+	got = availableTiles([]integrations.View{{ID: 3, Type: "arcane"}, {ID: 4, Type: "pve"}})
 	if w, _ := defaultSize("hosts"); strings.Join(got, " ") != "backups checks integration:3 integration:4 hosts backup-timeline events" || w != 8 {
 		t.Errorf("mit Hosts: %v", got)
 	}

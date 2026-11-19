@@ -12,7 +12,7 @@ const create = (page: Parameters<typeof api>[0], body: Record<string, unknown>) 
     enabled: true, interval_seconds: 3600, timeout_seconds: 5, tls_verify: true, secrets: {}, clear_secrets: [], ...body,
   })
 
-test('Proxmox VE und Dockhand: Systeme, Detailseite mit Hosts, VMs, Containern, Suche', async ({ page }) => {
+test('Proxmox VE und Arcane: Systeme, Detailseite mit Hosts, VMs, Containern, Suche', async ({ page }) => {
   await login(page)
 
   // PVE per Formular
@@ -31,21 +31,21 @@ test('Proxmox VE und Dockhand: Systeme, Detailseite mit Hosts, VMs, Containern, 
   await dialog.getByRole('button', { name: 'Speichern' }).click()
   await expect(dialog).toBeHidden()
 
-  const dockhand = await create(page, {
-    type: 'dockhand', name: 'Dockhand', config: { base_url: `${MOCK}/dockhand` }, secrets: { api_token: 'dh_mock' },
+  const arcane = await create(page, {
+    type: 'arcane', name: 'Arcane', config: { base_url: `${MOCK}/arcane` }, secrets: { api_key: 'arc_mock' },
   })
-  await api(page, 'POST', `/api/integrations/${dockhand.json.id}/poll`)
+  await api(page, 'POST', `/api/integrations/${arcane.json.id}/poll`)
 
   // Systeme: beide unter „Server und Virtualisierung“
   await page.goto('/systeme')
   const compute = page.locator('[data-category="compute"]')
   await expect(compute.locator('[data-system="PVE"]')).toContainText('2 Nodes')
-  await expect(compute.locator('[data-system="Dockhand"]')).toBeVisible()
+  await expect(compute.locator('[data-system="Arcane"]')).toBeVisible()
 
   // Suche über alle Systeme findet Container und VMs und springt zur Zeile
   await page.getByLabel('Systeme, Hosts, VMs, Container oder Ports suchen').fill('vaultwarden')
   const hit = page.locator('[data-hit="vaultwarden"]')
-  await expect(hit).toContainText('Dockhand')
+  await expect(hit).toContainText('Arcane')
   await hit.click()
   await expect(page).toHaveURL(/\/systeme\/\d+#res-container_/)
   await expect(page.locator('tr[data-resource="vaultwarden"]')).toContainText('Unhealthy')
@@ -83,7 +83,7 @@ test('Proxmox VE und Dockhand: Systeme, Detailseite mit Hosts, VMs, Containern, 
   await expect(pveTile).toHaveAttribute('data-tone', 'error')
   await expect(pveTile.locator('[data-problem-count]')).toBeVisible()
   const unhealthy = problemList(page).getByRole('link', { name: /Container unhealthy/ })
-  await expect(unhealthy).toContainText('Dockhand › vaultwarden')
+  await expect(unhealthy).toContainText('Arcane › vaultwarden')
   // Problem mit Ressource führt zur Zeile des Containers
   await unhealthy.click()
   await expect(page).toHaveURL(/\/systeme\/\d+#res-container_/)
