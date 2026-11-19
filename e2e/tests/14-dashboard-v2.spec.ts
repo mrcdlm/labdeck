@@ -96,9 +96,12 @@ test('Neues Dashboard mit Integrations- und Kennzahl-Kachel, Reiter, Löschen', 
 
 test('Kacheln ziehen und in der Größe ändern; Abbrechen verwirft', async ({ page }) => {
   await login(page)
+  // Standardanordnung herstellen: frühere Tests können das Haupt-Dashboard gespeichert haben
+  const main = (await dashboards(page)).find((d) => d.id === 'main')!
+  await api(page, 'PUT', '/api/dashboards/main', { ...main, tiles: [] })
   await addPihole(page)
   await page.goto('/')
-  const before = (await dashboards(page))[0].tiles.find((t) => t.id === 'backups')!
+  const before = (await dashboards(page)).find((d) => d.id === 'main')!.tiles.find((t) => t.id === 'backups')!
   expect(before).toMatchObject({ x: 0, y: 0, w: 4 })
 
   await page.getByRole('button', { name: 'Bearbeiten' }).click()
@@ -112,7 +115,7 @@ test('Kacheln ziehen und in der Größe ändern; Abbrechen verwirft', async ({ p
   await page.mouse.up()
   // Abbrechen: nichts gespeichert
   await page.getByRole('button', { name: 'Abbrechen' }).click()
-  expect((await dashboards(page))[0].tiles.find((t) => t.id === 'backups')).toMatchObject({ x: 0, y: 0 })
+  expect((await dashboards(page)).find((d) => d.id === 'main')!.tiles.find((t) => t.id === 'backups')).toMatchObject({ x: 0, y: 0 })
 
   await page.getByRole('button', { name: 'Bearbeiten' }).click()
   const b2 = (await backups.boundingBox())!
@@ -131,9 +134,9 @@ test('Kacheln ziehen und in der Größe ändern; Abbrechen verwirft', async ({ p
   await page.mouse.up()
   await page.getByRole('button', { name: 'Fertig' }).click()
   await expect
-    .poll(async () => (await dashboards(page))[0].tiles.find((t) => t.id === 'backups'))
+    .poll(async () => (await dashboards(page)).find((d) => d.id === 'main')!.tiles.find((t) => t.id === 'backups'))
     .toMatchObject({ x: expect.any(Number), h: expect.any(Number) })
-  const after = (await dashboards(page))[0].tiles.find((t) => t.id === 'backups')!
+  const after = (await dashboards(page)).find((d) => d.id === 'main')!.tiles.find((t) => t.id === 'backups')!
   expect(after.x).toBeGreaterThan(0)
   expect(after.h).toBeGreaterThan(before.h)
   expect(after.w).toBeLessThan(before.w)
