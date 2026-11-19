@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] – 2026-11-19
+
 ### Added
 - Arcane integration (API key, v3 and v2): every Docker host Arcane manages (online/offline),
   status (incl. healthy / unhealthy), image, stack, CPU, RAM and network per container, compose
