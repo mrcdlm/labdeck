@@ -53,6 +53,8 @@ Wo diese Datei nichts anderes sagt, gilt: so machen wie in dnsdeck.
 /internal/integrations/snmp         Switches per SNMP (IF-MIB, ENTITY-MIB), Frontbild
 /internal/integrations/redfish      Server-Hardware per DMTF Redfish (iLO, iDRAC …)
 /internal/integrations/pihole       Pi-hole v6 (REST-API mit Session)
+/internal/integrations/arcane       Docker-Hosts, Container, Stacks aus Arcane (v3 /api/agents, Fallback v2)
+/internal/integrations/netbird      NetBird: Peers (nur gewählte überwacht), Reverse-Proxy-Dienste
 /internal/live           Ringpuffer: Kennzahlen der letzten Stunde in Abfrageauflösung
 /internal/backups        Backup-Auswertung (Frische, Erfolg, Überfälligkeit) über alle Quellen
 /internal/secrets        Verschlüsselte Ablage von Zugangsdaten

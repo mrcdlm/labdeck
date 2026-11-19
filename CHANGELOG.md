@@ -6,6 +6,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Arcane integration (API key, v3 and v2): every Docker host Arcane manages (online/offline),
+  status (incl. healthy / unhealthy), image, stack, CPU, RAM and network per container, compose
+  stacks (partially running as a warning) and pending image updates. Listed under "Servers and
+  virtualization" on the Systems page.
+- NetBird integration (cloud or self-hosted, access token of a service user): peers with
+  online/offline, IP, DNS name, OS, version and last seen; only peers of a chosen group or by
+  name are monitored (offline = problem), laptops and phones are just shown. Reverse proxy
+  services with status and certificate, offline proxy clusters as problems. Listed under
+  "Network"; the detail page has a section "VPN & reverse proxy".
+
+### Removed
+- Dockhand integration (replaced by Arcane). Existing Dockhand entries show "unknown type" and
+  can be deleted.
+
+### Fixed
+- Deleting an integration with a lot of history (e.g. many containers) failed: the cascade over
+  millions of raw values took minutes, the request was aborted by the reverse proxy and SQLite
+  rolled everything back. The integration is now deleted at once; its data is removed in small
+  batches in the background. The delete dialog shows errors.
+- Backup timeline: daily backups no longer show a yellow "due soon" stripe every day; the
+  history only shows ok, overdue and failed (the current state still colours the last segment).
+
 ## [0.9.0] – 2026-11-12
 
 ### Changed

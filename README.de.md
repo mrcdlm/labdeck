@@ -44,9 +44,13 @@ Schwesterprojekt von [dnsdeck](https://github.com/mrcdlm/dnsdeck) – gleiche Op
   Nextcloud, Home Assistant … ohne eigenen Code).
 - **Prometheus** – beliebige PromQL-Abfragen mit Einheit und Schwellwerten, eine Zeile je
   Label-Wert; alles, was Exporter liefern (node_exporter, restic-/borg-Exporter, SMART …).
-- **Proxmox VE, Dockhand und USV** – CPU, RAM und Platte jedes Nodes, jeder VM, jedes LXC- und
-  Docker-Containers (alle Docker-Hosts aus Dockhand, inkl. Health und ausstehender Image-Updates) mit Füllständen und Verlauf; Storages, SMART,
-  ZFS, vzdump-Sicherungen; USV im Batteriebetrieb als Problem.
+- **Proxmox VE, Arcane und USV** – CPU, RAM und Platte jedes Nodes, jeder VM, jedes LXC- und
+  Docker-Containers (alle Docker-Hosts aus Arcane, inkl. Health, Compose-Stacks und ausstehender
+  Image-Updates) mit Füllständen und Verlauf; Storages, SMART, ZFS, vzdump-Sicherungen; USV im
+  Batteriebetrieb als Problem.
+- **NetBird** (Cloud oder selbst gehostet) – Peers mit online/offline, IP, Betriebssystem,
+  Version und „zuletzt gesehen“; überwacht werden nur gewählte Peers (Gruppe oder Namen), ein
+  ausgeschalteter Laptop ist also kein Alarm. Reverse-Proxy-Dienste mit Status und Zertifikat.
 - **Switches per SNMP** (v2c/v3) – jeder Switch mit Standard-MIBs (Cisco C1300, UniFi, MikroTik,
   TP-Link, Netgear …): schematische Front mit RJ45/SFP-Ports, Link, Geschwindigkeit, Traffic,
   Auslastung und Fehler je Port; überwachte Ports (mit Beschreibung oder ausgewählt) als Problem.
@@ -130,7 +134,8 @@ Zertifikate im LAN ausschaltbar). Mehrere Instanzen je Typ sind möglich.
 | HTTP-JSON | optional ein Header mit Zugangsdaten (verschlüsselt gespeichert) | beliebige Werte, Zeitstempel als Backups |
 | Prometheus | keine, Basic Auth oder Bearer-Token | beliebige PromQL-Abfragen |
 | Proxmox VE | API-Token `benutzer@realm!name`, Rolle **PVEAuditor** auf `/` | Auslastung je Node, VM und Container, Storages, SMART, ZFS, Sicherungen |
-| Dockhand | API-Token `dh_…` (nur bei aktiver Anmeldung in Dockhand) | CPU/RAM je Docker-Host und Container, Health, ausstehende Updates |
+| Arcane | API-Key `arc_…` (Einstellungen → API-Keys) | Docker-Hosts, Container mit Health, CPU/RAM, Compose-Stacks, ausstehende Updates |
+| NetBird | Access Token eines **Service-Benutzers** (Team → Service Users; Leserechte genügen) | Peers online/offline, überwachte Peers als Problem, Reverse-Proxy-Dienste |
 | USV (NUT) | optional upsd-Benutzer | Netz/Batterie, Ladung, Restlaufzeit, Last |
 | Switch (SNMP) | SNMP v2c (Read-only-Community) oder v3 (Benutzer mit Lese-View, SHA/AES) | Ports mit Link, Traffic, Auslastung, Fehlern; schematische Front |
 | Server-Management (Redfish / iLO) | BMC-Benutzer nur mit Recht **Login** (iLO) bzw. **ReadOnly** (iDRAC) | Zustand je Komponente, Netzteile, Lüfter, Temperaturen, Laufwerke, Leistung |

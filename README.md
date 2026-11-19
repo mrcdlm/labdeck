@@ -42,9 +42,13 @@ Sister project of [dnsdeck](https://github.com/mrcdlm/dnsdeck) – same look, sa
   file can be monitored (Uptime Kuma, Paperless, Nextcloud, Home Assistant … without code).
 - **Prometheus** – any PromQL queries with unit and thresholds, one row per label value;
   everything exporters provide (node_exporter, restic/borg exporters, SMART …).
-- **Proxmox VE, Dockhand and UPS** – CPU, RAM and disk of every node, VM, LXC and Docker
-  container (all Docker hosts managed by Dockhand, incl. health and pending image updates) with meters and history; storages, SMART, ZFS, vzdump backups;
+- **Proxmox VE, Arcane and UPS** – CPU, RAM and disk of every node, VM, LXC and Docker
+  container (all Docker hosts managed by Arcane, incl. health, compose stacks and pending image
+  updates) with meters and history; storages, SMART, ZFS, vzdump backups;
   UPS on battery as a problem.
+- **NetBird** (cloud or self-hosted) – peers with online/offline, IP, OS, version and last seen;
+  only chosen peers (a group or by name) are monitored, so a laptop being offline is no alarm.
+  Reverse proxy services with status and certificate.
 - **Switches via SNMP** (v2c/v3) – any switch with standard MIBs (Cisco C1300, UniFi, MikroTik,
   TP-Link, Netgear …): schematic front panel with RJ45/SFP ports, link, speed, traffic,
   utilisation and errors per port; monitored ports (with a description or selected) as problems.
@@ -127,7 +131,8 @@ LAN). Several instances per type are possible.
 | HTTP JSON | optional header with credentials (stored encrypted) | any values, timestamps as backups |
 | Prometheus | none, basic auth or bearer token | any PromQL query |
 | Proxmox VE | API token `user@realm!name`, role **PVEAuditor** on `/` | load per node, VM and container, storages, SMART, ZFS, backups |
-| Dockhand | API token `dh_…` (only if authentication is enabled in Dockhand) | CPU/RAM per Docker host and container, health, pending updates |
+| Arcane | API key `arc_…` (Settings → API Keys) | Docker hosts, containers with health, CPU/RAM, compose stacks, pending updates |
+| NetBird | access token of a **service user** (Team → Service Users; read access is enough) | peers online/offline, monitored peers as problems, reverse proxy services |
 | UPS (NUT) | optional upsd user | mains/battery, charge, runtime, load |
 | Switch (SNMP) | SNMP v2c (read-only community) or v3 (user with a read view, SHA/AES) | ports with link, traffic, utilisation, errors; schematic front panel |
 | Server management (Redfish / iLO) | BMC user with only the **Login** (iLO) or **ReadOnly** (iDRAC) privilege | health per component, power supplies, fans, temperatures, drives, power draw |
