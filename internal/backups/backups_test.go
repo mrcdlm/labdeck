@@ -108,10 +108,11 @@ func TestRunHistory(t *testing.T) {
 		ago float64
 		to  integrations.Status
 	}
+	// keine Warnphasen („bald fällig“) im Verlauf
 	want := []step{
-		{100, integrations.StatusOK}, {100 - 20.8, integrations.StatusWarning}, {74, integrations.StatusError},
-		{50, integrations.StatusOK}, {50 - 20.8, integrations.StatusWarning}, {24, integrations.StatusError},
-		{2, integrations.StatusOK}, {2 - 20.8, integrations.StatusWarning}, {2 - 26, integrations.StatusError},
+		{100, integrations.StatusOK}, {74, integrations.StatusError},
+		{50, integrations.StatusOK}, {24, integrations.StatusError},
+		{2, integrations.StatusOK}, {2 - 26, integrations.StatusError},
 	}
 	// der Fehlschlag vor 60 h ändert nichts: da ist es ohnehin schon überfällig
 	if len(tr) != len(want) {
@@ -131,5 +132,36 @@ func TestRunHistory(t *testing.T) {
 	u := items[0].Uptime["24h"] // letzte Stunde: ok (der 3-h-Abschnitt im 7-Tage-Balken enthält noch „überfällig“)
 	if len(items[0].Uptime) != 3 || u.Percent == nil || *u.Percent >= 100 || u.Buckets[len(u.Buckets)-1] != integrations.StatusOK {
 		t.Fatalf("%+v", items[0].Uptime)
+	}
+}
+
+// Ein täglich pünktlich laufendes Backup zeigt in keinem Zeitraum gelbe
+// Abschnitte – erst der aktuelle Zustand „bald fällig“ färbt den letzten.
+func TestRunHistoryDailyNoStripes(t *testing.T) {
+	const h = time.Hour
+	var runs []integrations.Run
+	for d := 30; d >= 1; d-- {
+		runs = append(runs, integrations.Run{At: now.Add(-time.Duration(d)*24*h + 3*h), Result: integrations.StatusOK})
+	}
+	last := runs[len(runs)-1].At // vor 21 h → ab 20,8 h „bald fällig“
+	items := Evaluate([]Source{{IntegrationID: 1, Backups: []integrations.Backup{
+		{ID: "vm/100", Name: "vm/100", LastRun: &last, Result: integrations.StatusOK, Runs: runs},
+	}}}, nil, 26, now)
+	if items[0].State != StateDueSoon {
+		t.Fatalf("Zustand %s", items[0].State)
+	}
+	for key, u := range items[0].Uptime {
+		for i, b := range u.Buckets {
+			want := integrations.StatusOK
+			if i == len(u.Buckets)-1 {
+				want = integrations.StatusWarning // aktueller Zustand
+			}
+			if key == "30d" && i == 0 {
+				continue // vor dem ersten Lauf: unbekannt
+			}
+			if b != want {
+				t.Errorf("%s Abschnitt %d: %s, erwartet %s", key, i, b, want)
+			}
+		}
 	}
 }

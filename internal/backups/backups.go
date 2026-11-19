@@ -130,8 +130,13 @@ func Evaluate(sources []Source, maxAges map[store.BackupKey]int, defaultHours in
 }
 
 // runHistory macht aus Läufen Statuswechsel: nach einem erfolgreichen Lauf
-// ok, ab WarnRatio des Höchstalters Warnung, danach Fehler (überfällig) bis
-// zum nächsten Lauf; ein fehlgeschlagener Lauf ist Fehler bis zum nächsten.
+// ok, nach Ablauf des Höchstalters Fehler (überfällig) bis zum nächsten Lauf;
+// ein fehlgeschlagener Lauf ist Fehler bis zum nächsten.
+//
+// „Bald fällig“ (ab WarnRatio) gehört nicht in den Verlauf: Ein täglich
+// laufendes Backup erreicht bei 26 h Höchstalter jeden Tag für gut 3 h die
+// Warnschwelle – der Balken wäre voller gelber Streifen, obwohl jeder Lauf
+// pünktlich kam. Der aktuelle Zustand färbt weiterhin den letzten Abschnitt.
 func runHistory(runs []integrations.Run, maxAge time.Duration) ([]integrations.Transition, time.Time) {
 	rs := slices.Clone(runs)
 	slices.SortFunc(rs, func(a, b integrations.Run) int { return a.At.Compare(b.At) })
@@ -152,9 +157,6 @@ func runHistory(runs []integrations.Run, maxAge time.Duration) ([]integrations.T
 		next := r.At.Add(maxAge + 1) // nach dem letzten Lauf: bis „jetzt“
 		if i+1 < len(rs) {
 			next = rs[i+1].At
-		}
-		if w := r.At.Add(time.Duration(float64(maxAge) * WarnRatio)); w.Before(next) {
-			set(w, integrations.StatusWarning)
 		}
 		if o := r.At.Add(maxAge); o.Before(next) {
 			set(o, integrations.StatusError)
