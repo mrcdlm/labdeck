@@ -365,6 +365,7 @@
     "notPolled": "Noch nicht abgefragt",
     "deleteTitle": "Integration löschen?",
     "deleteHint": "„{{name}}“ wird samt Verlauf und Kennzahlen gelöscht.",
+    "deleteError": "Löschen fehlgeschlagen: {{error}}",
     "listItem": "#{{n}}",
     "listRemove": "{{label}} {{n}} entfernen",
     "listAdd": "Hinzufügen",

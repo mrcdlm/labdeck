@@ -1,4 +1,4 @@
-import { Pencil, Plug, Plus, RefreshCw, Trash2 } from 'lucide-react'
+import { Loader2, Pencil, Plug, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -177,12 +177,25 @@ export function IntegrationsSection() {
         onOpenChange={(open) => setDialog((d) => ({ ...d, open }))}
       />
 
-      <AlertDialog open={toDelete !== undefined} onOpenChange={(open) => !open && setToDelete(undefined)}>
+      <AlertDialog
+        open={toDelete !== undefined}
+        onOpenChange={(open) => {
+          if (!open) {
+            setToDelete(undefined)
+            del.reset()
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('integrations.deleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>{t('integrations.deleteHint', { name: toDelete?.name })}</AlertDialogDescription>
           </AlertDialogHeader>
+          {del.isError && (
+            <p className="text-destructive text-sm break-words" role="alert">
+              {t('integrations.deleteError', { error: del.error.message })}
+            </p>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
@@ -192,6 +205,7 @@ export function IntegrationsSection() {
               }}
               disabled={del.isPending}
             >
+              {del.isPending && <Loader2 className="animate-spin" />}
               {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>

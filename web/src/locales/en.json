@@ -365,6 +365,7 @@
     "notPolled": "Not polled yet",
     "deleteTitle": "Delete integration?",
     "deleteHint": "\"{{name}}\" will be deleted including its history and metrics.",
+    "deleteError": "Delete failed: {{error}}",
     "listItem": "#{{n}}",
     "listRemove": "Remove {{label}} {{n}}",
     "listAdd": "Add",

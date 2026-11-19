@@ -221,6 +221,14 @@ func run() error {
 			if err == nil && r != (store.PurgeResult{}) {
 				log.Info("Alte Daten gelöscht", "samples", r.Samples, "resource_samples", r.Short, "daily", r.Daily, "changes", r.Changes)
 			}
+			if err != nil {
+				return err
+			}
+			// Daten gelöschter Integrationen (siehe Store.DeleteIntegration)
+			n, err := st.PurgeOrphans(ctx)
+			if n > 0 {
+				log.Info("Daten gelöschter Integrationen entfernt", "rows", n)
+			}
 			return err
 		},
 	})

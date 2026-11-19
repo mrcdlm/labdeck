@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -131,16 +132,110 @@ func (s *Store) UpdateIntegration(ctx context.Context, it Integration) (Integrat
 	return s.GetIntegration(ctx, it.ID)
 }
 
-// DeleteIntegration löscht die Integration samt Verlauf und Kennzahlen.
+// bulkTables halten je Integration bis zu Millionen Zeilen. Sie per
+// ON DELETE CASCADE in einer Anweisung zu löschen dauert Minuten (2 Mio.
+// Rohwerte: > 2 min) – länger als jeder Reverse Proxy wartet; bricht die
+// Anfrage ab, rollt SQLite alles zurück und die Integration bleibt.
+var bulkTables = []string{"metric_samples", "metric_daily", "status_changes"}
+
+// DeleteIntegration löscht die Integration sofort. Ihre Rohwerte, Tageswerte
+// und Statuswechsel bleiben verwaist zurück (IDs werden nie wiederverwendet,
+// alle Abfragen filtern nach Integration) und räumt PurgeOrphans in kleinen
+// Blöcken weg.
 func (s *Store) DeleteIntegration(ctx context.Context, id int64) error {
-	res, err := s.db.ExecContext(ctx, `DELETE FROM integrations WHERE id = ?`, id)
+	// Eigene Verbindung: Fremdschlüssel nur für diese Löschung aus, keine
+	// andere Anfrage läuft dazwischen (MaxOpenConns = 1).
+	conn, err := s.db.Conn(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	if _, err := conn.ExecContext(ctx, `PRAGMA foreign_keys = OFF`); err != nil {
+		return err
+	}
+	defer conn.ExecContext(context.WithoutCancel(ctx), `PRAGMA foreign_keys = ON`)
+
+	tx, err := conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	res, err := tx.ExecContext(ctx, `DELETE FROM integrations WHERE id = ?`, id)
 	if err != nil {
 		return err
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
 		return ErrNotFound
 	}
-	return nil
+	// kleine Tabellen gleich mit (sonst Kaskade)
+	for _, q := range []string{`DELETE FROM backup_settings WHERE integration_id = ?`,
+		`DELETE FROM backup_states WHERE integration_id = ?`} {
+		if _, err := tx.ExecContext(ctx, q, id); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+// purgeChunk: so viele Zeilen löscht eine Anweisung höchstens – kurz genug,
+// dass andere Anfragen zwischendurch die Datenbank bekommen.
+const purgeChunk = 2000
+
+// deleteChunked löscht die Zeilen von table, auf die where zutrifft, in
+// Blöcken von purgeChunk Zeilen.
+func (s *Store) deleteChunked(ctx context.Context, table, where string, args ...any) (int64, error) {
+	q := `DELETE FROM ` + table + ` WHERE rowid IN (SELECT rowid FROM ` + table + ` WHERE ` + where +
+		` LIMIT ` + strconv.Itoa(purgeChunk) + `)`
+	var total int64
+	for {
+		res, err := s.db.ExecContext(ctx, q, args...)
+		if err != nil {
+			return total, err
+		}
+		n, _ := res.RowsAffected()
+		total += n
+		if n < purgeChunk {
+			return total, nil
+		}
+	}
+}
+
+// PurgeOrphans löscht Rohwerte, Tageswerte und Statuswechsel gelöschter
+// Integrationen (siehe DeleteIntegration) und liefert die Anzahl Zeilen.
+func (s *Store) PurgeOrphans(ctx context.Context) (int64, error) {
+	var total int64
+	for _, table := range bulkTables {
+		ids, err := s.orphanIDs(ctx, table)
+		if err != nil {
+			return total, err
+		}
+		for _, id := range ids {
+			n, err := s.deleteChunked(ctx, table, `integration_id = ?`, id)
+			total += n
+			if err != nil {
+				return total, err
+			}
+		}
+	}
+	return total, nil
+}
+
+func (s *Store) orphanIDs(ctx context.Context, table string) ([]int64, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT DISTINCT integration_id FROM `+table+`
+		WHERE integration_id NOT IN (SELECT id FROM integrations)`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
 }
 
 func (s *Store) GetIntegration(ctx context.Context, id int64) (Integration, error) {
@@ -250,7 +345,9 @@ func (s *Store) SavePollResult(ctx context.Context, id int64, r PollResult) erro
 // (integrationID 0 = alle), neueste zuerst.
 func (s *Store) ListStatusChanges(ctx context.Context, integrationID int64, limit int) ([]StatusChange, error) {
 	rows, err := s.db.QueryContext(ctx, `SELECT id, integration_id, kind, item_id, item_name, from_status, to_status,
-		message, at FROM status_changes WHERE (? = 0 OR integration_id = ?) ORDER BY at DESC, id DESC LIMIT ?`,
+		message, at FROM status_changes WHERE (? = 0 OR integration_id = ?)
+		AND integration_id IN (SELECT id FROM integrations) -- ohne Reste gelöschter (PurgeOrphans)
+		ORDER BY at DESC, id DESC LIMIT ?`,
 		integrationID, integrationID, limit)
 	if err != nil {
 		return nil, err
@@ -306,20 +403,21 @@ type PurgeResult struct {
 func (s *Store) PurgeOldData(ctx context.Context, rawBefore, shortBefore, dailyBefore time.Time) (PurgeResult, error) {
 	var r PurgeResult
 	for _, q := range []struct {
-		sql string
-		arg string
-		n   *int64
+		table, where, arg string
+		n                 *int64
 	}{
-		{`DELETE FROM metric_samples WHERE at < ?`, formatTime(rawBefore), &r.Samples},
-		{`DELETE FROM metric_samples WHERE short = 1 AND at < ?`, formatTime(shortBefore), &r.Short},
-		{`DELETE FROM metric_daily WHERE day < ?`, dailyBefore.UTC().Format(time.DateOnly), &r.Daily},
-		{`DELETE FROM status_changes WHERE at < ?`, formatTime(dailyBefore), &r.Changes},
+		{"metric_samples", `at < ?`, formatTime(rawBefore), &r.Samples},
+		{"metric_samples", `short = 1 AND at < ?`, formatTime(shortBefore), &r.Short},
+		{"metric_daily", `day < ?`, dailyBefore.UTC().Format(time.DateOnly), &r.Daily},
+		{"status_changes", `at < ?`, formatTime(dailyBefore), &r.Changes},
 	} {
-		res, err := s.db.ExecContext(ctx, q.sql, q.arg)
+		// in Blöcken: nach Verkürzen der Aufbewahrung sind es sonst Millionen
+		// Zeilen in einer Anweisung, die die Datenbank minutenlang sperren
+		n, err := s.deleteChunked(ctx, q.table, q.where, q.arg)
+		*q.n = n
 		if err != nil {
 			return r, err
 		}
-		*q.n, _ = res.RowsAffected()
 	}
 	return r, nil
 }

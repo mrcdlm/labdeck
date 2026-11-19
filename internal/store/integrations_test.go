@@ -53,6 +53,76 @@ func TestIntegrationsCRUD(t *testing.T) {
 	}
 }
 
+// Löschen entfernt die Integration sofort; Rohwerte, Tageswerte und
+// Statuswechsel räumt PurgeOrphans weg – die der anderen bleiben.
+func TestDeleteIntegrationPurgesLater(t *testing.T) {
+	s, ctx := openTest(t), context.Background()
+	mk := func(name string) int64 {
+		it, err := s.CreateIntegration(ctx, Integration{Type: "x", Name: name, Enabled: true, Interval: time.Minute,
+			Timeout: time.Second, Config: "{}"}, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return it.ID
+	}
+	gone, kept := mk("Weg"), mk("Bleibt")
+	count := func(table string, id int64) (n int) {
+		s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM `+table+` WHERE integration_id = ?`, id).Scan(&n)
+		return n
+	}
+	// mehr als ein Block Rohwerte
+	rows := purgeChunk*2 + 7
+	for _, id := range []int64{gone, kept} {
+		if _, err := s.db.ExecContext(ctx, `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i+1 FROM n WHERE i < ?)
+			INSERT INTO metric_samples (integration_id, key, at, value) SELECT ?, 'k', printf('2026-11-01T00:00:%05dZ', i), i FROM n`,
+			rows, id); err != nil {
+			t.Fatal(err)
+		}
+		for _, q := range []string{
+			`INSERT INTO metric_daily (integration_id, key, day, last, min, max) VALUES (?, 'k', '2026-11-01', 1, 1, 1)`,
+			`INSERT INTO status_changes (integration_id, kind, from_status, to_status, at) VALUES (?, 'integration', 'ok', 'error', '2026-11-01T00:00:00Z')`,
+			`INSERT INTO backup_settings (integration_id, item_id, max_age_hours) VALUES (?, 'b', 12)`,
+			`INSERT INTO backup_states (integration_id, item_id, state) VALUES (?, 'b', 'ok')`,
+		} {
+			if _, err := s.db.ExecContext(ctx, q, id); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+
+	if err := s.DeleteIntegration(ctx, gone); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.GetIntegration(ctx, gone); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("nach Löschen: %v", err)
+	}
+	if count("backup_settings", gone)+count("backup_states", gone) != 0 {
+		t.Fatal("Backup-Einstellungen nicht sofort gelöscht")
+	}
+	// Fremdschlüssel sind danach wieder aktiv
+	if _, err := s.db.ExecContext(ctx, `INSERT INTO metric_daily (integration_id, key, day, last, min, max)
+		VALUES (?, 'k', '2026-11-02', 1, 1, 1)`, gone); err == nil {
+		t.Fatal("Fremdschlüssel nach dem Löschen nicht wieder aktiv")
+	}
+
+	n, err := s.PurgeOrphans(ctx)
+	if err != nil || n != int64(rows+2) {
+		t.Fatalf("PurgeOrphans: %d %v", n, err)
+	}
+	for _, table := range []string{"metric_samples", "metric_daily", "status_changes"} {
+		if c := count(table, gone); c != 0 {
+			t.Errorf("%s: %d Zeilen übrig", table, c)
+		}
+	}
+	if count("metric_samples", kept) != rows || count("metric_daily", kept) != 1 || count("status_changes", kept) != 1 ||
+		count("backup_settings", kept) != 1 {
+		t.Fatal("Daten der anderen Integration angetastet")
+	}
+	if n, err := s.PurgeOrphans(ctx); n != 0 || err != nil {
+		t.Fatalf("zweiter Lauf: %d %v", n, err)
+	}
+}
+
 func TestPollResults(t *testing.T) {
 	s, ctx := openTest(t), context.Background()
 	it, _ := s.CreateIntegration(ctx, Integration{Type: "x", Name: "X", Enabled: true, Interval: time.Minute,
@@ -109,8 +179,13 @@ func TestPollResults(t *testing.T) {
 		t.Fatalf("purge: %+v %v", r, err)
 	}
 
-	// Löschen der Integration entfernt Verlauf und Kennzahlen
+	// Löschen der Integration entfernt Verlauf und Kennzahlen (sofort
+	// unsichtbar, die Zeilen selbst räumt PurgeOrphans weg)
 	s.DeleteIntegration(ctx, it.ID)
+	if c, _ := s.ListStatusChanges(ctx, 0, 10); len(c) != 0 {
+		t.Fatalf("Wechsel nach Löschen sichtbar: %+v", c)
+	}
+	s.PurgeOrphans(ctx)
 	if c, _ := s.ListStatusChanges(ctx, 0, 10); len(c) != 0 {
 		t.Fatalf("Wechsel nach Löschen: %+v", c)
 	}

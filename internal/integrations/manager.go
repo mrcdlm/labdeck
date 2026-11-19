@@ -388,7 +388,9 @@ func (m *Manager) Update(ctx context.Context, id int64, in Input, lang i18n.Lang
 }
 
 func (m *Manager) Delete(ctx context.Context, id int64) error {
-	err := m.store.DeleteIntegration(ctx, id)
+	// Bricht die Anfrage ab (Browser, Reverse Proxy), soll das Löschen
+	// trotzdem durchlaufen statt zurückgerollt zu werden.
+	err := m.store.DeleteIntegration(context.WithoutCancel(ctx), id)
 	if errors.Is(err, store.ErrNotFound) {
 		return ErrNotFound
 	}
