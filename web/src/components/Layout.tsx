@@ -86,6 +86,10 @@ function LiveIndicator({ compact }: { compact?: boolean }) {
   )
 }
 
+// Datenseiten nutzen große Bildschirme (Raster, Tabellen); Formulare und
+// Listen zum Lesen bleiben schmal.
+const widePages = /^\/($|d\/|backups|checks|systeme)/
+
 export function Layout() {
   return (
     <LiveProvider>
@@ -96,6 +100,7 @@ export function Layout() {
 
 function Shell() {
   const { t } = useTranslation()
+  const wide = widePages.test(useLocation().pathname)
   const logout = useLogout()
   // Zeitzone der Anzeige (Einstellungen → Allgemein) für alle Zeitangaben
   setDisplayTimeZone(useSettings().data?.timezone ?? '')
@@ -153,7 +158,7 @@ function Shell() {
       </header>
 
       <main className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">
-        <div className="mx-auto max-w-5xl">
+        <div className={cn('mx-auto', wide ? 'max-w-[1600px]' : 'max-w-5xl')}>
           <Outlet />
         </div>
       </main>

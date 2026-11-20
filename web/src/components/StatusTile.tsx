@@ -71,6 +71,7 @@ export function StatusTile({
   value,
   sub,
   action,
+  aside,
   children,
   stretch = true,
 }: {
@@ -85,6 +86,8 @@ export function StatusTile({
   sub?: ReactNode
   /** Bedienelement rechts im Kopf (z. B. Zeitraum) */
   action?: ReactNode
+  /** rechts neben Zahl und Nebenzeile, z. B. ein Mini-Verlauf (nur bei genug Breite) */
+  aside?: ReactNode
   children?: ReactNode
   stretch?: boolean
 }) {
@@ -92,7 +95,7 @@ export function StatusTile({
   return (
     <div
       className={cn(
-        'group bg-card relative flex flex-col gap-1 overflow-hidden rounded-xl border p-5',
+        'group bg-card @container relative flex flex-col gap-1 overflow-hidden rounded-xl border px-5 py-4',
         'transition-[background-color,transform,box-shadow] duration-200',
         'before:absolute before:inset-y-0 before:left-0 before:w-1',
         bar[status],
@@ -126,8 +129,15 @@ export function StatusTile({
         {action && <div className="relative z-10">{action}</div>}
         <ChevronRight className="text-muted-foreground size-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
       </div>
-      {value !== undefined && <div className="mt-2 flex flex-wrap items-baseline gap-x-1.5">{value}</div>}
-      {sub && <div className="text-muted-foreground text-sm tabular-nums">{sub}</div>}
+      {(value !== undefined || sub || aside) && (
+        <div className="mt-2 flex min-h-0 items-end gap-4">
+          <div className="min-w-0 flex-1">
+            {value !== undefined && <div className="flex flex-wrap items-baseline gap-x-1.5">{value}</div>}
+            {sub && <div className="text-muted-foreground line-clamp-2 text-sm tabular-nums">{sub}</div>}
+          </div>
+          {aside}
+        </div>
+      )}
       {children}
     </div>
   )

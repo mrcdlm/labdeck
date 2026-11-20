@@ -95,21 +95,6 @@ var (
 	tileRanges   = []string{"1h", "24h", "7d", "30d"}
 )
 
-// defaultSize: Breite und Höhe neuer Kacheln.
-func defaultSize(id string) (w, h int) {
-	switch {
-	case id == "events":
-		return 12, 7
-	case id == "backup-timeline":
-		return 12, 5
-	case id == "hosts":
-		return 8, 5
-	case strings.HasPrefix(id, "metric:"):
-		return 4, 3
-	}
-	return 4, 5
-}
-
 // availableTiles: eingebaute und Integrations-Kacheln, die es gerade geben
 // kann, in Standardreihenfolge (Kennzahl-Kacheln legt man selbst an).
 func availableTiles(list []integrations.View) []string {
@@ -125,16 +110,6 @@ func availableTiles(list []integrations.View) []string {
 		out = append(out, "hosts")
 	}
 	return append(out, "backup-timeline", "events")
-}
-
-func bottom(tiles []tileDTO, skip string) int {
-	b := 0
-	for _, t := range tiles {
-		if t.ID != skip {
-			b = max(b, t.Y+t.H)
-		}
-	}
-	return b
 }
 
 // place setzt t an die höchste freie Stelle (bei gleicher Höhe links), wie
@@ -165,7 +140,7 @@ func place(tiles []tileDTO, t tileDTO, skip string) tileDTO {
 func legacyFlow(tiles []tileDTO) []tileDTO {
 	x, y, rowH := 0, 0, 0
 	for n, t := range tiles {
-		_, h := defaultSize(t.ID)
+		_, h := defaultSize(t.ID, "")
 		w := gridCols / 3 * min(max(t.Size, 1), 3)
 		if x+w > gridCols {
 			x, y, rowH = 0, y+rowH, 0
@@ -178,8 +153,9 @@ func legacyFlow(tiles []tileDTO) []tileDTO {
 }
 
 // merge gleicht Kacheln mit den verfügbaren ab: verschwundene (gelöschte
-// Integration) entfallen; auto: neue kommen dazu – vor die Ereignisse.
-func merge(saved []tileDTO, available []string, integrationIDs map[int64]bool, auto bool) []tileDTO {
+// Integration) entfallen; auto: neue kommen in ihren Bereich (siehe arrange),
+// ein noch leeres Dashboard bekommt die Standardanordnung.
+func merge(saved []tileDTO, available []string, integrationIDs map[int64]bool, types map[string]string, auto bool) []tileDTO {
 	out := []tileDTO{}
 	legacy := false
 	for _, t := range saved {
@@ -197,22 +173,21 @@ func merge(saved []tileDTO, available []string, integrationIDs map[int64]bool, a
 	if !auto {
 		return out
 	}
+	fresh := len(out) == 0
 	for _, id := range available {
 		if slices.ContainsFunc(out, func(o tileDTO) bool { return o.ID == id }) {
 			continue
 		}
 		t := tileDTO{ID: id, Visible: true}
-		t.W, t.H = defaultSize(id)
-		ev := slices.IndexFunc(out, func(o tileDTO) bool { return o.ID == "events" })
-		// Ereignisse ganz unten: neue Kachel darüber, Ereignisse rücken nach
-		evBottom := ev >= 0 && out[ev].Y >= bottom(out, "events")
-		if evBottom {
-			t = place(out, t, "events")
-			out[ev].Y = max(out[ev].Y, t.Y+t.H)
+		t.W, t.H = defaultSize(id, types[id])
+		if fresh {
+			out = append(out, t)
 		} else {
-			t = place(out, t, "")
+			out = insert(out, t, types)
 		}
-		out = append(out, t)
+	}
+	if fresh {
+		out = arrange(out, types)
 	}
 	return out
 }
@@ -257,8 +232,9 @@ func (s *Server) loadDashboards(ctx context.Context) ([]dashboardDTO, error) {
 	}
 	// neue Kacheln aufs Haupt-Dashboard (auch wenn es nicht vorne steht)
 	auto := mainIndex(saved)
+	types := tileTypes(list)
 	for n := range saved {
-		saved[n].Tiles = merge(saved[n].Tiles, available, ids, n == auto)
+		saved[n].Tiles = merge(saved[n].Tiles, available, ids, types, n == auto)
 	}
 	return saved, nil
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 
@@ -62,17 +63,17 @@ func TestDashboardsDefault(t *testing.T) {
 	if tileIDs(d.Tiles) != "backups checks backup-timeline events" {
 		t.Fatalf("Kacheln: %s", tileIDs(d.Tiles))
 	}
-	// von oben gefüllt: zwei Kacheln nebeneinander, darunter die breiten
-	if b, ch, tl, ev := d.Tiles[0], d.Tiles[1], d.Tiles[2], d.Tiles[3]; b.X != 0 || b.Y != 0 || b.W != 4 || ch.X != 4 || ch.Y != 0 ||
-		tl.Y != 5 || tl.W != 12 || ev.Y != 10 || ev.H != 7 {
+	// Standardanordnung: Status-Kacheln füllen die Reihe, darunter die breiten
+	if b, ch, tl, ev := d.Tiles[0], d.Tiles[1], d.Tiles[2], d.Tiles[3]; b.X != 0 || b.Y != 0 || b.W != 6 || b.H != 3 ||
+		ch.X != 6 || ch.Y != 0 || tl.Y != 3 || tl.W != 12 || ev.Y != 8 || ev.H != 6 {
 		t.Fatalf("Positionen: %+v", d.Tiles)
 	}
 
-	// neue Integration: Kachel kommt dazu, die Ereignisse bleiben unten
+	// noch nie gespeichert: neue Integration → Standardanordnung, drei in einer Reihe
 	id := e.addImmich(t, c)
 	d = e.dashboards(t, c)[0]
 	im, ev := tileByID(d.Tiles, fmt.Sprintf("integration:%d", id)), tileByID(d.Tiles, "events")
-	if im.W != 4 || im.X != 8 || im.Y != 0 || ev.Y != 10 {
+	if im.W != 4 || im.X != 8 || im.Y != 0 || ev.Y != 8 {
 		t.Fatalf("neue Kachel: %+v / %+v", im, ev)
 	}
 }
@@ -91,7 +92,7 @@ func TestDashboardsLegacy(t *testing.T) {
 		t.Fatalf("übernommen: %+v", d)
 	}
 	ch, b, ev, tl := d.Tiles[0], d.Tiles[1], d.Tiles[2], d.Tiles[3]
-	if ch.W != 8 || b.X != 8 || b.W != 4 || ev.Y != 5 || ev.W != 12 || ev.Visible || tl.Y != 12 {
+	if ch.W != 8 || b.X != 8 || b.W != 4 || ev.Y != 3 || ev.W != 12 || ev.Visible || tl.Y != 9 {
 		t.Fatalf("umgerechnet: %+v", d.Tiles)
 	}
 
@@ -101,7 +102,8 @@ func TestDashboardsLegacy(t *testing.T) {
 	if first.ID != "main" || len(first.Tiles) != 4 {
 		t.Fatalf("Alias: %+v", first)
 	}
-	resp := e.do(t, "PUT", "/api/dashboard", `{"tiles":[{"id":"backups","visible":true,"size":3}]}`, c)
+	resp := e.do(t, "PUT", "/api/dashboard", `{"tiles":[{"id":"backups","visible":true,"size":3},{"id":"checks","visible":false,"size":1},`+
+		`{"id":"backup-timeline","visible":true,"size":3},{"id":"events","visible":true,"size":3}]}`, c)
 	if resp.StatusCode != 200 {
 		t.Fatalf("Alias speichern: %d %s", resp.StatusCode, body(t, resp.Body))
 	}
@@ -204,7 +206,7 @@ func TestAvailableTilesHosts(t *testing.T) {
 		t.Errorf("ohne Hosts: %v", got)
 	}
 	got = availableTiles([]integrations.View{{ID: 3, Type: "arcane"}, {ID: 4, Type: "pve"}})
-	if w, _ := defaultSize("hosts"); strings.Join(got, " ") != "backups checks integration:3 integration:4 hosts backup-timeline events" || w != 8 {
+	if w, _ := defaultSize("hosts", ""); strings.Join(got, " ") != "backups checks integration:3 integration:4 hosts backup-timeline events" || w != 6 {
 		t.Errorf("mit Hosts: %v", got)
 	}
 }
@@ -219,5 +221,61 @@ func TestPlace(t *testing.T) {
 	// unter b ist am frühesten Platz
 	if p := place(tiles, tileDTO{W: 4, H: 3}, ""); p.X != 4 || p.Y != 2 {
 		t.Errorf("unter b: %+v", p)
+	}
+}
+
+func TestArrange(t *testing.T) {
+	types := map[string]string{"integration:9": "snmp"}
+	var tiles []tileDTO
+	for _, id := range []string{"backups", "checks", "integration:1", "integration:2", "integration:3", "integration:4",
+		"integration:5", "integration:6", "integration:7", "integration:9", "hosts", "backup-timeline", "events"} {
+		tiles = append(tiles, tileDTO{ID: id, Visible: true})
+	}
+	tiles = append(tiles, tileDTO{ID: "metric:a", Visible: true, W: 6, H: 4}, tileDTO{ID: "metric:b", Visible: false, X: 1, Y: 1, W: 4, H: 3})
+	got := arrange(tiles, types)
+	pos := func(id string) tileDTO { return tileByID(got, id) }
+	// 9 Status-Kacheln → Reihen mit 3, 3, 3 (Breite 4), jede Reihe voll und 3 hoch
+	if b, i4, i7 := pos("backups"), pos("integration:4"), pos("integration:7"); b.W != 4 || b.H != 3 ||
+		i4.X != 8 || i4.Y != 3 || i4.W != 4 || i7.X != 8 || i7.Y != 6 || i7.H != 3 {
+		t.Errorf("Status: %+v", got[:10])
+	}
+	// SNMP ist breit: zusammen mit Hosts in einer Reihe, darunter die Zeitleiste über die volle Breite
+	if s, h, tl := pos("integration:9"), pos("hosts"), pos("backup-timeline"); s.Y != 9 || s.W != 6 || h.X != 6 || h.Y != 9 ||
+		tl.Y != 14 || tl.W != 12 {
+		t.Errorf("breit: %+v %+v %+v", s, h, tl)
+	}
+	if m := pos("metric:a"); m.Y != 19 || m.W != 6 || m.H != 4 {
+		t.Errorf("Kennzahl: %+v", m)
+	}
+	if ev := pos("events"); ev.Y != 23 || ev.W != 12 {
+		t.Errorf("Ereignisse: %+v", ev)
+	}
+	if m := pos("metric:b"); m.X != 1 || m.Y != 1 {
+		t.Errorf("ausgeblendet verändert: %+v", m)
+	}
+}
+
+func TestInsert(t *testing.T) {
+	types := map[string]string{}
+	base := arrange([]tileDTO{{ID: "backups", Visible: true}, {ID: "checks", Visible: true}, {ID: "integration:1", Visible: true},
+		{ID: "integration:2", Visible: true}, {ID: "backup-timeline", Visible: true}, {ID: "events", Visible: true}}, types)
+	// Reihe voll (4 × 3) → Statusbereich neu: 3 + 2, Zeitleiste rückt um 3 nach unten
+	got := insert(slices.Clone(base), tileDTO{ID: "integration:3", Visible: true, W: 3, H: 3}, types)
+	if n, tl := tileByID(got, "integration:3"), tileByID(got, "backup-timeline"); n.Y != 3 || n.W != 6 || tl.Y != 6 ||
+		tileByID(got, "events").Y != 11 {
+		t.Errorf("neu verteilt: %+v", got)
+	}
+	// Lücke im Statusbereich wird genutzt, nichts verschiebt sich
+	gap := slices.Clone(base)
+	gap = slices.DeleteFunc(gap, func(x tileDTO) bool { return x.ID == "integration:2" })
+	got = insert(gap, tileDTO{ID: "integration:3", Visible: true, W: 3, H: 3}, types)
+	if n := tileByID(got, "integration:3"); n.X != 9 || n.Y != 0 || tileByID(got, "backup-timeline").Y != 3 {
+		t.Errorf("Lücke: %+v", got)
+	}
+	// Hosts kommt neben die Zeitleiste (beide halb breit), Ereignisse bleiben
+	got = insert(slices.Clone(base), tileDTO{ID: "hosts", Visible: true, W: 6, H: 5}, types)
+	if h, tl := tileByID(got, "hosts"), tileByID(got, "backup-timeline"); h.Y != 3 || h.X != 6 || tl.Y != 3 || tl.W != 6 ||
+		tileByID(got, "events").Y != 8 {
+		t.Errorf("Hosts: %+v", got)
 	}
 }

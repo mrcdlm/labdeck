@@ -531,6 +531,8 @@ export const dashboardApi = {
   save: (d: Dashboard) => request<{ dashboards: Dashboard[] }>('PUT', `/api/dashboards/${d.id}`, d),
   remove: (id: string) => request<{ dashboards: Dashboard[] }>('DELETE', `/api/dashboards/${id}`),
   order: (ids: string[]) => request<{ dashboards: Dashboard[] }>('PUT', '/api/dashboards/order', { ids }),
+  /** Standardanordnung für diese Kacheln (ohne zu speichern) */
+  arrange: (tiles: DashboardTile[]) => request<{ tiles: DashboardTile[] }>('POST', '/api/dashboards/arrange', { tiles }),
 }
 
 export const historyApi = {

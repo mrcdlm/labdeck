@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Dashboard layout: data pages (dashboard, backups, checks, systems) use wide screens (up to
+  1600 px) and stay centred. Status tiles are compact – the number and its details, with the
+  mini chart next to them when there is room. New dashboards are arranged by area without gaps:
+  status tiles in even, full rows on top; switch front panels, server hardware, hosts and the
+  backup timeline two side by side below; own metric tiles next; events at the bottom. A new
+  integration's tile joins its area instead of the first free spot.
+
+### Added
+- "Arrange automatically" in edit mode: rearranges the tiles of a dashboard by area (saved only
+  with "Done"), e.g. to get the new layout for an existing dashboard.
+
+### Fixed
+- Arcane: hosts without host details from Arcane now show total RAM and CPU count (from
+  docker info); if the total is still unknown, the hosts tile shows the used RAM instead of "—".
+- Arcane: clearer message when the API key may not list environments.
+
 ## [0.10.0] – 2026-11-19
 
 ### Added

@@ -4,6 +4,7 @@ import { Area, AreaChart, ResponsiveContainer, YAxis } from 'recharts'
 import type { MetricRange } from '@/lib/api'
 import { reducedMotion } from '@/lib/motion'
 import { useMetricHistory } from '@/lib/queries'
+import { cn } from '@/lib/utils'
 
 /**
  * Mini-Verlauf einer Kennzahl (ohne Achsen und Tooltip) für Kacheln. Erst ab
@@ -13,10 +14,13 @@ export function Sparkline({
   integrationId,
   metricKey,
   range,
+  className = '-mx-1 mt-1 h-8',
 }: {
   integrationId: number
   metricKey: string
   range: MetricRange
+  /** Größe und Abstand (Standard: schmale Leiste unter dem Inhalt) */
+  className?: string
 }) {
   const id = useId()
   const history = useMetricHistory(integrationId, metricKey, range)
@@ -36,7 +40,7 @@ export function Sparkline({
   const fill = `spark-${id.replace(/:/g, '')}`
 
   return (
-    <div className="pointer-events-none -mx-1 mt-1 h-8" aria-hidden data-sparkline={metricKey}>
+    <div className={cn('pointer-events-none', className)} aria-hidden data-sparkline={metricKey}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={points} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
           <defs>

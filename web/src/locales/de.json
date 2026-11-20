@@ -110,6 +110,8 @@
     "done": "Fertig",
     "edit": "Bearbeiten",
     "editHint": "Kacheln ziehen und an der Ecke in der Größe ändern. Auf dem Handy stehen sie untereinander.",
+    "arrange": "Automatisch anordnen",
+    "arrangeHint": "Kacheln nach Bereichen neu anordnen: Status oben, breite Inhalte darunter, Ereignisse unten. Gespeichert wird erst mit „Fertig“.",
     "deleteTitle": "„{{name}}“ löschen?",
     "deleteHint": "Das Dashboard und seine Kachel-Anordnung werden entfernt. Integrationen und Daten bleiben erhalten.",
     "newName": "Dashboard {{n}}",

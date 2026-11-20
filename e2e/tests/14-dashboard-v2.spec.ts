@@ -72,7 +72,7 @@ test('Neues Dashboard mit Integrations- und Kennzahl-Kachel, Reiter, Löschen', 
   expect(dns.icon).toBe('shield-check')
   expect(dns.tiles.map((t) => t.id)).toEqual([`integration:${ph.json.id}`, expect.stringMatching(/^metric:/)])
   // neue Kacheln bleiben nebeneinander (höchste freie Stelle)
-  expect(dns.tiles[1]).toMatchObject({ x: 4, y: 0 })
+  expect(dns.tiles[1]).toMatchObject({ x: 3, y: 0 })
   // das Haupt-Dashboard ist unverändert
   await page.locator('[data-dashboard-tab="main"]').click()
   await expect(page).toHaveURL('/')
@@ -140,6 +140,37 @@ test('Kacheln ziehen und in der Größe ändern; Abbrechen verwirft', async ({ p
   expect(after.x).toBeGreaterThan(0)
   expect(after.h).toBeGreaterThan(before.h)
   expect(after.w).toBeLessThan(before.w)
+})
+
+test('Automatisch anordnen: Bereiche ohne Lücken, erst „Fertig“ speichert', async ({ page }) => {
+  await login(page)
+  const ph = await addPihole(page)
+  const main = (await dashboards(page)).find((d) => d.id === 'main')!
+  // durcheinander: Backups rechts unten, Ereignisse oben
+  const messy = main.tiles.map((t) =>
+    t.id === 'backups' ? { ...t, x: 8, y: 20, w: 4, h: 5 } : t.id === 'events' ? { ...t, x: 0, y: 0, w: 6, h: 4 } : t,
+  )
+  await api(page, 'PUT', '/api/dashboards/main', { ...main, tiles: messy })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Bearbeiten' }).click()
+  await page.getByRole('button', { name: 'Automatisch anordnen' }).click()
+  const backups = page.locator('[data-grid-tile="backups"]')
+  const events = page.locator('[data-grid-tile="events"]')
+  await expect
+    .poll(async () => (await events.boundingBox())!.y - (await backups.boundingBox())!.y)
+    .toBeGreaterThan(0)
+  // noch nicht gespeichert
+  expect((await dashboards(page)).find((d) => d.id === 'main')!.tiles.find((t) => t.id === 'backups')).toMatchObject({ x: 8, y: 20 })
+  await page.getByRole('button', { name: 'Fertig' }).click()
+  await expect
+    .poll(async () => (await dashboards(page)).find((d) => d.id === 'main')!.tiles.find((t) => t.id === 'backups'))
+    .toMatchObject({ x: 0, y: 0, w: 4, h: 3 })
+  const saved = (await dashboards(page)).find((d) => d.id === 'main')!.tiles
+  // Backups, Checks, Pi-hole füllen die erste Reihe; Ereignisse ganz unten über die volle Breite
+  expect(saved.find((t) => t.id === `integration:${ph}`)).toMatchObject({ x: 8, y: 0, w: 4 })
+  const ev = saved.find((t) => t.id === 'events')!
+  expect(ev.w).toBe(12)
+  expect(ev.y).toBe(Math.max(...saved.filter((t) => t.visible && t.id !== 'events').map((t) => t.y + t.h)))
 })
 
 test('Live-Kachel: Wert ändert sich bei 5-s-Abfrage', async ({ page }) => {

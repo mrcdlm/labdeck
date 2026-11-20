@@ -110,6 +110,8 @@
     "done": "Done",
     "edit": "Edit",
     "editHint": "Drag tiles and resize them at the corner. On phones they are stacked.",
+    "arrange": "Arrange automatically",
+    "arrangeHint": "Rearrange tiles by area: status on top, wide content below, events at the bottom. Saved only with \"Done\".",
     "deleteTitle": "Delete \"{{name}}\"?",
     "deleteHint": "The dashboard and its tile arrangement are removed. Integrations and data stay.",
     "newName": "Dashboard {{n}}",

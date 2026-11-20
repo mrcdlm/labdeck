@@ -11,6 +11,7 @@ import {
   House,
   Image,
   LayoutDashboard,
+  LayoutGrid,
   Network,
   Pencil,
   Plug,
@@ -78,6 +79,7 @@ import {
   useIntegrations,
   useIntegrationTypes,
   useOverview,
+  useArrangeDashboard,
   useSaveDashboard,
 } from '@/lib/queries'
 import { appendTile, availableTiles, newMetricTileId } from '@/lib/tiles'
@@ -229,20 +231,28 @@ function ServiceTile({
         .map((m) => metricText(i.type, m))
         .join(' · ')}
       problems={problems.length}
+      aside={
+        spark &&
+        ports.length === 0 && (
+          <Sparkline
+            integrationId={i.id}
+            metricKey={spark.key}
+            range={spark.range}
+            className="hidden h-12 w-2/5 max-w-48 shrink-0 @[17rem]:block"
+          />
+        )
+      }
     >
       {ports.length > 0 ? (
         <div className="mt-3">
           <SwitchFront ports={ports} compact />
         </div>
       ) : (
-        <>
-          {server && (
-            <div className="mt-3">
-              <ServerHealth metrics={(i.snapshot?.metrics ?? []).filter((m) => m.resource === server.id)} compact />
-            </div>
-          )}
-          {spark && <Sparkline integrationId={i.id} metricKey={spark.key} range={spark.range} />}
-        </>
+        server && (
+          <div className="mt-3">
+            <ServerHealth metrics={(i.snapshot?.metrics ?? []).filter((m) => m.resource === server.id)} compact />
+          </div>
+        )
       )}
     </StatusTile>
   )
@@ -582,6 +592,8 @@ function EditBar({
   error,
   onChange,
   onAdd,
+  onArrange,
+  arranging,
   onDelete,
   onCancel,
   onDone,
@@ -593,6 +605,8 @@ function EditBar({
   error?: string
   onChange: (d: DashboardT) => void
   onAdd: () => void
+  onArrange: () => void
+  arranging: boolean
   onDelete: () => void
   onCancel: () => void
   onDone: () => void
@@ -638,6 +652,10 @@ function EditBar({
         <Button variant="outline" onClick={onAdd} data-action="add-tile">
           <Plus className="size-4" />
           {t('tile.addTitle')}
+        </Button>
+        <Button variant="outline" onClick={onArrange} disabled={arranging} title={t('dashboard.arrangeHint')} data-action="arrange">
+          <LayoutGrid className="size-4" />
+          {t('dashboard.arrange')}
         </Button>
         <label className="text-muted-foreground flex items-center gap-2 text-sm">
           <Switch checked={draft.problems_first} onCheckedChange={(v) => onChange({ ...draft, problems_first: v })} />
@@ -686,6 +704,7 @@ export function Dashboard() {
   const integrations = useIntegrations()
   const types = useIntegrationTypes()
   const save = useSaveDashboard()
+  const arrange = useArrangeDashboard()
   const create = useCreateDashboard()
   const remove = useDeleteDashboard()
   const name = useDashboardName()
@@ -747,6 +766,11 @@ export function Dashboard() {
     }))
     setDialog(undefined)
   }
+  function onArrange() {
+    if (!draft) return
+    // nur der Entwurf ändert sich – „Fertig“ speichert, „Abbrechen“ verwirft
+    arrange.mutate(draft.tiles, { onSuccess: (r) => update((d) => ({ ...d, tiles: r.tiles })) })
+  }
   function onDone() {
     if (!draft) return
     save.mutate(draft, { onSuccess: () => setEditId(undefined) })
@@ -802,6 +826,8 @@ export function Dashboard() {
           error={save.error?.message ?? create.error?.message ?? remove.error?.message}
           onChange={setDraft}
           onAdd={() => setDialog({})}
+          onArrange={onArrange}
+          arranging={arrange.isPending}
           onDelete={onDelete}
           onCancel={() => setEditId(undefined)}
           onDone={onDone}

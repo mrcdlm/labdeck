@@ -8,6 +8,7 @@ import {
   monitoringApi,
   webhookApi,
   type Dashboard,
+  type DashboardTile,
   type HistoryFilter,
   type IntegrationInput,
   type MetricRange,
@@ -207,3 +208,5 @@ export const useCreateDashboard = () =>
   useDashboardMutation((d: { name: string; icon: string }) => dashboardApi.create(d.name, d.icon))
 export const useDeleteDashboard = () => useDashboardMutation((id: string) => dashboardApi.remove(id))
 export const useOrderDashboards = () => useDashboardMutation((ids: string[]) => dashboardApi.order(ids))
+/** Standardanordnung berechnen (Entwurf im Bearbeiten-Modus, speichert nicht) */
+export const useArrangeDashboard = () => useMutation({ mutationFn: (tiles: DashboardTile[]) => dashboardApi.arrange(tiles) })

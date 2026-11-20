@@ -22,11 +22,10 @@ export function availableTiles(integrations: Integration[]): string[] {
   return [...out, 'backup-timeline', 'events']
 }
 
-/** Breite und Höhe neuer Kacheln (Rastereinheiten). */
+/** Breite und Höhe neuer Kacheln (Rastereinheiten) – wie defaultSize im Backend. */
 export function defaultSize(id: string, options?: TileOptions): { w: number; h: number } {
-  if (id === 'events') return { w: 12, h: 7 }
-  if (id === 'backup-timeline') return { w: 12, h: 5 }
-  if (id === 'hosts') return { w: 8, h: 5 }
+  if (id === 'events') return { w: 12, h: 6 }
+  if (id === 'backup-timeline' || id === 'hosts') return { w: 6, h: 5 }
   if (id.startsWith('metric:')) {
     // Kennzahl-Kacheln: so groß, wie die Darstellung Platz braucht
     if (options?.view === 'area') return { w: 6, h: 5 }
@@ -34,7 +33,8 @@ export function defaultSize(id: string, options?: TileOptions): { w: number; h: 
     if (options?.view === 'gauge') return { w: 4, h: 5 }
     return { w: 4, h: 4 }
   }
-  return { w: 4, h: 5 }
+  // Status-Kacheln (Backups, Checks, Integrationen): kompakt
+  return { w: 3, h: 3 }
 }
 
 /**

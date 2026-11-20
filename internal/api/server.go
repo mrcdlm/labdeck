@@ -129,6 +129,7 @@ func (s *Server) Routes() http.Handler {
 			r.Get("/dashboards", s.handleListDashboards)
 			r.Post("/dashboards", s.handleCreateDashboard)
 			r.Put("/dashboards/order", s.handleOrderDashboards)
+			r.Post("/dashboards/arrange", s.handleArrange)
 			r.Put("/dashboards/{id}", s.handlePutDashboardByID)
 			r.Delete("/dashboards/{id}", s.handleDeleteDashboard)
 
