@@ -65,8 +65,8 @@ func (*Integration) Schema() integrations.ConfigSchema {
 			{Key: "api_key", Type: integrations.FieldSecret, Required: true,
 				Label: T{DE: "API-Key", EN: "API key"},
 				Help: T{
-					DE: "In Arcane unter Einstellungen → API-Keys anlegen (beginnt mit arc_).",
-					EN: "Create one in Arcane under Settings → API Keys (starts with arc_).",
+					DE: "In Arcane unter Einstellungen → API-Keys anlegen (beginnt mit arc_). Leserechte genügen: Environments, Containers und Projects jeweils auflisten/ansehen.",
+					EN: "Create one in Arcane under Settings → API Keys (starts with arc_). Read access is enough: list/view for Environments, Containers and Projects.",
 				}},
 			{Key: "environments", Type: integrations.FieldString,
 				Label:       T{DE: "Umgebungen", EN: "Environments"},
@@ -176,6 +176,11 @@ func connect(ctx context.Context, cfg integrations.Config) (*client, []env, erro
 			want = append(want, n)
 		}
 	}
+	// leere Liste: meist fehlt dem Key das Recht, Umgebungen aufzulisten –
+	// das sagen statt „Umgebung … nicht gefunden“
+	if len(all) == 0 {
+		return nil, nil, i18n.E("arcane.no_envs")
+	}
 	var out []env
 	for _, e := range all {
 		if e.ID == "" {
@@ -187,7 +192,11 @@ func connect(ctx context.Context, cfg integrations.Config) (*client, []env, erro
 	}
 	if len(out) == 0 {
 		if len(want) > 0 {
-			return nil, nil, i18n.E("arcane.env_missing", "names", strings.Join(want, ", "))
+			names := make([]string, 0, len(all))
+			for _, e := range all {
+				names = append(names, e.Name)
+			}
+			return nil, nil, i18n.E("arcane.env_missing", "names", strings.Join(want, ", "), "available", strings.Join(names, ", "))
 		}
 		return nil, nil, i18n.E("arcane.no_envs")
 	}

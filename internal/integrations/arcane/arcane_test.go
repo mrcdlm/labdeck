@@ -185,8 +185,9 @@ func TestErrors(t *testing.T) {
 	if c := code(cfg(t, srv.URL, nil, "arc_falsch", time.Second)); c != "integration.unauthorized" {
 		t.Errorf("falscher Key: %s", c)
 	}
-	if c := code(cfg(t, srv.URL, map[string]any{"environments": "gibtsnicht"}, key, time.Second)); c != "arcane.env_missing" {
-		t.Errorf("Umgebung: %s", c)
+	err := New().Test(ctx, cfg(t, srv.URL, map[string]any{"environments": "gibtsnicht"}, key, time.Second))
+	if m := i18n.FromError(err); m.Code != "arcane.env_missing" || m.Params["available"] == "" {
+		t.Errorf("Umgebung: %s %v", m.Code, m.Params)
 	}
 	fake.Broken(true)
 	if c := code(cfg(t, srv.URL, nil, key, time.Second)); c != "arcane.unexpected" {
@@ -206,6 +207,10 @@ func TestErrors(t *testing.T) {
 	fake.SetEnvs()
 	if c := code(cfg(t, srv.URL, nil, key, time.Second)); c != "arcane.no_envs" {
 		t.Errorf("keine Umgebungen: %s", c)
+	}
+	// Key ohne Recht auf Umgebungen: Liste leer → Hinweis aufs Recht, nicht „nicht gefunden“
+	if c := code(cfg(t, srv.URL, map[string]any{"environments": "nas"}, key, time.Second)); c != "arcane.no_envs" {
+		t.Errorf("leer mit Namen: %s", c)
 	}
 	// andere Web-App unter der Adresse
 	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("<html>")) }))

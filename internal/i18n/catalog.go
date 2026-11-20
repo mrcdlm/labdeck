@@ -159,8 +159,8 @@ var catalog = map[string]entry{
 
 	// Arcane
 	"arcane.unexpected":  {"Antwort ist keine Arcane-API – ist die Adresse die Arcane-Oberfläche?", "The response is not the Arcane API – is the address the Arcane web interface?"},
-	"arcane.no_envs":     {"Arcane kennt keine Umgebung (Docker-Host) oder der API-Key darf keine sehen", "Arcane knows no environment (Docker host) or the API key may not see any"},
-	"arcane.env_missing": {"Umgebung {names} in Arcane nicht gefunden", "Environment {names} not found in Arcane"},
+	"arcane.no_envs":     {"Arcane liefert keine Umgebung (Docker-Host) – fehlt dem API-Key das Recht „Environments“ (auflisten)?", "Arcane returns no environment (Docker host) – is the API key missing the \"Environments\" (list) permission?"},
+	"arcane.env_missing": {"Umgebung {names} in Arcane nicht gefunden (vorhanden: {available})", "Environment {names} not found in Arcane (available: {available})"},
 	// NetBird
 	"netbird.unexpected": {"Antwort ist keine NetBird-Management-API – ist die Adresse der Management-Server (Cloud: https://api.netbird.io)?", "The response is not the NetBird management API – is the address the management server (cloud: https://api.netbird.io)?"},
 
