@@ -120,6 +120,8 @@ Neue Quellen sprechen offene Protokolle; Herstellerspezifisches nur als optional
 - **SNMP** (`snmp`): v2c/v3, nur RFC-MIBs (SNMPv2-MIB, IF-MIB, ENTITY-MIB). Referenz Cisco C1300, jeder Switch passt.
   Frontbild (RJ45/SFP, Einheit, Position) aus ENTITY-MIB, sonst aus Portnamen/Modellname; Feld *Frontlayout* überschreibt.
   Ports: Ressourcen `kind=port` unter `kind=switch`; Raten aus 64-Bit-Zählern (Zustand im Speicher).
+  Für den Netzplan zusätzlich LLDP-MIB (Nachbar je Port) und BRIDGE-/Q-BRIDGE-MIB (PVID, getaggte VLANs,
+  VLAN-Namen) – optional, 5 min zwischengespeichert; Infos `lldp_*`, `pvid`, `vlans` am Port.
 - **Redfish** (`redfish`): DMTF-Felder, Pfade nur aus `@odata.id` (keine festen IDs). Referenz HPE iLO 5 mit
   `Oem.Hpe.AggregateHealthStatus` und SmartStorage; iDRAC, XCC, Supermicro über dieselben DMTF-Felder.
   Ressource `kind=server` (iLO liefert keine CPU-/RAM-Auslastung → kein „Host“).
@@ -146,6 +148,11 @@ Neue Quellen sprechen offene Protokolle; Herstellerspezifisches nur als optional
   Ressourcen. **Eine Detailseite je Integration** (`/systeme/:id`) mit allem: Probleme, Kennzahlen + Diagramm,
   Hosts/Gäste, Hardware, Switch-Front, Tabellen. Jede Information hat genau einen Ort – keine zweite Seite mit
   denselben Daten anlegen. `/dienste` und `/ressourcen` leiten weiter.
+- **Netzplan** (`/netz`, `GET/PUT /api/topology`): Ebenen Internet → Router/Firewall → Switches → Geräte.
+  Geräte live aus Integrationen (Switch, Host, Server; Server mit Host gleichen Namens zusammengeführt), Kabel
+  aus LLDP; gepflegt (JSON-Einstellung `topology`): eigene Geräte, Kabel (Vorrang vor LLDP), VLAN-Farben/
+  Subnetze, Zuordnungen (`res:…`, `lldp:…`, `int:…` → Gerät), ausgeblendete Geräte. Linienbreite =
+  Speed, Farbe = VLAN (`--vlan-1…6`, validiert), Kabeltabelle als Alternative, Export PNG/SVG mit Schwärzen.
 - **Verlauf:** Statuswechsel und Fehler aller Integrationen, filterbar
 - **Einstellungen:**
   - *Integrationen:* hinzufügen (Typ wählen → Formular aus Schema), bearbeiten, „Verbindung testen“, aktivieren/deaktivieren, löschen

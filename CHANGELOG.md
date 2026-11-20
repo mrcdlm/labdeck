@@ -15,6 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   integration's tile joins its area instead of the first free spot.
 
 ### Added
+- **Network map** (`/netz`): devices in tiers (internet → router/firewall → switches → devices),
+  built live from your integrations – switches with ports and VLANs, cables from LLDP, Proxmox VE
+  and Arcane hosts with their guests, Redfish hardware merged into the host of the same name,
+  NetBird's public services and VPN peers. Add what they don't know in the editor: your own
+  devices (router, firewall, access point …) with ports, cables, VLAN names, colours and subnets;
+  assign unknown LLDP neighbours, services (e.g. Immich runs on docker01) and merge or hide
+  devices. Line width shows the speed, colour the untagged VLAN, trunks are double lines,
+  missing links dashed; all cables also as a table. Export as PNG or SVG, optionally with IPs,
+  subnets and domains redacted.
+- SNMP: LLDP neighbours (LLDP-MIB) and VLANs per port (BRIDGE-/Q-BRIDGE-MIB), optional.
 - "Arrange automatically" in edit mode: rearranges the tiles of a dashboard by area (saved only
   with "Done"), e.g. to get the new layout for an existing dashboard.
 

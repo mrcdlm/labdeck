@@ -51,7 +51,8 @@ Sister project of [dnsdeck](https://github.com/mrcdlm/dnsdeck) – same look, sa
   Reverse proxy services with status and certificate.
 - **Switches via SNMP** (v2c/v3) – any switch with standard MIBs (Cisco C1300, UniFi, MikroTik,
   TP-Link, Netgear …): schematic front panel with RJ45/SFP ports, link, speed, traffic,
-  utilisation and errors per port; monitored ports (with a description or selected) as problems.
+  utilisation and errors per port; monitored ports (with a description or selected) as problems;
+  LLDP neighbours and VLANs per port (LLDP-MIB, Q-BRIDGE-MIB) for the network map.
 - **Server hardware via Redfish** – HPE iLO, Dell iDRAC, Lenovo XCC, Supermicro: health per
   component, power supplies, fans, temperatures, drives/RAID with SSD remaining life, power draw.
 - **Pi-hole** (v6) – queries, blocked %, clients, blocklist age, blocking on/off, updates.
@@ -60,6 +61,11 @@ Sister project of [dnsdeck](https://github.com/mrcdlm/dnsdeck) – same look, sa
   one detail page with everything it delivers: metrics and charts (24 hours to 1 year; raw
   values 30 days, daily values 1 year, configurable), hosts and guests, hardware, switch front
   panel and tables.
+- **Network map** – builds itself from your integrations: switches with ports and VLANs, cables
+  from LLDP, Proxmox and Docker hosts with their guests, server hardware, services. Add what
+  they don't know (router, firewall, access point, cables, VLAN colours and subnets) in the UI.
+  Line width shows link speed, colour the VLAN, trunks are drawn as double lines; live status
+  everywhere. Export as PNG or SVG with IPs and domains redacted – ready to share.
 - **History** – status changes and errors of all integrations, filterable.
 - **Notifications via webhooks** – presets for ntfy, Gotify, Discord, Slack, Telegram and
   Home Assistant; check down/up, backup overdue/failed/OK again, integration
@@ -76,6 +82,8 @@ Sister project of [dnsdeck](https://github.com/mrcdlm/dnsdeck) – same look, sa
 | Backups | Checks | Systems | History |
 |---|---|---|---|
 | ![Backups](docs/screenshots/backups.en.png) | ![Checks](docs/screenshots/checks.en.png) | ![Systems](docs/screenshots/systems.en.png) | ![History](docs/screenshots/history.en.png) |
+
+![Network map](docs/screenshots/network.en.png)
 
 ## Quick start
 

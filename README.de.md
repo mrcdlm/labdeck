@@ -53,7 +53,8 @@ Schwesterprojekt von [dnsdeck](https://github.com/mrcdlm/dnsdeck) – gleiche Op
   ausgeschalteter Laptop ist also kein Alarm. Reverse-Proxy-Dienste mit Status und Zertifikat.
 - **Switches per SNMP** (v2c/v3) – jeder Switch mit Standard-MIBs (Cisco C1300, UniFi, MikroTik,
   TP-Link, Netgear …): schematische Front mit RJ45/SFP-Ports, Link, Geschwindigkeit, Traffic,
-  Auslastung und Fehler je Port; überwachte Ports (mit Beschreibung oder ausgewählt) als Problem.
+  Auslastung und Fehler je Port; überwachte Ports (mit Beschreibung oder ausgewählt) als Problem;
+  LLDP-Nachbarn und VLANs je Port (LLDP-MIB, Q-BRIDGE-MIB) für den Netzplan.
 - **Server-Hardware per Redfish** – HPE iLO, Dell iDRAC, Lenovo XCC, Supermicro: Zustand je
   Komponente, Netzteile, Lüfter, Temperaturen, Laufwerke/RAID mit SSD-Restlebensdauer, Leistung.
 - **Pi-hole** (v6) – Anfragen, geblockt %, Clients, Alter der Blockliste, Blocken an/aus, Updates.
@@ -62,6 +63,11 @@ Schwesterprojekt von [dnsdeck](https://github.com/mrcdlm/dnsdeck) – gleiche Op
   eine Detailseite mit allem, was sie liefert: Kennzahlen und Diagramme (24 Stunden bis 1 Jahr;
   Rohwerte 30 Tage, Tageswerte 1 Jahr, einstellbar), Hosts und Gäste, Hardware, Switch-Front
   und Tabellen.
+- **Netzplan** – entsteht aus den Integrationen: Switches mit Ports und VLANs, Kabel per LLDP,
+  Proxmox- und Docker-Hosts mit ihren Gästen, Server-Hardware, Dienste. Was sie nicht kennen
+  (Router, Firewall, Access Point, Kabel, VLAN-Farben und Subnetze), ergänzt du im UI.
+  Linienbreite = Geschwindigkeit, Farbe = VLAN, Trunks als Doppellinie; überall Live-Status.
+  Export als PNG oder SVG mit geschwärzten IPs und Domains – fertig zum Teilen.
 - **Verlauf** – Statuswechsel und Fehler aller Integrationen, filterbar.
 - **Benachrichtigungen per Webhook** – Vorlagen für ntfy, Gotify, Discord, Slack, Telegram und
   Home Assistant; Check down/wieder up, Backup überfällig/fehlgeschlagen/wieder OK,
@@ -79,6 +85,8 @@ Schwesterprojekt von [dnsdeck](https://github.com/mrcdlm/dnsdeck) – gleiche Op
 | Backups | Checks | Systeme | Verlauf |
 |---|---|---|---|
 | ![Backups](docs/screenshots/backups.de.png) | ![Checks](docs/screenshots/checks.de.png) | ![Systeme](docs/screenshots/systems.de.png) | ![Verlauf](docs/screenshots/history.de.png) |
+
+![Netzplan](docs/screenshots/network.de.png)
 
 ## Schnellstart
 

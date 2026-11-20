@@ -231,7 +231,15 @@ function LinkLayer({ links, vlans, container }: { links: TopoLink[]; vlans: Topo
       const r = el.getBoundingClientRect()
       // Unterkante der Karte: waagerechte Stücke laufen darunter, nicht hinter ihr
       const card = (el.closest('[data-anchor-device]') ?? el).getBoundingClientRect()
-      return { x: r.left - base.left + r.width / 2, top: r.top - base.top, bottom: r.bottom - base.top, card: card.bottom - base.top }
+      return {
+        x: r.left - base.left + r.width / 2,
+        top: r.top - base.top,
+        bottom: r.bottom - base.top,
+        card: card.bottom - base.top,
+        left: card.left - base.left,
+        right: card.right - base.left,
+        el: el.closest('[data-anchor-device]'),
+      }
     }
     // Kabel zwischen denselben Ebenen auf eigene Höhen verteilen (keine deckungsgleichen Linien)
     const raw = links.flatMap((l) => {
@@ -241,6 +249,13 @@ function LinkLayer({ links, vlans, container }: { links: TopoLink[]; vlans: Topo
       const [u, d] = a.top <= b.top ? [a, b] : [b, a]
       return [{ l, u, d }]
     })
+    // Karten als Hindernisse: ein senkrechtes Kabel darf nicht hinter einer fremden Karte verlaufen
+    const cards = [...container.querySelectorAll<HTMLElement>('[data-anchor-device]')].map((c) => {
+      const r = c.getBoundingClientRect()
+      return { c, left: r.left - base.left, right: r.right - base.left, top: r.top - base.top, bottom: r.bottom - base.top }
+    })
+    const blocked = (x: number, from: number, to: number, except: Element | null) =>
+      cards.some((k) => k.c !== except && k.left - 2 < x && x < k.right + 2 && k.top < to && k.bottom > from)
     const lanes = new Map<number, number>()
     const out: Drawn[] = []
     for (const r of raw.sort((x, y) => x.u.x - y.u.x)) {
@@ -259,6 +274,13 @@ function LinkLayer({ links, vlans, container }: { links: TopoLink[]; vlans: Topo
       }
       const gap = y2 - r.u.card
       const ym = r.u.card + Math.max(6, Math.min(gap - 10, 12 + (n % 6) * 6))
+      if (blocked(r.d.x, ym, y2, r.d.el)) {
+        // Ziel liegt unter einer anderen Karte: durch die Lücke zwischen den Spalten, kurz vor dem Ziel einbiegen
+        const gx = r.d.left - 8 > 4 ? r.d.left - 8 : r.d.right + 8
+        const yt = y2 - 8
+        out.push({ l: r.l, w, d: `M${r.u.x},${y1} V${ym} H${gx} V${yt} H${r.d.x} V${y2}`, lx: r.d.x, ly: y2 - 4 })
+        continue
+      }
       out.push({ l: r.l, w, d: `M${r.u.x},${y1} V${ym} H${r.d.x} V${y2}`, lx: r.d.x, ly: y2 - 4 })
     }
     setDrawn(out)
