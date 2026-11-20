@@ -545,3 +545,118 @@ export const historyApi = {
     return request<HistoryPage>('GET', `/api/history?${q}`)
   },
 }
+
+// --- Netzplan ---------------------------------------------------------------
+
+export type TopoDeviceType =
+  | 'internet' | 'router' | 'firewall' | 'switch' | 'ap' | 'server' | 'hypervisor' | 'docker' | 'nas' | 'pc' | 'iot' | 'other'
+
+export const topoDeviceTypes: TopoDeviceType[] = [
+  'internet', 'router', 'firewall', 'switch', 'ap', 'server', 'hypervisor', 'docker', 'nas', 'pc', 'iot', 'other',
+]
+
+export interface TopoEndpoint {
+  device: string
+  port?: string
+}
+
+export interface TopoPort {
+  name: string
+  status: Status
+  state: string
+  speed?: number
+  media?: string
+  unit?: number
+  pos?: number
+  alias?: string
+  pvid?: number
+  tagged?: number[]
+  util?: string
+  resource_id?: string
+}
+
+export interface TopoDevice {
+  id: string
+  name: string
+  type: TopoDeviceType
+  tier: number
+  status: Status
+  manual: boolean
+  facts: { key: string; value: string }[]
+  sources: { integration_id: number; integration_name: string; integration_type: string; resource_id?: string }[]
+  ports: TopoPort[]
+  guests: { id: string; name: string; kind: string; state: string; status: Status; group?: string }[]
+  services: TopoService[]
+  note?: string
+}
+
+export interface TopoService {
+  integration_id: number
+  name: string
+  type: string
+  status: Status
+}
+
+export interface TopoLink {
+  id: string
+  a: TopoEndpoint
+  b: TopoEndpoint
+  speed?: number
+  vlan?: number
+  tagged?: number[]
+  status: Status
+  source: 'lldp' | 'manual'
+  note?: string
+}
+
+export interface TopoVLAN {
+  id: number
+  name: string
+  subnet?: string
+  color?: string
+  note?: string
+}
+
+export interface TopoManualDevice {
+  id: string
+  name: string
+  type: TopoDeviceType
+  model?: string
+  ip?: string
+  note?: string
+  ports?: number
+}
+
+export interface TopoManualLink {
+  id: string
+  a: TopoEndpoint
+  b: TopoEndpoint
+  speed?: number
+  vlan?: number
+  tagged?: number[]
+  note?: string
+}
+
+export interface TopoConfig {
+  devices: TopoManualDevice[]
+  links: TopoManualLink[]
+  vlans: TopoVLAN[]
+  aliases: Record<string, string>
+  hidden: string[]
+}
+
+export interface Topology {
+  devices: TopoDevice[]
+  links: TopoLink[]
+  vlans: TopoVLAN[]
+  services: TopoService[]
+  suggestions: { switch: string; port: string; name: string; remote_port?: string; chassis?: string }[]
+  exposed: { name: string; targets?: string; status: Status; source: string }[]
+  vpn: { integration_id: number; name: string; online: number; total: number; problems: number }[]
+  config: TopoConfig
+}
+
+export const topologyApi = {
+  get: () => request<Topology>('GET', '/api/topology'),
+  save: (c: TopoConfig) => request<Topology>('PUT', '/api/topology', c),
+}

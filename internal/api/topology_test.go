@@ -206,3 +206,22 @@ func TestTopologyAPI(t *testing.T) {
 		t.Errorf("gespeichert: %s", raw)
 	}
 }
+
+// Eigene Geräte ohne Quelle: Listen sind leer, nicht null (das Frontend greift darauf zu).
+func TestTopologyEmptyLists(t *testing.T) {
+	got := buildTopology(nil, topoConfig{Devices: []topoManualDevice{{ID: "fw", Name: "FW", Type: "firewall"}}})
+	b, _ := json.Marshal(got.Devices[0])
+	for _, k := range []string{`"sources":[]`, `"facts":[]`, `"ports":[]`, `"guests":[]`, `"services":[]`} {
+		if !strings.Contains(string(b), k) {
+			t.Errorf("%s fehlt: %s", k, b)
+		}
+	}
+}
+
+// Ohne Pflege: config mit leeren Listen statt null.
+func TestTopologyConfigEmpty(t *testing.T) {
+	b, _ := json.Marshal(buildTopology(nil, topoConfig{}).Config)
+	if string(b) != `{"devices":[],"links":[],"vlans":[],"aliases":{},"hidden":[]}` {
+		t.Errorf("config: %s", b)
+	}
+}

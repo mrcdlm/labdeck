@@ -13,6 +13,7 @@ const Backups = lazy(() => import('@/pages/Backups').then((m) => ({ default: m.B
 const Checks = lazy(() => import('@/pages/Checks').then((m) => ({ default: m.Checks })))
 const History = lazy(() => import('@/pages/History').then((m) => ({ default: m.History })))
 const Systems = lazy(() => import('@/pages/Systems').then((m) => ({ default: m.Systems })))
+const Topology = lazy(() => import('@/pages/Topology').then((m) => ({ default: m.Topology })))
 const SystemDetail = lazy(() => import('@/pages/SystemDetail').then((m) => ({ default: m.SystemDetail })))
 
 function Lazy({ children }: { children: ReactNode }) {
@@ -57,6 +58,7 @@ export default function App() {
         <Route path="systeme/:id" element={<Lazy><SystemDetail /></Lazy>} />
         <Route path="dienste" element={<LegacySystems />} />
         <Route path="ressourcen" element={<LegacySystems />} />
+        <Route path="netz" element={<Lazy><Topology /></Lazy>} />
         <Route path="verlauf" element={<Lazy><History /></Lazy>} />
         <Route path="einstellungen" element={<Lazy><Settings /></Lazy>} />
       </Route>

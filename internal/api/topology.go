@@ -252,6 +252,7 @@ var guestKinds = []string{integrations.KindVM, integrations.KindCT, integrations
 
 // buildTopology führt Integrationen und gepflegte Angaben zum Plan zusammen.
 func buildTopology(list []integrations.View, cfg topoConfig) topologyDTO {
+	cfg.normalize()
 	out := topologyDTO{Config: cfg, Devices: []topoDevice{}, Links: []topoLink{}, Services: []topoService{},
 		Suggestions: []topoSuggestion{}, Exposed: []topoExposed{}, VPN: []topoVPN{}}
 	byID := map[string]*topoDevice{}
@@ -525,6 +526,12 @@ func buildTopology(list []integrations.View, cfg topoConfig) topologyDTO {
 		if d.Services == nil {
 			d.Services = []topoService{}
 		}
+		if d.Sources == nil {
+			d.Sources = []topoSource{}
+		}
+		if d.Facts == nil {
+			d.Facts = []topoFact{}
+		}
 		out.Devices = append(out.Devices, *d)
 	}
 	// Kabel zu ausgeblendeten Geräten entfallen
@@ -625,6 +632,25 @@ func firstTag(tags []string) string {
 
 var topoMu sync.Mutex
 
+// normalize: leere Listen statt null (das Frontend arbeitet direkt damit).
+func (c *topoConfig) normalize() {
+	if c.Devices == nil {
+		c.Devices = []topoManualDevice{}
+	}
+	if c.Links == nil {
+		c.Links = []topoManualLink{}
+	}
+	if c.VLANs == nil {
+		c.VLANs = []topoVLAN{}
+	}
+	if c.Aliases == nil {
+		c.Aliases = map[string]string{}
+	}
+	if c.Hidden == nil {
+		c.Hidden = []string{}
+	}
+}
+
 func (s *Server) loadTopoConfig(ctx context.Context) (topoConfig, error) {
 	cfg := topoConfig{Aliases: map[string]string{}}
 	raw, err := s.prefs.GetSetting(ctx, keyTopology)
@@ -634,9 +660,7 @@ func (s *Server) loadTopoConfig(ctx context.Context) (topoConfig, error) {
 	if raw != "" {
 		_ = json.Unmarshal([]byte(raw), &cfg) // kaputt = leer
 	}
-	if cfg.Aliases == nil {
-		cfg.Aliases = map[string]string{}
-	}
+	cfg.normalize()
 	return cfg, nil
 }
 
@@ -697,9 +721,7 @@ func validateTopo(c *topoConfig) *i18n.Msg {
 		m := i18n.M("topology.too_many")
 		return &m
 	}
-	if c.Aliases == nil {
-		c.Aliases = map[string]string{}
-	}
+	c.normalize()
 	return nil
 }
 

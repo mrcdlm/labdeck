@@ -1,5 +1,6 @@
 import { ArrowLeft, Check, ChevronDown, ExternalLink, KeyRound, Loader2, Plus, PlugZap, Trash2, X } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
+import type { TFunction } from 'i18next'
 import { Trans, useTranslation } from 'react-i18next'
 
 import { IntegrationIcon } from '@/components/IntegrationIcon'
@@ -595,7 +596,7 @@ function IntegrationForm({
   )
 }
 
-function summary(t: ReturnType<typeof useTranslation>['t'], r: { checks: number; backups: number; metrics: number }) {
+function summary(t: TFunction, r: { checks: number; backups: number; metrics: number }) {
   const parts: string[] = []
   if (r.checks) parts.push(t('integrations.count.checks', { count: r.checks }))
   if (r.backups) parts.push(t('integrations.count.backups', { count: r.backups }))

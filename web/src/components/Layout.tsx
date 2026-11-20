@@ -4,6 +4,7 @@ import {
   History,
   LayoutDashboard,
   LogOut,
+  Network,
   Server,
   Settings,
   type LucideIcon,
@@ -20,13 +21,14 @@ import { setDisplayTimeZone } from '@/lib/format'
 import { useLogout, useOverview, useSettings } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
-type NavKey = 'dashboard' | 'backups' | 'checks' | 'systems' | 'history' | 'settings'
+type NavKey = 'dashboard' | 'backups' | 'checks' | 'systems' | 'network' | 'history' | 'settings'
 
 const nav: { to: string; key: NavKey; icon: LucideIcon }[] = [
   { to: '/', key: 'dashboard', icon: LayoutDashboard },
   { to: '/backups', key: 'backups', icon: DatabaseBackup },
   { to: '/checks', key: 'checks', icon: HeartPulse },
   { to: '/systeme', key: 'systems', icon: Server },
+  { to: '/netz', key: 'network', icon: Network },
   { to: '/verlauf', key: 'history', icon: History },
   { to: '/einstellungen', key: 'settings', icon: Settings },
 ]
@@ -88,7 +90,7 @@ function LiveIndicator({ compact }: { compact?: boolean }) {
 
 // Datenseiten nutzen große Bildschirme (Raster, Tabellen); Formulare und
 // Listen zum Lesen bleiben schmal.
-const widePages = /^\/($|d\/|backups|checks|systeme)/
+const widePages = /^\/($|d\/|backups|checks|systeme|netz)/
 
 export function Layout() {
   return (

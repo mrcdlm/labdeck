@@ -12,7 +12,8 @@
     "checks": "Checks",
     "history": "History",
     "settings": "Settings",
-    "systems": "Systems"
+    "systems": "Systems",
+    "network": "Network map"
   },
   "live": {
     "on": "Live",
@@ -698,7 +699,6 @@
       "disabled": "Disabled"
     }
   },
-
   "units": {
     "mainsOn": "On mains",
     "mainsOff": "On battery",
@@ -835,6 +835,133 @@
       "power": "Power",
       "apps": "Applications",
       "monitoring": "Monitoring and custom sources"
+    }
+  },
+  "topology": {
+    "subtitle": "Devices, cables and networks – live from your integrations, plus your own additions",
+    "emptyTitle": "No network map yet",
+    "empty": "The map is built from switches (SNMP), Proxmox VE, Arcane and servers (Redfish). Add your own devices like a router or access point under \"Edit\".",
+    "networks": "Networks",
+    "noVlans": "No VLANs known – the switch reports them via Q-BRIDGE-MIB, or add them under \"Edit\".",
+    "exposed": "Reachable from the internet",
+    "vpnPeers": "{{online}} of {{total}} online",
+    "unplacedServices": "Services without a device",
+    "unplacedHint": "Assign them to a host under \"Edit → Assign\".",
+    "cables": "Cables",
+    "redact": "Redact",
+    "redactHint": "Hide IP addresses, subnets and domains for screenshots and exports",
+    "tagged": "tagged {{list}}",
+    "guests": "{{running}} of {{total}} guests running",
+    "moreGuests": "View {{count}} more",
+    "tier": {
+      "0": "Internet",
+      "1": "Router and firewall",
+      "2": "Switches",
+      "3": "Devices"
+    },
+    "type": {
+      "internet": "Internet",
+      "router": "Router",
+      "firewall": "Firewall",
+      "switch": "Switch",
+      "ap": "Access point",
+      "server": "Server",
+      "hypervisor": "Hypervisor",
+      "docker": "Docker host",
+      "nas": "NAS",
+      "pc": "PC",
+      "iot": "IoT",
+      "other": "Device"
+    },
+    "fact": {
+      "model": "Model",
+      "os": "System",
+      "firmware": "Firmware",
+      "cpu": "CPU",
+      "memory": "RAM",
+      "ip": "IP"
+    },
+    "guestKind": {
+      "vm": "VMs",
+      "ct": "Containers (LXC)",
+      "container": "Containers"
+    },
+    "portState": {
+      "up": "connected",
+      "down": "no link",
+      "disabled": "disabled"
+    },
+    "legend": {
+      "trunk": "Trunk (tagged VLANs)",
+      "access": "Access, colour = VLAN",
+      "down": "no link",
+      "speed": "Line width = speed (1G · 2.5G · 10G)",
+      "portVlans": "Port VLANs: tall = untagged, short = tagged"
+    },
+    "linkState": {
+      "ok": "Connected",
+      "warning": "Warning",
+      "error": "No link",
+      "paused": "No link",
+      "unknown": "Unknown"
+    },
+    "source": {
+      "lldp": "LLDP",
+      "manual": "entered"
+    },
+    "col": {
+      "from": "From",
+      "to": "To",
+      "speed": "Speed",
+      "vlans": "VLANs",
+      "state": "State",
+      "source": "Source"
+    },
+    "edit": {
+      "open": "Edit",
+      "title": "Edit network map",
+      "hint": "Adds what the integrations don't know. Saved only with \"Save\".",
+      "tab": {
+        "devices": "Devices",
+        "cables": "Cables",
+        "vlans": "VLANs",
+        "assign": "Assign"
+      },
+      "devicesHint": "Your own devices, e.g. router, firewall, access point or PC. With ports they get a front panel to plug cables into.",
+      "name": "Name",
+      "type": "Type",
+      "model": "Model",
+      "ip": "IP",
+      "ports": "Ports",
+      "remove": "Remove {{name}}",
+      "newDevice": "Device {{n}}",
+      "addDevice": "Add device",
+      "visibility": "Shown devices",
+      "cablesHint": "Cables LLDP can't find (e.g. router ↔ firewall). An entered cable replaces the LLDP cable on the same port.",
+      "port": "Port",
+      "auto": "automatic",
+      "untagged": "Untagged VLAN",
+      "taggedList": "Tagged VLANs",
+      "removeCable": "Remove cable",
+      "addCable": "Add cable",
+      "none": "—",
+      "vlansHint": "Names come from the switch; colour, subnet and your own VLANs here.",
+      "subnet": "Subnet",
+      "color": "Colour",
+      "colorN": "Colour {{n}}",
+      "resetVlan": "Remove details of VLAN {{id}}",
+      "vlanId": "VLAN ID",
+      "addVlan": "Add VLAN",
+      "suggestions": "Unknown LLDP neighbours",
+      "noSuggestions": "All LLDP neighbours are assigned to a device.",
+      "seenAt": "seen on {{at}}",
+      "assignTo": "Assign device",
+      "createDevice": "Create as device",
+      "servicesOn": "Services run on",
+      "runsOn": "{{name}} runs on",
+      "merge": "Same device",
+      "mergeHint": "Two sources describe the same machine (e.g. iLO and Proxmox host) – then they show as one card.",
+      "sameAs": "{{name}} is the same as"
     }
   }
 }

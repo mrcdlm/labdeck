@@ -3,6 +3,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import {
   api,
   dashboardApi,
+  topologyApi,
   historyApi,
   integrationApi,
   monitoringApi,
@@ -192,6 +193,16 @@ export function useHistory(filter: HistoryFilter, limit = 50) {
 
 export function useDashboards() {
   return useQuery({ queryKey: keys.dashboard, queryFn: dashboardApi.list, select: (r) => r.dashboards })
+}
+
+export function useTopology() {
+  return useQuery({ queryKey: keys.topology, queryFn: topologyApi.get })
+}
+
+/** Speichert die Pflege des Netzplans; die Antwort ist der neue Plan. */
+export function useSaveTopology() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: topologyApi.save, onSuccess: (t) => qc.setQueryData(keys.topology, t) })
 }
 
 /** Ändert Dashboards; die Antwort ist immer die vollständige Liste. */

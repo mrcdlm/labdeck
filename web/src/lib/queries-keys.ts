@@ -11,4 +11,5 @@ export const keys = {
   events: ['events'] as const,
   dashboard: ['dashboard'] as const,
   webhooks: ['webhooks'] as const,
+  topology: ['topology'] as const,
 }

@@ -31,6 +31,15 @@
   --chart-1: #2a78d6;
   --chart-2: #eb6834;
   --chart-3: #1baf7a;
+  /* Netzplan: VLAN-Farben in fester Reihenfolge, dieselbe Palette ohne Grün und Rot (Status).
+     Geprüft (dataviz-Validator, benachbarte Paare): CVD ΔE ≥ 9,1, normal ≥ 19,6 auf #fcfcfb;
+     Aqua, Gelb, Magenta < 3:1 → VLANs stehen immer beschriftet in der Legende „Netze“. */
+  --vlan-1: #2a78d6;
+  --vlan-2: #eb6834;
+  --vlan-3: #1baf7a;
+  --vlan-4: #eda100;
+  --vlan-5: #e87ba4;
+  --vlan-6: #6250d6;
 }
 
 .dark {
@@ -58,6 +67,13 @@
   /* dunkel: CVD ΔE ≥ 9,4, normal ≥ 20,9, alle ≥ 3:1 auf der Karte */
   --chart-2: #d95926;
   --chart-3: #199e70;
+  /* dunkel: CVD ΔE ≥ 8,4, normal ≥ 19,3, alle ≥ 3:1 auf #1a1a19 */
+  --vlan-1: #3987e5;
+  --vlan-2: #d95926;
+  --vlan-3: #199e70;
+  --vlan-4: #c98500;
+  --vlan-5: #d55181;
+  --vlan-6: #9085e9;
 }
 
 @theme inline {

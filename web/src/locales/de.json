@@ -12,7 +12,8 @@
     "checks": "Checks",
     "history": "Verlauf",
     "settings": "Einstellungen",
-    "systems": "Systeme"
+    "systems": "Systeme",
+    "network": "Netzplan"
   },
   "live": {
     "on": "Live",
@@ -834,6 +835,133 @@
       "power": "Strom",
       "apps": "Anwendungen",
       "monitoring": "Überwachung und eigene Quellen"
+    }
+  },
+  "topology": {
+    "subtitle": "Geräte, Kabel und Netze – live aus den Integrationen, ergänzt um Eigenes",
+    "emptyTitle": "Noch kein Netzplan",
+    "empty": "Der Plan entsteht aus Switches (SNMP), Proxmox VE, Arcane und Servern (Redfish). Eigene Geräte wie Router oder Access Point lassen sich unter „Bearbeiten“ ergänzen.",
+    "networks": "Netze",
+    "noVlans": "Keine VLANs bekannt – der Switch liefert sie per Q-BRIDGE-MIB, oder du legst sie unter „Bearbeiten“ an.",
+    "exposed": "Öffentlich erreichbar",
+    "vpnPeers": "{{online}} von {{total}} online",
+    "unplacedServices": "Dienste ohne Gerät",
+    "unplacedHint": "Unter „Bearbeiten → Zuordnung“ einem Host zuordnen.",
+    "cables": "Kabel",
+    "redact": "Schwärzen",
+    "redactHint": "IP-Adressen, Subnetze und Domains für Bildschirmfotos und Export unkenntlich machen",
+    "tagged": "getaggt {{list}}",
+    "guests": "{{running}} von {{total}} Gästen laufen",
+    "moreGuests": "{{count}} weitere ansehen",
+    "tier": {
+      "0": "Internet",
+      "1": "Router und Firewall",
+      "2": "Switches",
+      "3": "Geräte"
+    },
+    "type": {
+      "internet": "Internet",
+      "router": "Router",
+      "firewall": "Firewall",
+      "switch": "Switch",
+      "ap": "Access Point",
+      "server": "Server",
+      "hypervisor": "Hypervisor",
+      "docker": "Docker-Host",
+      "nas": "NAS",
+      "pc": "PC",
+      "iot": "IoT",
+      "other": "Gerät"
+    },
+    "fact": {
+      "model": "Modell",
+      "os": "System",
+      "firmware": "Firmware",
+      "cpu": "CPU",
+      "memory": "RAM",
+      "ip": "IP"
+    },
+    "guestKind": {
+      "vm": "VMs",
+      "ct": "Container (LXC)",
+      "container": "Container"
+    },
+    "portState": {
+      "up": "verbunden",
+      "down": "kein Link",
+      "disabled": "abgeschaltet"
+    },
+    "legend": {
+      "trunk": "Trunk (getaggte VLANs)",
+      "access": "Zugang, Farbe = VLAN",
+      "down": "kein Link",
+      "speed": "Linienbreite = Geschwindigkeit (1G · 2,5G · 10G)",
+      "portVlans": "Port-VLANs: hoch = ohne Tag, kurz = getaggt"
+    },
+    "linkState": {
+      "ok": "Verbunden",
+      "warning": "Warnung",
+      "error": "Kein Link",
+      "paused": "Kein Link",
+      "unknown": "Unbekannt"
+    },
+    "source": {
+      "lldp": "LLDP",
+      "manual": "eingetragen"
+    },
+    "col": {
+      "from": "Von",
+      "to": "Nach",
+      "speed": "Geschwindigkeit",
+      "vlans": "VLANs",
+      "state": "Zustand",
+      "source": "Quelle"
+    },
+    "edit": {
+      "open": "Bearbeiten",
+      "title": "Netzplan bearbeiten",
+      "hint": "Ergänzt, was die Integrationen nicht kennen. Gespeichert wird erst mit „Speichern“.",
+      "tab": {
+        "devices": "Geräte",
+        "cables": "Kabel",
+        "vlans": "VLANs",
+        "assign": "Zuordnung"
+      },
+      "devicesHint": "Eigene Geräte, z. B. Router, Firewall, Access Point oder PC. Mit Ports bekommen sie eine Front, an die Kabel angeschlossen werden.",
+      "name": "Name",
+      "type": "Typ",
+      "model": "Modell",
+      "ip": "IP",
+      "ports": "Ports",
+      "remove": "{{name}} entfernen",
+      "newDevice": "Gerät {{n}}",
+      "addDevice": "Gerät hinzufügen",
+      "visibility": "Angezeigte Geräte",
+      "cablesHint": "Kabel, die LLDP nicht findet (z. B. Router ↔ Firewall). Ein eingetragenes Kabel ersetzt das von LLDP am selben Port.",
+      "port": "Port",
+      "auto": "automatisch",
+      "untagged": "VLAN ohne Tag",
+      "taggedList": "Getaggte VLANs",
+      "removeCable": "Kabel entfernen",
+      "addCable": "Kabel hinzufügen",
+      "none": "—",
+      "vlansHint": "Namen kommen vom Switch; Farbe, Subnetz und eigene VLANs hier.",
+      "subnet": "Subnetz",
+      "color": "Farbe",
+      "colorN": "Farbe {{n}}",
+      "resetVlan": "Angaben zu VLAN {{id}} entfernen",
+      "vlanId": "VLAN-ID",
+      "addVlan": "VLAN hinzufügen",
+      "suggestions": "Unbekannte LLDP-Nachbarn",
+      "noSuggestions": "Alle LLDP-Nachbarn sind einem Gerät zugeordnet.",
+      "seenAt": "gesehen an {{at}}",
+      "assignTo": "Gerät zuordnen",
+      "createDevice": "Als Gerät anlegen",
+      "servicesOn": "Dienste laufen auf",
+      "runsOn": "{{name}} läuft auf",
+      "merge": "Dasselbe Gerät",
+      "mergeHint": "Zwei Quellen beschreiben dieselbe Maschine (z. B. iLO und Proxmox-Host) – dann erscheinen sie als eine Karte.",
+      "sameAs": "{{name}} ist dasselbe wie"
     }
   }
 }

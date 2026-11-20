@@ -86,12 +86,33 @@ if (mode === 'setup') {
       metric('blocked', 8, 5, 4, 5, { integration_id: id('pihole'), keys: ['blocked_pct'], view: 'gauge', range: '24h', max: 50, label: 'Pi-hole geblockt' }),
     ],
   })
+  // Netzplan: eigene Geräte (Internet, Firewall, Access Point), Uplink, Subnetze, PBS auf pve1
+  await api(page, 'PUT', '/api/topology', {
+    devices: [
+      { id: 'internet', name: 'Internet', type: 'internet', note: 'Glasfaser 1000/500' },
+      { id: 'opnsense', name: 'OPNsense', type: 'firewall', model: 'Lenovo M720q', ip: '10.0.99.1', ports: 4 },
+      { id: 'ap', name: 'U7 Lite', type: 'ap', model: 'UniFi U7 Lite', ip: '10.0.99.62' },
+    ],
+    links: [
+      { id: 'wan', a: { device: 'dev:internet' }, b: { device: 'dev:opnsense', port: '1' }, speed: 1000 },
+      { id: 'lan', a: { device: 'dev:opnsense', port: '2' }, b: { device: `res:${id('snmp')}:switch`, port: 'gi1/0/24' } },
+    ],
+    vlans: [
+      { id: 10, subnet: '10.0.10.0/24' },
+      { id: 20, subnet: '10.0.20.0/24' },
+      { id: 40, subnet: '10.0.40.0/24' },
+      { id: 99, subnet: '10.0.99.0/24', note: 'nur Verwaltung' },
+    ],
+    aliases: { 'lldp:apliving': 'dev:ap', [`int:${id('pbs')}`]: `res:${id('pve')}:node/pve1` },
+    hidden: [],
+  })
 } else {
   const shots = [
     ['dashboard', '/'],
     ['backups', '/backups'],
     ['checks', '/checks'],
     ['systems', '/systeme'],
+    ['network', '/netz'],
     ['history', '/verlauf'],
     ['settings', '/einstellungen'],
   ]
