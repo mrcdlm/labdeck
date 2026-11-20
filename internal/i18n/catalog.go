@@ -147,6 +147,8 @@ var catalog = map[string]entry{
 	// Dashboard
 	"dashboard.tile_invalid":   {"unbekannte oder doppelte Kachel {id} bzw. Position oder Größe außerhalb des Rasters", "unknown or duplicate tile {id} or position or size outside the grid"},
 	"dashboard.metric_invalid": {"Kennzahl-Kachel unvollständig: Integration, 1–3 Kennzahlen, Darstellung und Zeitraum angeben", "Metric tile incomplete: specify integration, 1–3 metrics, view and range"},
+	"topology.invalid":         {"Netzplan: Angabe ungültig ({what})", "Network map: invalid entry ({what})"},
+	"topology.too_many":        {"Netzplan: zu viele Einträge", "Network map: too many entries"},
 	"dashboard.invalid":        {"Name (bis 60 Zeichen) fehlt oder Symbol ungültig", "Name (up to 60 characters) missing or icon invalid"},
 	"dashboard.too_many":       {"Höchstens {max} Dashboards", "At most {max} dashboards"},
 	"dashboard.too_many_tiles": {"Höchstens {max} Kacheln je Dashboard", "At most {max} tiles per dashboard"},
