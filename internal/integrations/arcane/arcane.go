@@ -13,6 +13,7 @@
 //	GET /api/agents/{id}/projects            Compose-Stacks (paginiert)
 //	GET /api/agents/{id}/projects/counts     Stacks laufend/gestoppt, Updates
 //	GET /api/app/version                     Version
+//	GET /api/agents/{id}/system/docker/info  RAM/CPUs des Hosts, falls agentHost fehlt
 //
 // Arcane v2 bietet dieselben Pfade unter /api/environments – antwortet
 // /api/agents mit 404, wird darauf ausgewichen. Antworten stecken in einer
@@ -154,6 +155,43 @@ type env struct {
 		MemoryBytes   int64  `json:"memoryBytes"`
 		CPUs          int32  `json:"cpus"`
 	} `json:"agentHost"`
+}
+
+// dockerInfo: Ausschnitt aus „docker info“ (ohne Hülle). Arcane füllt
+// agentHost nicht für jede Umgebung – dann kommen RAM und CPUs von hier.
+type dockerInfo struct {
+	MemTotal        int64  `json:"MemTotal"`
+	NCPU            int    `json:"NCPU"`
+	OperatingSystem string `json:"OperatingSystem"`
+	ServerVersion   string `json:"ServerVersion"`
+}
+
+// hostInfo ergänzt CPUs und Gesamt-RAM aus docker info, wenn agentHost sie
+// nicht liefert. Fehler (z. B. fehlendes Recht) werden übergangen – der Host
+// zeigt dann nur den belegten RAM.
+func hostInfo(ctx context.Context, c *client, p string, node *integrations.Resource, memTotal *int64) {
+	if node.CPUs > 0 && *memTotal > 0 {
+		return
+	}
+	var di dockerInfo
+	if c.get(ctx, p+"/system/docker/info", &di) != nil {
+		return
+	}
+	if node.CPUs == 0 && di.NCPU > 0 {
+		node.CPUs = float64(di.NCPU)
+	}
+	if *memTotal == 0 {
+		*memTotal = di.MemTotal
+	}
+	if node.Info == nil {
+		node.Info = map[string]string{}
+	}
+	if node.Info["os"] == "" && di.OperatingSystem != "" {
+		node.Info["os"] = di.OperatingSystem
+	}
+	if node.Info["docker"] == "" && di.ServerVersion != "" {
+		node.Info["docker"] = di.ServerVersion
+	}
 }
 
 // connect findet die API-Variante und liefert die (gewählten) Umgebungen.
@@ -313,6 +351,11 @@ func (*Integration) Collect(ctx context.Context, cfg integrations.Config) (integ
 		}
 		online++
 		p := c.prefix + "/" + url.PathEscape(e.ID)
+		var memTotal int64
+		if h := e.AgentHost; h != nil {
+			memTotal = h.MemoryBytes
+		}
+		hostInfo(ctx, c, p, &node, &memTotal)
 
 		counts, err := getData[containerCounts](ctx, c, p+"/containers/counts")
 		if err != nil {
@@ -397,8 +440,8 @@ func (*Integration) Collect(ctx context.Context, cfg integrations.Config) (integ
 				node.CPU = ptr(cpuSum / node.CPUs)
 			}
 			node.MemUsed = ptr(memSum)
-			if h := e.AgentHost; h != nil && h.MemoryBytes > 0 {
-				node.MemTotal = ptr(h.MemoryBytes)
+			if memTotal > 0 {
+				node.MemTotal = ptr(memTotal)
 			}
 		}
 		node.Info = withInfo(node.Info, "containers", strconv.Itoa(counts.Total))

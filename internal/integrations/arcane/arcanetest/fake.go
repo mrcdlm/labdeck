@@ -39,6 +39,7 @@ type Env struct {
 	Disabled   bool
 	CPUs       int
 	Memory     int64
+	NoHostInfo bool // agentHost fehlt (RAM/CPUs nur über docker info)
 	Containers []Container
 	Projects   []Project
 }
@@ -70,7 +71,7 @@ func (f *Fake) Demo() *Fake {
 			},
 			Projects: []Project{{Name: "media", Status: "running"}, {Name: "paperless", Status: "running", Update: true},
 				{Name: "vault", Status: "running"}, {Name: "wiki", Status: "stopped"}, {Name: "monitoring", Status: "partially running"}}},
-		{ID: "6f1c2a9e-0b7d-4f2e-9a55-3c1d2e4f5a6b", Name: "pi-edge", Status: "online", CPUs: 4, Memory: 4 * gb,
+		{ID: "6f1c2a9e-0b7d-4f2e-9a55-3c1d2e4f5a6b", Name: "pi-edge", Status: "online", CPUs: 4, Memory: 4 * gb, NoHostInfo: true,
 			Containers: []Container{
 				{ID: "b1b1b1b1b1b1b1", Name: "zigbee2mqtt", Image: "koenkk/zigbee2mqtt:2.6", State: "running", Stack: "home", CPU: 2.4, Mem: 180_000_000, Limit: 4 * gb},
 			},
@@ -150,10 +151,13 @@ func (f *Fake) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if rest == "" {
 		out := []any{}
 		for _, e := range envs {
-			out = append(out, map[string]any{"id": e.ID, "name": e.Name, "apiUrl": "http://" + e.Name + ":3553",
-				"status": e.Status, "enabled": !e.Disabled,
-				"agentHost": map[string]any{"hostname": e.Name + ".lan", "os": "Ubuntu 24.04", "dockerVersion": "28.4.0",
-					"memoryBytes": e.Memory, "cpus": e.CPUs}})
+			m := map[string]any{"id": e.ID, "name": e.Name, "apiUrl": "http://" + e.Name + ":3553",
+				"status": e.Status, "enabled": !e.Disabled}
+			if !e.NoHostInfo {
+				m["agentHost"] = map[string]any{"hostname": e.Name + ".lan", "os": "Ubuntu 24.04", "dockerVersion": "28.4.0",
+					"memoryBytes": e.Memory, "cpus": e.CPUs}
+			}
+			out = append(out, m)
 		}
 		page(w, q, out)
 		return
@@ -174,6 +178,9 @@ func (f *Fake) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch strings.Join(parts[1:], "/") {
+	case "system/docker/info":
+		writeJSON(w, http.StatusOK, map[string]any{"success": true, "MemTotal": env.Memory, "NCPU": env.CPUs,
+			"OperatingSystem": "Debian GNU/Linux 13", "ServerVersion": "28.5.1"})
 	case "containers/counts":
 		var running, stopped, unhealthy, updates int
 		for _, c := range env.Containers {

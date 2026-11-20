@@ -299,7 +299,9 @@ function HostsTile({
               detail={
                 r.mem_used !== undefined && r.mem_total
                   ? `${formatBytes(r.mem_used)} / ${formatBytes(r.mem_total)}`
-                  : '—'
+                  : r.mem_used !== undefined
+                    ? formatBytes(r.mem_used) // Gesamt unbekannt: belegt zeigen, ohne Balken
+                    : '—'
               }
             />
           </li>

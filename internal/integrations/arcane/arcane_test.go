@@ -102,6 +102,11 @@ func TestCollect(t *testing.T) {
 	if z := r["container/6f1c2a9e-0b7d-4f2e-9a55-3c1d2e4f5a6b/zigbee2mqtt"]; z.Parent != "pi-edge" {
 		t.Errorf("zweiter Host: %+v", z)
 	}
+	// pi-edge ohne agentHost: RAM, CPUs und Docker-Version aus docker info
+	if p := r["env/6f1c2a9e-0b7d-4f2e-9a55-3c1d2e4f5a6b"]; p.MemTotal == nil || *p.MemTotal != 4e9 || p.CPUs != 4 ||
+		*p.MemUsed != 180_000_000 || p.Info["docker"] != "28.5.1" {
+		t.Errorf("Host ohne agentHost: %+v", p)
+	}
 }
 
 func TestOptions(t *testing.T) {
