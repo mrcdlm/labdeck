@@ -94,6 +94,7 @@ type device struct {
 	ifs         table
 	ent         table             // nil = keine ENTITY-MIB
 	alias       map[string]string // Entity-Index → ifIndex
+	topo        *topo             // nil = noch nicht gelesen
 	at          time.Time
 }
 

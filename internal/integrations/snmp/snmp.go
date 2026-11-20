@@ -44,6 +44,8 @@ type devState struct {
 	ent      table // nil = keine ENTITY-MIB
 	alias    map[string]string
 	entAt    time.Time
+	topo     *topo // LLDP-Nachbarn und VLANs (zwischengespeichert)
+	topoAt   time.Time
 }
 
 type counters struct{ in, out, errs uint64 }
@@ -212,7 +214,16 @@ func (i *Integration) fetch(ctx context.Context, cfg integrations.Config) (*devi
 		i.mu.Unlock()
 	}
 	i.mu.Lock()
-	d.ent, d.alias = st.ent, st.alias
+	staleTopo := st.topoAt.IsZero() || d.at.Sub(st.topoAt) >= topoTTL
+	i.mu.Unlock()
+	if staleTopo {
+		t := fetchTopo(ctx, g, d.ifs)
+		i.mu.Lock()
+		st.topo, st.topoAt = t, d.at
+		i.mu.Unlock()
+	}
+	i.mu.Lock()
+	d.ent, d.alias, d.topo = st.ent, st.alias, st.topo
 	i.mu.Unlock()
 	return d, st, nil
 }
@@ -288,6 +299,7 @@ func snapshot(d *device, ports []*port, monitored map[*port]bool, utilWarn float
 		if monitored[p] {
 			res.Info["monitored"] = "1"
 		}
+		portTopo(res.Info, d.topo, p.ifIndex)
 		lag := p.media == mediaLAG
 		if !lag {
 			total++
@@ -364,6 +376,14 @@ func snapshot(d *device, ports []*port, monitored map[*port]bool, utilWarn float
 		if v != "" {
 			sw.Info[k] = v
 		}
+	}
+	if d.topo != nil && len(d.topo.vlanNames) > 0 {
+		var names []string
+		for id, n := range d.topo.vlanNames {
+			names = append(names, strconv.Itoa(id)+"="+strings.ReplaceAll(strings.ReplaceAll(n, ";", ","), "=", "-"))
+		}
+		slices.SortFunc(names, func(a, b string) int { return compareIndex(strings.Split(a, "=")[0], strings.Split(b, "=")[0]) })
+		sw.Info["vlan_names"] = strings.Join(names, ";")
 	}
 	snap.Resources = append([]integrations.Resource{sw}, snap.Resources...)
 

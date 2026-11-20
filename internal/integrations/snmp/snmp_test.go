@@ -2,6 +2,7 @@ package snmp
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"strings"
 	"testing"
@@ -318,5 +319,54 @@ func TestFrontFromNames(t *testing.T) {
 	front(ports, d, "")
 	if ports[23].media != "rj45" || ports[24].media != "sfp" || ports[27].media != "sfp" {
 		t.Errorf("Uplinks: %s %s %s", ports[23].media, ports[24].media, ports[27].media)
+	}
+}
+
+func TestTopology(t *testing.T) {
+	a := start(t, snmptest.C1300())
+	i, _ := newIntegration()
+	snap := collect(t, i, cfg(t, a.Addr(), nil, nil))
+	r := map[string]integrations.Resource{}
+	for _, x := range snap.Resources {
+		r[x.ID] = x
+	}
+	if p := r["port/gi1/0/1"].Info; p["lldp_name"] != "pve1" || p["lldp_port"] != "enp3s0" || p["lldp_chassis"] != "52:54:00:12:34:01" ||
+		p["pvid"] != "10" || p["vlans"] != "20,40" {
+		t.Errorf("gi1/0/1: %v", p)
+	}
+	if p := r["port/gi1/0/24"].Info; p["lldp_name"] != "opnsense" || p["pvid"] != "1" || p["vlans"] != "10,20,40,99" || p["speed"] != "10000" {
+		t.Errorf("Uplink: %v", p)
+	}
+	// Port ohne Link: kein Nachbar, VLAN trotzdem
+	if p := r["port/gi1/0/15"].Info; p["lldp_name"] != "" || p["pvid"] != "10" {
+		t.Errorf("ohne Link: %v", p)
+	}
+	if v := r["switch"].Info["vlan_names"]; v != "1=default;10=LAN;20=DMZ;40=IoT;99=MGMT" {
+		t.Errorf("VLAN-Namen: %q", v)
+	}
+
+	// Switch ohne LLDP/Q-BRIDGE: Ports ohne Angaben, keine Fehler
+	g := start(t, snmptest.Generic8())
+	snap = collect(t, i, cfg(t, g.Addr(), nil, nil))
+	for _, x := range snap.Resources {
+		if x.Info["lldp_name"] != "" || x.Info["pvid"] != "" || x.Info["vlan_names"] != "" {
+			t.Errorf("ohne MIBs: %v", x.Info)
+		}
+	}
+}
+
+func TestPortSetAndLLDPID(t *testing.T) {
+	if got := portSet([]byte{0b1000_0001, 0b0100_0000}); fmt.Sprint(got) != "[1 8 10]" {
+		t.Errorf("PortList: %v", got)
+	}
+	if got := lldpID([]byte{0x52, 0x54, 0, 1, 2, 3}, false); got != "52:54:00:01:02:03" {
+		t.Errorf("MAC: %q", got)
+	}
+	if got := lldpID([]byte("gi1/0/3"), false); got != "gi1/0/3" {
+		t.Errorf("Name: %q", got)
+	}
+	// Name aus genau 6 druckbaren Zeichen bleibt Text (außer Subtyp MAC)
+	if got := lldpID([]byte("enp3s0"), false); got != "enp3s0" {
+		t.Errorf("6 Zeichen: %q", got)
 	}
 }

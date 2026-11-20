@@ -23,6 +23,33 @@ const (
 	entPort    = 10
 )
 
+// portTopo schreibt LLDP-Nachbar und VLANs eines Ports in seine Infos
+// (lldp_name, lldp_port, lldp_chassis, lldp_count, pvid, vlans).
+func portTopo(info map[string]string, t *topo, ifIndex string) {
+	if t == nil {
+		return
+	}
+	if ns := t.neighbors[ifIndex]; len(ns) > 0 {
+		n := ns[0]
+		for k, v := range map[string]string{"lldp_name": n.name, "lldp_port": cmp.Or(n.port, n.portDesc), "lldp_chassis": n.chassis} {
+			if v != "" {
+				info[k] = v
+			}
+		}
+		if len(ns) > 1 {
+			info["lldp_count"] = strconv.Itoa(len(ns))
+		}
+	}
+	if v := t.vlans[ifIndex]; v != nil {
+		if v.pvid > 0 {
+			info["pvid"] = strconv.Itoa(v.pvid)
+		}
+		if len(v.tagged) > 0 {
+			info["vlans"] = vlanList(v.tagged)
+		}
+	}
+}
+
 type port struct {
 	ifIndex, name, alias string
 	typ                  uint64

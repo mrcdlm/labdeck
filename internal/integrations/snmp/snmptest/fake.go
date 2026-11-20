@@ -24,7 +24,18 @@ const (
 	ifX     = ".1.3.6.1.2.1.31.1.1.1"
 	entPhys = ".1.3.6.1.2.1.47.1.1.1.1"
 	entMap  = ".1.3.6.1.2.1.47.1.3.2.1.2"
+	lldpLoc = ".1.0.8802.1.1.2.1.3.7.1"
+	lldpRem = ".1.0.8802.1.1.2.1.4.1.1"
+	bridge  = ".1.3.6.1.2.1.17.1.4.1.2"
+	qPvid   = ".1.3.6.1.2.1.17.7.1.4.5.1.1"
+	qStatic = ".1.3.6.1.2.1.17.7.1.4.3.1"
 )
+
+// Neighbor ist ein LLDP-Nachbar (MAC als Chassis-ID).
+type Neighbor struct {
+	SysName, PortID, PortDesc string
+	MAC                       []byte
+}
 
 // Port eines Profils.
 type Port struct {
@@ -33,12 +44,16 @@ type Port struct {
 	SFP         bool // in der ENTITY-MIB als SFP beschrieben
 	Speed       uint32
 	Up, Admin   bool
+	Neighbor    *Neighbor // LLDP
+	PVID        int       // VLAN ohne Tag (0 = keins)
+	Tagged      []int     // getaggte VLANs
 }
 
 // Profile beschreibt einen Switch.
 type Profile struct {
 	Descr, Name, Model, Firmware, Serial string
-	Entity                               bool // ENTITY-MIB vorhanden
+	Entity                               bool           // ENTITY-MIB vorhanden
+	VLANs                                map[int]string // Q-BRIDGE-MIB (nil = keine)
 	Ports                                []Port
 	Extra                                []Port // weitere Interfaces (VLAN, CPU …), werden nicht als Port gezählt
 }
@@ -55,8 +70,33 @@ func C1300() Profile {
 		Entity:   true,
 	}
 	aliases := map[int]string{1: "pve-01", 2: "pve-02", 3: "nas", 4: "pbs", 8: "ap-living", 12: "printer", 24: "uplink-router"}
+	p.VLANs = map[int]string{1: "default", 10: "LAN", 20: "DMZ", 40: "IoT", 99: "MGMT"}
+	mac := func(b byte) []byte { return []byte{0x52, 0x54, 0x00, 0x12, 0x34, b} }
+	// LLDP: Proxmox-Hosts, Docker-Hosts, Access Point und Router
+	neighbors := map[int]*Neighbor{
+		1:  {SysName: "pve1", PortID: "enp3s0", PortDesc: "vmbr0 uplink", MAC: mac(1)},
+		2:  {SysName: "pve2", PortID: "eno1", MAC: mac(2)},
+		5:  {SysName: "docker01", PortID: "ens18", MAC: mac(5)},
+		6:  {SysName: "pi-edge", PortID: "eth0", MAC: mac(6)},
+		8:  {SysName: "ap-living", PortID: "eth0", PortDesc: "U7 Lite", MAC: mac(8)},
+		24: {SysName: "opnsense", PortID: "igc1", PortDesc: "LAN trunk", MAC: mac(24)},
+	}
 	for n := 1; n <= 28; n++ {
-		port := Port{Name: fmt.Sprintf("gi1/0/%d", n), Type: 6, Speed: 1000, Up: true, Admin: true, Alias: aliases[n], SFP: n > 24}
+		port := Port{Name: fmt.Sprintf("gi1/0/%d", n), Type: 6, Speed: 1000, Up: true, Admin: true, Alias: aliases[n], SFP: n > 24,
+			Neighbor: neighbors[n], PVID: 10}
+		switch n {
+		case 1, 2: // Proxmox: Verwaltung im LAN, Gäste auch in DMZ und IoT
+			port.Tagged = []int{20, 40}
+		case 8: // Access Point: Verwaltung im MGMT, SSIDs in LAN und IoT
+			port.PVID, port.Tagged = 99, []int{10, 40}
+		case 24: // Uplink zum Router: alle VLANs getaggt
+			port.PVID, port.Tagged = 1, []int{10, 20, 40, 99}
+		case 12:
+			port.PVID = 40
+		}
+		if n == 24 {
+			port.Speed = 10000
+		}
 		switch {
 		case n == 12: // Drucker aus: überwachter Port down
 			port.Up = false
@@ -182,6 +222,7 @@ func (a *Agent) load(p Profile) {
 		a.set(ifX+".15."+idx, gosnmp.Gauge32, port.Speed)
 		a.set(ifX+".18."+idx, gosnmp.OctetString, port.Alias)
 	}
+	a.loadTopo(p)
 	if !p.Entity {
 		return
 	}
@@ -209,6 +250,54 @@ func (a *Agent) load(p Profile) {
 		a.set(entPhys+".6."+e, gosnmp.Integer, n+1)
 		a.set(entPhys+".7."+e, gosnmp.OctetString, port.Name)
 		a.set(entMap+"."+e+".0", gosnmp.ObjectIdentifier, ".1.3.6.1.2.1.2.2.1.1."+strconv.Itoa(n+1))
+	}
+}
+
+// loadTopo: LLDP-Nachbarn (LocalPortNum = ifIndex) und VLANs (Bridge-Port =
+// ifIndex) der Ports.
+func (a *Agent) loadTopo(p Profile) {
+	for n, port := range p.Ports {
+		idx := strconv.Itoa(n + 1)
+		if port.Type != 6 {
+			continue
+		}
+		a.set(lldpLoc+".3."+idx, gosnmp.OctetString, port.Name)
+		a.set(lldpLoc+".4."+idx, gosnmp.OctetString, port.Name)
+		if nb := port.Neighbor; nb != nil && port.Up {
+			rem := "0." + idx + ".1"
+			a.set(lldpRem+".4."+rem, gosnmp.Integer, 4) // macAddress
+			a.set(lldpRem+".5."+rem, gosnmp.OctetString, nb.MAC)
+			a.set(lldpRem+".6."+rem, gosnmp.Integer, 5) // interfaceName
+			a.set(lldpRem+".7."+rem, gosnmp.OctetString, nb.PortID)
+			a.set(lldpRem+".8."+rem, gosnmp.OctetString, nb.PortDesc)
+			a.set(lldpRem+".9."+rem, gosnmp.OctetString, nb.SysName)
+		}
+	}
+	if p.VLANs == nil {
+		return
+	}
+	bits := func(match func(Port) bool) []byte {
+		b := make([]byte, (len(p.Ports)+7)/8)
+		for n, port := range p.Ports {
+			if port.Type == 6 && match(port) {
+				b[n/8] |= 0x80 >> (n % 8)
+			}
+		}
+		return b
+	}
+	for n, port := range p.Ports {
+		if port.Type != 6 {
+			continue
+		}
+		idx := strconv.Itoa(n + 1)
+		a.set(bridge+"."+idx, gosnmp.Integer, n+1)
+		a.set(qPvid+"."+idx, gosnmp.Gauge32, uint32(max(port.PVID, 1)))
+	}
+	for id, name := range p.VLANs {
+		vid := strconv.Itoa(id)
+		a.set(qStatic+".1."+vid, gosnmp.OctetString, name)
+		a.set(qStatic+".2."+vid, gosnmp.OctetString, bits(func(x Port) bool { return x.PVID == id || slices.Contains(x.Tagged, id) }))
+		a.set(qStatic+".4."+vid, gosnmp.OctetString, bits(func(x Port) bool { return x.PVID == id }))
 	}
 }
 
